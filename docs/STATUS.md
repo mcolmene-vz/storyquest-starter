@@ -6,7 +6,7 @@ Owner: **Producer** persona keeps this current; the lead maintains "Needs Martin
 
 **M0 — Device loop: signed off by the producer 2026-10-16** (see Sign-offs). Started 2026-10-15, plan `docs/PLAN-M0.md`, build 4 (0.1.0) running on the iPad (A16) and the iPhone 17 Pro.
 
-**M1 — Battle slice: in progress since 2026-10-16.** Plan `docs/PLAN-M1.md`. Done and verified: D1 KayKit import, D2 Core battle rules + tables + the eight BattleResolver tests (all green in the CLI gate), L1 simulator driver (`Tools/sim-driver`). In progress: D3 toon shader and combatant generator. Then D4 runtime skeleton, D5 battle UI, D6 presenter and hit recipe, D7 audio, D8 device build and the 10-minute soak.
+**M1 — Battle slice: in progress since 2026-10-16.** Plan `docs/PLAN-M1.md`. Done and verified by the lead: D1 KayKit import, D2 Core rules + tables + 8 tests, D3 toon shader + generator, D4 runtime skeleton, D5 battle UI and result screens, D6 presenter and hit recipe, L1 simulator driver. In progress: D7 audio (plus the architect's fix for the action-camera pose). Next: D8 device build and Martin's 10-minute soak on both devices.
 
 ## Needs Martin (in order)
 
