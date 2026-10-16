@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "classes": [
+    {
+      "id": "swordsman", "name": "Swordsman", "damageType": "slash", "attackPower": 1.0,
+      "skill": { "id": "power_slash", "name": "Power Slash", "damageType": "slash", "power": 1.8, "cooldownTurns": 3 },
+      "weaponSocket": "handslot.r", "weaponMesh": "sword_1handed", "model": "Knight",
+      "clips": {
+        "Idle": "Idle_A", "Walk": "Walking_A",
+        "Attack": "Melee_1H_Attack_Slice_Diagonal", "Skill": "Melee_1H_Attack_Jump_Chop",
+        "Hit": "Hit_A", "BigStagger": "Hit_B", "Defend": "Melee_Blocking", "Defeat": "Death_A", "Victory": "Cheering"
+      }
+    },
+    {
+      "id": "archer", "name": "Archer", "damageType": "pierce", "attackPower": 1.0,
+      "skill": { "id": "twin_shot", "name": "Twin Shot", "damageType": "pierce", "power": 1.6, "cooldownTurns": 3 },
+      "weaponSocket": "handslot.r", "weaponMesh": "bow_withString", "model": "Ranger",
+      "clips": {
+        "Idle": "Ranged_Bow_Idle", "Walk": "Walking_A",
+        "Attack": "Ranged_Bow_Release", "Skill": "Ranged_Bow_Release_Up",
+        "Hit": "Hit_A", "BigStagger": "Hit_B", "Defend": "Melee_Blocking", "Defeat": "Death_A", "Victory": "Cheering"
+      }
+    },
+    {
+      "id": "mage", "name": "Mage", "damageType": "magic", "attackPower": 1.0,
+      "skill": { "id": "fireball", "name": "Fireball", "damageType": "magic", "power": 2.0, "cooldownTurns": 3 },
+      "weaponSocket": "handslot.r", "weaponMesh": "staff", "model": "Mage",
+      "clips": {
+        "Idle": "Idle_A", "Walk": "Walking_A",
+        "Attack": "Ranged_Magic_Shoot", "Skill": "Ranged_Magic_Raise",
+        "Hit": "Hit_A", "BigStagger": "Hit_B", "Defend": "Melee_Blocking", "Defeat": "Death_A", "Victory": "Cheering"
+      }
+    },
+    {
+      "id": "fighter", "name": "Fighter", "damageType": "blunt", "attackPower": 1.0,
+      "skill": { "id": "ground_pound", "name": "Ground Pound", "damageType": "blunt", "power": 1.5, "cooldownTurns": 3 },
+      "weaponSocket": "handslot.r", "weaponMesh": "", "model": "Barbarian",
+      "clips": {
+        "Idle": "Melee_Unarmed_Idle", "Walk": "Walking_A",
+        "Attack": "Melee_Unarmed_Attack_Punch_A", "Skill": "Melee_Unarmed_Attack_Kick",
+        "Hit": "Hit_A", "BigStagger": "Hit_B", "Defend": "Melee_Blocking", "Defeat": "Death_B", "Victory": "Cheering"
+      }
+    }
+  ]
+}

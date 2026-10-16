@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "enemies": [
+    {
+      "id": "troll_grunt", "name": "Troll Grunt", "hp": 70, "attack": 10, "defence": 3, "speed": 4,
+      "damageType": "blunt", "attackPower": 1.0, "weakness": "blunt", "behaviour": "attack_random_hero",
+      "xp": 20, "coins": 10, "model": "Mannequin_Medium", "scale": 1.35, "tint": "#6E9A4F",
+      "clips": {
+        "Idle": "Idle_B", "Walk": "Walking_B",
+        "Attack": "Melee_2H_Attack_Chop", "Skill": "Melee_2H_Attack_Spin",
+        "Hit": "Hit_B", "BigStagger": "Hit_A", "Defend": "Melee_Blocking", "Defeat": "Death_B", "Victory": "Cheering"
+      }
+    }
+  ]
+}

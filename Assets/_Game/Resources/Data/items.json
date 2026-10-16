@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "items": [
+    { "id": "potion", "name": "Potion", "kind": "consumable", "effect": "heal", "amount": 25, "price": 15 },
+    { "id": "revive", "name": "Revive", "kind": "consumable", "effect": "revive", "amount": 0.5, "price": 40 },
+    { "id": "sword_2", "name": "Steel Sword", "kind": "weapon", "classId": "swordsman", "stat": "attack", "bonus": 3, "price": 45, "mesh": "sword_2handed", "socket": "handslot.r" },
+    { "id": "charm_swift", "name": "Swift Charm", "kind": "charm", "classId": "archer", "stat": "speed", "bonus": 2, "price": 30 }
+  ]
+}

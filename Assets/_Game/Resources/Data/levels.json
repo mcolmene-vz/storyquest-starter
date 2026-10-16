@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "xpToReach": [0, 20, 50, 90, 140, 200, 270, 350, 440, 540],
+  "stats": {
+    "swordsman": [
+      { "hp": 40, "attack": 9, "defence": 4, "speed": 5 },
+      { "hp": 44, "attack": 10, "defence": 5, "speed": 5 },
+      { "hp": 48, "attack": 11, "defence": 6, "speed": 5 },
+      { "hp": 53, "attack": 12, "defence": 7, "speed": 6 },
+      { "hp": 59, "attack": 13, "defence": 8, "speed": 6 },
+      { "hp": 64, "attack": 14, "defence": 9, "speed": 6 },
+      { "hp": 71, "attack": 15, "defence": 10, "speed": 7 },
+      { "hp": 78, "attack": 16, "defence": 11, "speed": 7 },
+      { "hp": 86, "attack": 17, "defence": 12, "speed": 7 },
+      { "hp": 94, "attack": 18, "defence": 13, "speed": 8 }
+    ],
+    "archer": [
+      { "hp": 32, "attack": 8, "defence": 3, "speed": 8 },
+      { "hp": 35, "attack": 9, "defence": 4, "speed": 8 },
+      { "hp": 39, "attack": 10, "defence": 5, "speed": 8 },
+      { "hp": 43, "attack": 11, "defence": 6, "speed": 9 },
+      { "hp": 47, "attack": 12, "defence": 7, "speed": 9 },
+      { "hp": 52, "attack": 13, "defence": 8, "speed": 9 },
+      { "hp": 57, "attack": 14, "defence": 9, "speed": 10 },
+      { "hp": 62, "attack": 15, "defence": 10, "speed": 10 },
+      { "hp": 69, "attack": 16, "defence": 11, "speed": 10 },
+      { "hp": 75, "attack": 17, "defence": 12, "speed": 11 }
+    ],
+    "mage": [
+      { "hp": 28, "attack": 11, "defence": 2, "speed": 6 },
+      { "hp": 31, "attack": 12, "defence": 3, "speed": 6 },
+      { "hp": 34, "attack": 13, "defence": 4, "speed": 6 },
+      { "hp": 37, "attack": 14, "defence": 5, "speed": 7 },
+      { "hp": 41, "attack": 15, "defence": 6, "speed": 7 },
+      { "hp": 45, "attack": 16, "defence": 7, "speed": 7 },
+      { "hp": 50, "attack": 17, "defence": 8, "speed": 8 },
+      { "hp": 55, "attack": 18, "defence": 9, "speed": 8 },
+      { "hp": 60, "attack": 19, "defence": 10, "speed": 8 },
+      { "hp": 66, "attack": 20, "defence": 11, "speed": 9 }
+    ],
+    "fighter": [
+      { "hp": 48, "attack": 8, "defence": 5, "speed": 4 },
+      { "hp": 53, "attack": 9, "defence": 6, "speed": 4 },
+      { "hp": 58, "attack": 10, "defence": 7, "speed": 4 },
+      { "hp": 64, "attack": 11, "defence": 8, "speed": 5 },
+      { "hp": 70, "attack": 12, "defence": 9, "speed": 5 },
+      { "hp": 77, "attack": 13, "defence": 10, "speed": 5 },
+      { "hp": 85, "attack": 14, "defence": 11, "speed": 6 },
+      { "hp": 94, "attack": 15, "defence": 12, "speed": 6 },
+      { "hp": 103, "attack": 16, "defence": 13, "speed": 6 },
+      { "hp": 113, "attack": 17, "defence": 14, "speed": 7 }
+    ]
+  }
+}
