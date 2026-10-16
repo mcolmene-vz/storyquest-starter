@@ -30,6 +30,7 @@ namespace Game.Editor
             ImportTmpEssentials();
             CreatePlaceholderMaterial();
             CreateRenderPipeline();
+            SetQualityAntiAliasing();
             CreateBootScene();
             SetInputSystemOnly();
             BuildPipeline.ApplyPlayerSettings();
@@ -140,10 +141,31 @@ namespace Game.Editor
             {
                 QualitySettings.SetQualityLevel(i, false);
                 QualitySettings.renderPipeline = pipeline;
+                QualitySettings.antiAliasing = 4;
             }
             QualitySettings.SetQualityLevel(originalLevel, false);
 
             Log("URP assets", true);
+        }
+
+        static void SetQualityAntiAliasing()
+        {
+            // On iOS the backbuffer is allocated at launch from the active quality level's antiAliasing, before URP
+            // instantiates and pushes its 4x; a 0 there gives a 1-sample drawable for the first frame (§13.5).
+            // Runs every time because CreateRenderPipeline returns early once the URP asset exists.
+            bool changed = false;
+            int originalLevel = QualitySettings.GetQualityLevel();
+            for (int i = 0; i < QualitySettings.names.Length; i++)
+            {
+                QualitySettings.SetQualityLevel(i, false);
+                if (QualitySettings.antiAliasing == 4)
+                    continue;
+                QualitySettings.antiAliasing = 4;
+                changed = true;
+            }
+            QualitySettings.SetQualityLevel(originalLevel, false);
+
+            Debug.Log("[ProjectSetup] quality AA 4x: " + (changed ? "set" : "exists"));
         }
 
         static void CreateBootScene()

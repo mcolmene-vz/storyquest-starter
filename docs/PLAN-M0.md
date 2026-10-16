@@ -68,7 +68,11 @@ T1–T3 are written before Unity is installed and cannot compile until T4. Their
 - **Commands:** `SQ_APPLE_TEAM_ID=W727YBJNK6 "$UNITY" -batchmode -projectPath . -executeMethod Game.Editor.BuildPipeline.BuildIOS -logFile - -quit`; then `SQ_SIMULATOR=1` for `Builds/iOS-sim`; `xcodebuild` for the simulator destination; `xcrun simctl boot/install/launch/io screenshot` on one iPad and one notch iPhone simulator.
 - **Verification:** exit 0; `Builds/iOS/Info.plist` contains `ITSAppUsesNonExemptEncryption` = false; `PrivacyInfo.xcprivacy` exists in the generated project; build number went up by one; two screenshots, label fully inside the safe area, iPhone readout shows a non-zero horizontal inset, cube visibly rotating between two screenshots a second apart.
 - **Not part of it:** TestFlight, archive, signing fixes beyond the team id, performance measurement.
-- **Status:** in progress 2026-10-16 (simulator build and screenshots first, device build after the architect's ruling on `submitAnalytics`).
+- **Status:** done 2026-10-16, verified by the lead. Simulator screenshots (iPad 10th gen 2360×1640 safe y:40; iPhone 15 Pro 2556×1179 safe x:177) in `Builds/evidence/M0/`; device Xcode project `Builds/iOS` at build 4, automatic signing for team W727YBJNK6, `ITSAppUsesNonExemptEncryption` false, privacy manifest present, compiles for arm64 unsigned. Findings and rulings:
+  - Unity throws when asked to append where no build exists; `BuildIOS` now appends only when `BuildCanBeAppended` says yes. A failed build still consumes a build number (harmless).
+  - `PlayerSettings.submitAnalytics` has no public API in Unity 6; set through `SerializedObject` (architect-approved pattern). Manifest aligned to the lock for `test-framework` 1.6.0.
+  - One-time simulator error "Attachment 0 was created with 1 samples but 4 samples were requested": architect diagnosed a first-frame drawable created from the quality level's `antiAliasing` 0; all six quality levels now carry 4 (ARCHITECTURE §13.5). If it still appears once on device, it is disclosed to the producer as an exception to smoke item 10; per frame would be a blocker.
+  - Nothing was signed, archived, installed or launched on a physical device by Claude Code; that is Martin's T6 and uses his Apple account.
 
 ### T6 — Device run (Martin) and DEVICE-TESTING reconciliation
 
@@ -76,7 +80,7 @@ T1–T3 are written before Unity is installed and cannot compile until T4. Their
 - **Files:** `docs/DEVICE-TESTING.md`, `docs/STATUS.md`.
 - **Verification:** Martin reports taps counting and the cube spinning on both devices; the lead edits DEVICE-TESTING with any step that differed; the developer confirms the privacy manifest in the Xcode project (ARCHITECTURE §10).
 - **Not part of it:** TestFlight (M5).
-- **Status:** blocked on T5 and Needs Martin items 1, 6, 7.
+- **Status:** ready for Martin 2026-10-16 (build 4 at `Builds/iOS`). Waiting for his device report: taps count, cube spins, Xcode console lines containing RenderPass/Attachment.
 
 ## Acceptance evidence to assemble for the producer
 
