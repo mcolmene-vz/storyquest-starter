@@ -44,6 +44,7 @@ Not needed yet, flagged early so nothing blocks later:
 - 2026-10-16, **`docs/AWS-INFRA-PLAYBOOK.md`** (untracked) is a Terraform/Lambda playbook for other projects. Nothing in V1 has a backend (V1-SCOPE §10); the only AWS use is Polly from a local narration tool in M3. Do not commit it to this repo and do not build from it. Martin: move it out or add it to `.gitignore`.
 
 ## Decisions the lead took without asking (reversible, free)
+- 2026-10-16: for PLAN-M1 task L1 (scripted taps on the iOS Simulator so battles can be verified without a human), installed Meta's `idb` tooling: Homebrew tap `facebook/fb` with only the `idb-companion` formula trusted (`brew untrust` and `brew uninstall idb-companion` reverse it) and the `fb-idb` Python client in a throwaway venv inside the session scratchpad, not in the repo. No permission grants, no account.
 - 2026-10-16: removed `-quit` from the EditMode test command in CLAUDE.md and DEVICE-TESTING.md; with it the editor exits before the test runner starts (verified in logs). Added generated `.vscode/` to `.gitignore`.
 
 - 2026-10-15: `git init` on `main` in place; the starter kit is the first commit.
