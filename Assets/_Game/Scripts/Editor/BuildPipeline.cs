@@ -107,6 +107,10 @@ namespace Game.Editor
             bool simulator = Environment.GetEnvironmentVariable("SQ_SIMULATOR") == "1";
             string location = simulator ? "Builds/iOS-sim" : "Builds/iOS";
             PlayerSettings.iOS.sdkVersion = simulator ? iOSSdkVersion.SimulatorSDK : iOSSdkVersion.DeviceSDK;
+            // Unity's default X86_64 simulator slice ran under Rosetta on iOS 17 and cannot install on iOS 26/27 simulators
+            // (§13.6 amendment, 2026-10-16). Simulator-only setting; device builds never read it.
+            if (simulator)
+                PlayerSettings.iOS.simulatorSdkArchitecture = AppleMobileArchitectureSimulator.ARM64;
 
             var options = BuildOptions.None;
             // Append keeps the Xcode signing settings (§13.6), but Unity throws when asked to append where no build exists yet.
@@ -115,7 +119,8 @@ namespace Game.Editor
             if (Environment.GetEnvironmentVariable("SQ_DEV") == "1")
                 options |= BuildOptions.Development;
 
-            Debug.Log($"[BuildIOS] {ProductName} {BundleVersion} build {PlayerSettings.iOS.buildNumber} -> {location} sdk={PlayerSettings.iOS.sdkVersion} options={options}");
+            Debug.Log($"[BuildIOS] {ProductName} {BundleVersion} build {PlayerSettings.iOS.buildNumber} -> {location} sdk={PlayerSettings.iOS.sdkVersion}"
+                      + (simulator ? $" simulatorArch={PlayerSettings.iOS.simulatorSdkArchitecture}" : "") + $" options={options}");
 
             BuildReport report;
             try

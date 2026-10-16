@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using TMPro;
 using UnityEditor;
@@ -31,6 +32,8 @@ namespace Game.Editor
             CreatePlaceholderMaterial();
             CreateRenderPipeline();
             SetQualityAntiAliasing();
+            ToonShaderCheck();
+            CombatantGenerator.Generate();
             CreateBootScene();
             SetInputSystemOnly();
             BuildPipeline.ApplyPlayerSettings();
@@ -38,7 +41,7 @@ namespace Game.Editor
             AssetDatabase.SaveAssets();
 
             if (Application.isBatchMode)
-                Debug.Log("[ProjectSetup] done: TMP essentials, Placeholder.mat, URP assets, Boot.unity, Input System only, player settings, iOS target");
+                Debug.Log("[ProjectSetup] done: TMP essentials, Placeholder.mat, URP assets, quality AA, toon shader, combatants, Boot.unity, Input System only, player settings, iOS target");
         }
 
         static void ImportTmpEssentials()
@@ -166,6 +169,26 @@ namespace Game.Editor
             QualitySettings.SetQualityLevel(originalLevel, false);
 
             Debug.Log("[ProjectSetup] quality AA 4x: " + (changed ? "set" : "exists"));
+        }
+
+        static void ToonShaderCheck()
+        {
+            // Runs every time: a shader that fails to compile stops the CLI here instead of showing up pink on device (§14.9).
+            var shader = Shader.Find(CombatantGenerator.ShaderName);
+            if (shader == null)
+                throw new InvalidOperationException("[ProjectSetup] shader '" + CombatantGenerator.ShaderName + "' not found; is Assets/_Game/Art/Shaders/Toon.shader present and imported?");
+            if (ShaderUtil.ShaderHasError(shader))
+            {
+                var errors = ShaderUtil.GetShaderMessages(shader)
+                    .Where(m => m.severity == UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error)
+                    .Select(m => m.message + " (" + m.file + ":" + m.line + ")");
+                throw new InvalidOperationException("[ProjectSetup] shader '" + CombatantGenerator.ShaderName + "' has compile errors:\n - " + string.Join("\n - ", errors));
+            }
+            // Shader.passCount reads the active subshader on the current device (the Null device under -nographics picks
+            // the fallback); ShaderData is the importer's view and lists the four passes regardless.
+            var passes = ShaderUtil.GetShaderData(shader).GetSubshader(0);
+            Debug.Log("[ProjectSetup] toon shader: ok, passes: " + string.Join(", ",
+                Enumerable.Range(0, passes.PassCount).Select(i => passes.GetPass(i).Name)));
         }
 
         static void CreateBootScene()
