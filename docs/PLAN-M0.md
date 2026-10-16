@@ -45,7 +45,7 @@ T1–T3 are written before Unity is installed and cannot compile until T4. Their
 - **Files:** `Assets/_Game/Scripts/Runtime/Boot/GameBootstrap.cs`, `Assets/_Game/Scripts/Runtime/Boot/Spinner.cs`, `Assets/_Game/Scripts/Runtime/Boot/TapCounter.cs`, `Assets/_Game/Scripts/Runtime/UI/SafeAreaFitter.cs`.
 - **Verification:** lead reads the diff against §13.4; `GameBootstrap` has no serialized fields (no public fields, no `[SerializeField]`); no physics component survives; no `UnityEngine` usage outside `Runtime/`; `SafeAreaFitter` re-applies when `Screen.safeArea` changes. Compiles in T4; behaviour seen in T5 screenshots.
 - **Not part of it:** Cinemachine, services, flow state machine, anything from M1. `Spinner` and `TapCounter` are deleted in M1.
-- **Status:** not started.
+- **Status:** done 2026-10-15, verified by the lead (diff read against §13.4; no serialized fields, no physics, material from Resources). One accepted addition: an `AudioListener` on the camera, because Unity warns every frame without one and ARCHITECTURE §4 needs it for `AudioService` anyway. Compile pending T4.
 
 ### T4 — First headless open, ProjectSetup, compile gate (needs Unity installed)
 
@@ -54,7 +54,7 @@ T1–T3 are written before Unity is installed and cannot compile until T4. Their
 - **Commands:** §13.1 steps 2 and 3, then the EditMode test command from DEVICE-TESTING §2.
 - **Verification:** `-runTests` exits 0 with zero tests (else switch the gate to `CompileCheck` and update DEVICE-TESTING); log has no `error CS`; `grep -r UnityEngine Assets/_Game/Scripts/Core` empty; `manifest.json` still equals §13.2 apart from core-package patch rewrites; `packages-lock.json` has no `com.unity.services.*` and no `unityanalytics`; `ProjectSettings.asset` shows landscape only, bundle id, iOS 16.0, IL2CPP ARM64, Linear, analytics/crash reporting off; `Boot.unity` is the only `.unity`; no `.prefab`/`.controller`/`.playable` anywhere. Lead runs the checks.
 - **Not part of it:** the iOS build; any new feature; any test file.
-- **Status:** blocked on Unity install (Needs Martin item 1).
+- **Status:** blocked on Unity install (Needs Martin item 1). A background watcher in the lead's session starts T4 automatically once `/Applications/Unity/Hub/Editor/6000.3.26f1` and its iOS module exist.
 
 ### T5 — iOS build from the CLI and two-aspect simulator check
 

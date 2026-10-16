@@ -4,7 +4,7 @@ Owner: **Producer** persona keeps this current; the lead maintains "Needs Martin
 
 ## Current milestone
 
-**M0 — Device loop.** Started 2026-10-15. Architect confirmed the design and resolved ARCHITECTURE §11 the same day. Plan: `docs/PLAN-M0.md`. T1–T3 (code written blind) in progress; T4 onward wait for the Unity install.
+**M0 — Device loop.** Started 2026-10-15. Architect confirmed the design and resolved ARCHITECTURE §11 the same day. Plan: `docs/PLAN-M0.md`. T1–T3 (skeleton, editor scripts, runtime scripts) written and reviewed on 2026-10-15 without a compiler. T4 onward (first open, compile, iOS build, device run) wait for the Unity install, Needs Martin item 1.
 
 ## Needs Martin (in order)
 
