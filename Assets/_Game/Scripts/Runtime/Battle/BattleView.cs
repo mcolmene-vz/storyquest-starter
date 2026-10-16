@@ -7,7 +7,8 @@ using Object = UnityEngine.Object;
 namespace Game.Runtime
 {
     /// The battle on screen (ARCHITECTURE §14.4): stage, one actor per combatant in Services.Battle.State, the camera
-    /// rig, the HUD, the command panel and the result screen. Show builds all of it; Hide destroys it.
+    /// rig, the effects, the HUD, the command panel, the presenter that plays the batches and the result screen.
+    /// Show builds all of it; Hide stops the presenter and destroys the rest.
     public sealed class BattleView : IView
     {
         readonly FlowController flow;
@@ -17,7 +18,7 @@ namespace Game.Runtime
         Transform? uiRoot;
         CommandPanel? panel;
         DebugCorner? corner;
-        EventApplier? applier;
+        BattlePresenter? presenter;
 
         public BattleView(FlowController flow)
         {
@@ -58,17 +59,22 @@ namespace Game.Runtime
             panel = new CommandPanel(uiRoot, Hud, Services.Tables);
             panel.Submitted += OnCommand;
             corner = DebugCorner.Create(uiRoot);
-            applier = new EventApplier(Hud, panel, OnOutcome);
-            battle.BatchReady += applier.Apply;
+            presenter = new BattlePresenter(flow.Host, Hud, panel, Cameras, actors, new HitFx(root.transform),
+                DamageNumberPool.Create(root.transform, camera), state, OnOutcome);
+            battle.BatchReady += presenter.Play;
             // The start batch (BattleStarted, RoundStarted, TurnStarted) was raised before this view existed.
-            applier.Apply(battle.LastEvents);
+            presenter.Play(battle.LastEvents);
         }
 
         public void Hide()
         {
-            if (applier != null)
-                Services.Battle.BatchReady -= applier.Apply;
-            applier = null;
+            if (presenter != null)
+            {
+                Services.Battle.BatchReady -= presenter.Play;
+                // Before the actors go: it restores the time scale and clears the flash block and subscriptions.
+                presenter.Stop();
+            }
+            presenter = null;
             result.Hide();
             if (panel != null)
             {

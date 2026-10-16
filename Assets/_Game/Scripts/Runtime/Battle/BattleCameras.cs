@@ -20,7 +20,7 @@ namespace Game.Runtime
         // Anchors sit at chest height with a 1.2 m radius (y -0.2..2.2), covering every body the generator allows.
         const float AnchorHeight = 1.0f;
         const float MemberRadius = 1.2f;
-        const float GroupFramingSize = 0.95f;
+        const float GroupFramingSize = 0.75f;
         const float GroupDamping = 0.3f;
         const float GroupFov = 30f;
         const float ActionFov = 32f;
@@ -29,7 +29,7 @@ namespace Game.Runtime
         static readonly Vector3 GroupPose = new Vector3(-6.6f, 3.2f, -7.9f);
         static readonly Vector3 GroupEuler = new Vector3(12f, 40f, 0f);
         // Half-frame units; positive y lifts the group (the package moves the camera down by this amount).
-        static readonly Vector2 GroupCenterOffset = new Vector2(0f, 0.30f);
+        static readonly Vector2 GroupCenterOffset = new Vector2(0f, 0.22f);
         static readonly Vector3 ImpulseVelocity = new Vector3(0f, -0.25f, 0f);
         // §14.4: camera behind and to the right of the attacker, aim 70 % of the way to the target at chest height.
         const float ShoulderBack = 2.0f;
@@ -129,6 +129,9 @@ namespace Game.Runtime
             aim.y = AimHeight;
             ActionAim.position = aim;
             Action.transform.LookAt(aim);
+            // The composer keeps damping state from the last action; without this the cut swings in from the old
+            // orientation (seen as a frame of empty sky when the troll follows a hero, 2026-10-16).
+            Action.ForceCameraPosition(Action.transform.position, Action.transform.rotation);
         }
 
         public void SetActionActive(bool active) => Action.Priority = active ? ActionPriority : 0;
