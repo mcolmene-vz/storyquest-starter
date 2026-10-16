@@ -175,6 +175,7 @@ namespace Game.Runtime
 
         void Fire(Command command)
         {
+            Services.Audio.Play(SfxId.MenuTap);
             Hide();
             Submitted?.Invoke(command);
         }

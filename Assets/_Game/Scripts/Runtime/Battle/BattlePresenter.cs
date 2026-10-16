@@ -178,6 +178,7 @@ namespace Game.Runtime
                             yield return PlayVictory();
                             break;
                         case PartyDefeated:
+                            Services.Audio.Play(SfxId.Defeat);
                             while (Time.time < lastDefeatEnds)
                                 yield return null;
                             break;
@@ -229,6 +230,8 @@ namespace Game.Runtime
             float length = skill ? attacker.SkillLength : attacker.AttackLength;
             string clipName = skill ? attacker.SkillClip : attacker.AttackClip;
             float start = Time.time;
+            if (skill)
+                Services.Audio.Play(SfxId.Skill);
             yield return PlayClipToImpact(attacker, skill ? SkillHash : AttackHash, length, clipName);
             float impactTime = Time.time;
 
@@ -253,6 +256,7 @@ namespace Game.Runtime
             {
                 target.Actor.Animator.CrossFadeInFixedTime(weakness ? BigStaggerHash : HitHash, CrossFadeSeconds);
             }
+            Services.Audio.Play(SfxId.Hit);
 
             // 6. knockback of the root, alongside the rest
             StartKnockback(attacker, target, weakness ? WeaknessKnockbackMetres : KnockbackMetres);
@@ -336,6 +340,7 @@ namespace Game.Runtime
             foreach (var record in recordList)
                 if (record.Team == Team.Hero && !record.Down)
                     record.Actor.Animator.CrossFadeInFixedTime(VictoryHash, CrossFadeSeconds);
+            Services.Audio.Play(SfxId.Victory);
             yield return victoryCheer;
         }
 

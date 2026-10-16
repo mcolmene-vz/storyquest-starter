@@ -1,5 +1,6 @@
 using System;
 using Game.Core.Data;
+using UnityEngine;
 
 namespace Game.Runtime
 {
@@ -8,16 +9,20 @@ namespace Game.Runtime
     {
         static GameTables? tables;
         static BattleService? battle;
+        static AudioService? audio;
 
         public static GameTables Tables => tables ?? throw NotCreated();
         public static BattleService Battle => battle ?? throw NotCreated();
+        public static AudioService Audio => audio ?? throw NotCreated();
 
-        public static void Create()
+        /// host is the bootstrap object: AudioService lives on it as a MonoBehaviour for the focus and pause callbacks.
+        public static void Create(GameObject host)
         {
             if (tables != null)
                 throw new InvalidOperationException("Services.Create was already called");
             tables = TableLoader.Load(new ResourcesTableSource());
             battle = new BattleService(tables);
+            audio = AudioService.Create(host);
         }
 
         static InvalidOperationException NotCreated() =>

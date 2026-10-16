@@ -31,7 +31,7 @@ namespace Game.Runtime
             body.rectTransform.offsetMin = new Vector2(0f, ContinueInset + ContinueSize.y);
             body.rectTransform.offsetMax = new Vector2(0f, -260f);
 
-            var button = UiFactory.Button(root, "Continue", ContinueSize, onContinue);
+            var button = UiFactory.Button(root, "Continue", ContinueSize, () => { Services.Audio.Play(SfxId.MenuTap); onContinue(); });
             button.Place(new Vector2(0.5f, 0f), new Vector2(0f, ContinueInset));
         }
 

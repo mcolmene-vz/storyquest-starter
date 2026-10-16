@@ -79,7 +79,7 @@ D2 does not depend on D1 technically, but the developer works one task at a time
 - **Files:** `Assets/Plugins/iOS/SQAudioSession.mm` (+ `.meta`), `Runtime/Services/AudioService.cs`, `Runtime/Services/PlaceholderSfx.cs`, one-line call sites in `BattlePresenter`, `CommandPanel`, `ResultView`.
 - **Verification:** compile gate exit 0; the device Xcode project contains `SQAudioSession.mm` in the Unity-iPhone target; simulator run plays audio (log line on first `Play`); Martin's silent-switch check in D8. Lead reads the plugin against §13.9.
 - **Not part of it:** music, narration, mixer, the real CC0 SFX set (M3).
-- **Status:** blocked on D6.
+- **Status:** done 2026-10-16, verified by the lead (own gate 8/8; `SQAudioSession.mm` is §13.9 verbatim and compiles/links into UnityFramework on the device project; the playback category is applied at Awake, focus and unpause; placeholder SFX fire from the recipe and the UI; plugin `.meta` defaults to iOS-only with no click). The architect's action-camera ruling landed in this task: high rear-shoulder shot verified on the Fighter's weakness hit (`Builds/evidence/M1/d7-iphone-fighter-*.png`), group CenterOffset x −0.10 clears the iPad card by a thin margin (0.2–0.6 % of width, thinner than modelled; architect to see at review). Build-tool finding for D8: a simulator Append build made right after a device build inherits Burst file references that do not exist for the simulator and fails in Xcode; build the simulator project first or delete `Builds/iOS-sim` before it.
 
 ### D8 — Device build, soak, framing evidence
 

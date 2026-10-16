@@ -67,6 +67,7 @@ namespace Game.Runtime
 
         void ShowToast(string text)
         {
+            Services.Audio.Play(SfxId.MenuTap);
             toastText.text = text;
             toast.gameObject.SetActive(true);
             if (hideToast != null)

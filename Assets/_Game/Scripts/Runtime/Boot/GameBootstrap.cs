@@ -28,7 +28,7 @@ namespace Game.Runtime
             var safeArea = CreateUI();
 
             // §14.9: services once, the M1 battle, then the flow takes over.
-            Services.Create();
+            Services.Create(gameObject);
             Services.Battle.Start(DebugParty.Create());
             flow = new FlowController(this, safeArea);
             flow.Go(FlowState.Battle);

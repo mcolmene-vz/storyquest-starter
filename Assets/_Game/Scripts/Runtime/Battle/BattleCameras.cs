@@ -6,7 +6,7 @@ using Object = UnityEngine.Object;
 namespace Game.Runtime
 {
     /// The two-shot rig of ARCHITECTURE §14.4 on the M0 main camera: CM_Group frames every combatant through a
-    /// target group, CM_Action is re-posed over the attacker's shoulder per action. Built in code when BattleView shows.
+    /// target group, CM_Action is re-posed high behind the attacker's shoulder per action. Built in code when BattleView shows.
     /// Components added at runtime skip Cinemachine's Reset(), so every value the inspector would have set is set here.
     public sealed class BattleCameras
     {
@@ -28,15 +28,16 @@ namespace Game.Runtime
         // Three-quarter view from the party's rear-left (§14.4, amended 2026-10-16); FOV is fixed, the framing dollies.
         static readonly Vector3 GroupPose = new Vector3(-6.6f, 3.2f, -7.9f);
         static readonly Vector3 GroupEuler = new Vector3(12f, 40f, 0f);
-        // Half-frame units; positive y lifts the group (the package moves the camera down by this amount).
-        static readonly Vector2 GroupCenterOffset = new Vector2(0f, 0.22f);
+        // Half-frame units; positive y lifts the group (the package moves the camera down by this amount); negative x
+        // moves it left so no combatant sits under a party card on 4:3 (§14.4, amended after D6).
+        static readonly Vector2 GroupCenterOffset = new Vector2(-0.10f, 0.22f);
         static readonly Vector3 ImpulseVelocity = new Vector3(0f, -0.25f, 0f);
-        // §14.4: camera behind and to the right of the attacker, aim 70 % of the way to the target at chest height.
-        const float ShoulderBack = 2.0f;
-        const float ShoulderRight = 0.9f;
-        const float ShoulderUp = 1.5f;
-        const float AimFraction = 0.7f;
-        const float AimHeight = 1.1f;
+        // §14.4 (amended after D6): high behind the attacker's weapon shoulder, scaled by the attacker's root so the
+        // troll's 1.35 fits; the aim is the attacker-target midpoint at an unscaled 1.4 m, over every neighbour's head.
+        const float ShoulderBack = 3.0f;
+        const float ShoulderRight = 0.3f;
+        const float ShoulderUp = 2.8f;
+        const float AimHeight = 1.4f;
 
         readonly CinemachineBrain brain;
         readonly CinemachineBlenderSettings blends;
@@ -87,17 +88,9 @@ namespace Game.Runtime
             framing.Damping = GroupDamping;
             framing.DollyRange = new Vector2(-100f, 100f);
 
-            ActionAim = new GameObject("ActionAim").transform;
-            ActionAim.SetParent(Root, false);
+            // No Position/Rotation Control components: PoseOverShoulder sets the transform itself per action.
             Action = CreateCamera(ActionName, 0);
             Action.Lens.FieldOfView = ActionFov;
-            Action.Target.TrackingTarget = ActionAim;
-            var composer = Action.gameObject.AddComponent<CinemachineRotationComposer>();
-            composer.TargetOffset = Vector3.zero;
-            composer.Lookahead = new LookaheadSettings();
-            composer.Damping = new Vector2(0.5f, 0.5f);
-            composer.Composition = ScreenComposerSettings.Default;
-            composer.CenterOnActivate = true;
 
             Impulse = Root.gameObject.AddComponent<CinemachineImpulseSource>();
             Impulse.ImpulseDefinition = new CinemachineImpulseDefinition
@@ -118,20 +111,15 @@ namespace Game.Runtime
         public CinemachineCamera Group { get; }
         public CinemachineCamera Action { get; }
         public CinemachineTargetGroup TargetGroup { get; }
-        public Transform ActionAim { get; }
         public CinemachineImpulseSource Impulse { get; }
 
         public void PoseOverShoulder(CombatantActor attacker, CombatantActor target)
         {
             var from = attacker.Root;
-            Action.transform.position = from.position - from.forward * ShoulderBack + from.right * ShoulderRight + Vector3.up * ShoulderUp;
-            var aim = Vector3.Lerp(from.position, target.Root.position, AimFraction);
-            aim.y = AimHeight;
-            ActionAim.position = aim;
-            Action.transform.LookAt(aim);
-            // The composer keeps damping state from the last action; without this the cut swings in from the old
-            // orientation (seen as a frame of empty sky when the troll follows a hero, 2026-10-16).
-            Action.ForceCameraPosition(Action.transform.position, Action.transform.rotation);
+            float s = from.lossyScale.y;
+            var position = from.position - from.forward * (ShoulderBack * s) + from.right * (ShoulderRight * s) + Vector3.up * (ShoulderUp * s);
+            var aim = (from.position + target.Root.position) * 0.5f + Vector3.up * AimHeight;
+            Action.transform.SetPositionAndRotation(position, Quaternion.LookRotation(aim - position));
         }
 
         public void SetActionActive(bool active) => Action.Priority = active ? ActionPriority : 0;
