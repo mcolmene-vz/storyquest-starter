@@ -31,7 +31,37 @@ SQ_APPLE_TEAM_ID=W727YBJNK6 "$UNITY" -batchmode -nographics -projectPath . -exec
 
 The build script sets: landscape-only orientation, bundle ID, version and build number, minimum iOS 16, `ITSAppUsesNonExemptEncryption = NO`, and turns off Unity Analytics. If the build fails, the log prints to the terminal and Claude Code can read it.
 
+The very first build into an empty `Builds/iOS` (or `Builds/iOS-sim`) cannot use Xcode's Append mode because there is nothing to append to; the script notices and does a plain build, and appends from the next build on. A failed build still uses up a build number, which is harmless.
+
 Building from the Unity Editor menu (File → Build Profiles → iOS → Build) produces the same result if you prefer clicking.
+
+## 2b. Simulator check (both aspect ratios, no device needed)
+
+Claude Code runs this to see the game at iPad 4:3 and iPhone 19.5:9 before anything touches a real device. From the repo root:
+
+```bash
+# simulator Xcode project → Builds/iOS-sim/
+SQ_SIMULATOR=1 SQ_APPLE_TEAM_ID=W727YBJNK6 "$UNITY" -batchmode -nographics -projectPath . -executeMethod Game.Editor.BuildPipeline.BuildIOS -logFile - -quit
+
+# compile it for the simulator, unsigned (a few minutes the first time)
+xcodebuild -project Builds/iOS-sim/Unity-iPhone.xcodeproj -scheme Unity-iPhone -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/sq-dd-sim CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+APP=/tmp/sq-dd-sim/Build/Products/Debug-iphonesimulator/StoryQuest.app
+
+# iPad (10th generation) = 9897FBFE-0795-45F7-9207-CE75AC2C028E, iPhone 15 Pro = ADE26594-6F5C-4977-AF3F-B19364216167
+# (on another Mac, `xcrun simctl list devices` shows the UDIDs)
+for UDID in 9897FBFE-0795-45F7-9207-CE75AC2C028E ADE26594-6F5C-4977-AF3F-B19364216167; do
+  xcrun simctl boot $UDID                      # "already booted" is fine
+  xcrun simctl install $UDID "$APP"
+  xcrun simctl launch --console $UDID com.vendoza.storyquest > /tmp/sq-$UDID.log 2>&1 &   # the player log lands in that file
+  sleep 90                                     # a cold launch on the simulator can take over a minute before the first frame
+  xcrun simctl io $UDID screenshot /tmp/sq-$UDID-1.png
+  sleep 1
+  xcrun simctl io $UDID screenshot /tmp/sq-$UDID-2.png   # the cube should have turned between the two
+  xcrun simctl shutdown $UDID
+done
+```
+
+What to look for: the label `Taps: 0  <width>×<height>  safe (x, y, width, height)` sits top-left inside the safe area on both (on the iPhone it starts to the right of the Dynamic Island, x is not 0), and the cube is at a different angle in the second screenshot. The Debug configuration shows Unity's Development Console along the bottom; that is expected and does not appear in Release builds.
 
 ## 3. Run on a connected device (first time, Martin at the Mac)
 
@@ -64,3 +94,4 @@ Claude Code on your Mac can edit all code, run the EditMode tests, run the Unity
 - *UI under the notch on iPhone*: a panel is missing `SafeAreaFitter`.
 - *Build number rejected by TestFlight*: the previous upload used the same number; increment and re-archive.
 - *Xcode "Untrusted Developer"*: step 3.4 above.
+- *Unity says "The build cannot be appended"*: there was no previous build in that folder. Newer builds of the script handle this by themselves; if you still see it, delete `Builds/iOS` (or `Builds/iOS-sim`) and build again.

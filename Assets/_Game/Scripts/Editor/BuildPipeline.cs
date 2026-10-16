@@ -46,7 +46,7 @@ namespace Game.Editor
             PlayerSettings.iOS.hideHomeButton = false;
             PlayerSettings.iOS.appInBackgroundBehavior = iOSAppInBackgroundBehavior.Suspend;
             PlayerSettings.iOS.requiresPersistentWiFi = false;
-            SetPrepareIOSForRecordingOff();
+            SetProjectSettingOff("Prepare IOS For Recording");
 
             PlayerSettings.SetScriptingBackend(ios, ScriptingImplementation.IL2CPP);
             PlayerSettings.SetArchitecture(ios, ArchitectureArm64);
@@ -58,6 +58,8 @@ namespace Game.Editor
             PlayerSettings.SetGraphicsAPIs(BuildTarget.iOS, new[] { GraphicsDeviceType.Metal });
 
             PlayerSettings.insecureHttpOption = InsecureHttpOption.NotAllowed;
+            // Legacy hardware statistics, off so nothing phones home (ARCHITECTURE §13.6, 2026-10-16).
+            SetProjectSettingOff("submitAnalytics");
             // These may be marked obsolete in Unity 6; they still drive what ends up in ProjectSettings.
 #pragma warning disable 618
             UnityEditor.Analytics.AnalyticsSettings.enabled = false;
@@ -73,15 +75,19 @@ namespace Game.Editor
             }
         }
 
-        // PlayerSettings.iOS.prepareIOSForRecording left the public API in Unity 6; the flag is still serialized.
-        static void SetPrepareIOSForRecordingOff()
+        // For flags whose C# accessors are gone from the Unity 6 API (prepareIOSForRecording, submitAnalytics) but are
+        // still serialized in ProjectSettings.asset.
+        static void SetProjectSettingOff(string propertyName)
         {
             var settings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset")[0];
             using (var so = new SerializedObject(settings))
             {
-                var flag = so.FindProperty("Prepare IOS For Recording");
+                var flag = so.FindProperty(propertyName);
                 if (flag == null)
+                {
+                    Debug.LogWarning("[ApplyPlayerSettings] " + propertyName + " not found in ProjectSettings.asset");
                     return;
+                }
                 if (flag.propertyType == SerializedPropertyType.Boolean)
                     flag.boolValue = false;
                 else
@@ -102,7 +108,10 @@ namespace Game.Editor
             string location = simulator ? "Builds/iOS-sim" : "Builds/iOS";
             PlayerSettings.iOS.sdkVersion = simulator ? iOSSdkVersion.SimulatorSDK : iOSSdkVersion.DeviceSDK;
 
-            var options = BuildOptions.AcceptExternalModificationsToPlayer;
+            var options = BuildOptions.None;
+            // Append keeps the Xcode signing settings (§13.6), but Unity throws when asked to append where no build exists yet.
+            if (UnityEditor.BuildPipeline.BuildCanBeAppended(BuildTarget.iOS, location) == CanAppendBuild.Yes)
+                options |= BuildOptions.AcceptExternalModificationsToPlayer;
             if (Environment.GetEnvironmentVariable("SQ_DEV") == "1")
                 options |= BuildOptions.Development;
 
