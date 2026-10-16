@@ -37,7 +37,7 @@ T1–T3 are written before Unity is installed and cannot compile until T4. Their
 - **Files:** `Assets/_Game/Scripts/Editor/ProjectSetup.cs`, `Assets/_Game/Scripts/Editor/BuildPipeline.cs`.
 - **Verification:** lead reads the diff against §13.1, §13.4–§13.6 line by line; every setting in §13.6 appears once; `BuildIOS` exits non-zero on failure; the plist step fails the build if `PrivacyInfo.xcprivacy` is missing; no `Shader.Find` at runtime paths; `UnityEditor.BuildPipeline` is fully qualified. Compiles in T4.
 - **Not part of it:** icons, launch screen, splash (M5); asset postprocessors (M1); anything under `Runtime/`.
-- **Status:** not started.
+- **Status:** done 2026-10-15, verified by the lead (diff read against §13.1, §13.4–§13.6; one accepted deviation: default PostProcessData is loaded by asset path because Unity's helper is internal). Compile pending T4.
 
 ### T3 — Runtime: GameBootstrap, SafeAreaFitter, Spinner, TapCounter (blind)
 
