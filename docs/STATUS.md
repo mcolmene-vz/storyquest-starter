@@ -6,7 +6,7 @@ Owner: **Producer** persona keeps this current; the lead maintains "Needs Martin
 
 **M0 — Device loop: signed off by the producer 2026-10-16** (see Sign-offs). Started 2026-10-15, plan `docs/PLAN-M0.md`, build 4 (0.1.0) running on the iPad (A16) and the iPhone 17 Pro.
 
-**M1 — Battle slice is next.** Not started. Order of operations per CLAUDE.md: architect confirms the M1 design (ARCHITECTURE §13.7 toon shader, §13.9 AVAudioSession file, KayKit import) → lead writes `docs/PLAN-M1.md` → developer delivers → lead verifies → producer signs off. KayKit Adventurers 2.0 FREE is already downloaded (Needs Martin item 9).
+**M1 — Battle slice is next.** Not started. Architect's M1 design is written (ARCHITECTURE §14, 2026-10-16; §5 and §6 amended). Its two scope questions (no misses; no Archer/Mage projectile) were ruled by the producer 2026-10-16, see Producer rulings; V1-SCOPE §5 and §7 amended to match. Remaining order of operations per CLAUDE.md: lead writes `docs/PLAN-M1.md` → developer delivers → lead verifies → producer signs off. Both KayKit packs are on disk (Needs Martin item 9).
 
 ## Needs Martin (in order)
 
@@ -32,13 +32,15 @@ Not needed yet, flagged early so nothing blocks later:
 
 ## Blockers
 
-- None. M0 signed off 2026-10-16. M1 waits on the architect's design confirmation and `docs/PLAN-M1.md`.
+- None. M0 signed off 2026-10-16. Architect's M1 design is in ARCHITECTURE §14 and the producer has ruled on its scope questions; M1 waits only on `docs/PLAN-M1.md`.
 
 ## Producer rulings
 
 - 2026-10-16, **smoke item 10 at M0: deferred to M1, not waived.** V1-SCOPE §14 item 10 is "play 10 minutes"; M0 has nothing to play, and the soak exists to catch leaks, thermal throttling and per-frame errors under game load, which a cube and a label cannot produce. Martin's two device sessions already cover "no console errors" for the minutes they ran. Conditions: from M1 on, item 10 is a timed 10-minute soak on both devices with the Xcode console attached, reported with the time, and it is a hard requirement for M1 sign-off. The simulator-only render-pass message (ARCHITECTURE §13.5) keeps PLAN-M0 T5's rule on device: once is a disclosed exception, per frame is a blocker.
 - 2026-10-16, **AudioListener on the camera** (PLAN-M0 T3): accepted. One component, needed by ARCHITECTURE §4 `AudioService` in M3, no cost.
 - 2026-10-16, **M0 evidence location.** `Builds/evidence/M0/` is git-ignored, so the sign-off pointer below also names the commits. Lead: copy the text files (`M0-EVIDENCE.md`, `device-ipad.txt`, `device-iphone.txt`) to `docs/evidence/M0/` in the next commit so the record survives a `Builds/` clean; PNGs and logs stay out of git.
+- 2026-10-16, **No misses in V1: accepted.** V1-SCOPE §5 now says every Attack and Skill lands (no accuracy, no crits, no variance); "miss" is struck from the §7 SFX list; both recorded in the V1-SCOPE change log. Reason: §4's no-pressure tone and §5's "on every hit" were already pointing this way, and a miss gives a 5-year-old a failure with nothing to learn from it. One fewer sound, no miss test; the `BattleResolver` budget stays at the eight tests in ARCHITECTURE §14.7. The always-false `missed` field in `Attacked` is the architect's call and costs nothing; it does not come back into scope without a change-log entry.
+- 2026-10-16, **Archer arrow and Mage bolt: not required for V1.** Not an M1, M2 or M5 acceptance item; V1-SCOPE §5 now says so. M2's criterion stays exactly "buying a weapon changes the model in the next battle" and nothing is added to it. Backlog entry (lead: add this row verbatim to `docs/BACKLOG.md` in the PLAN-M1 commit; this ruling was limited to editing V1-SCOPE and STATUS): `| 2026-10-16 | architect (ARCHITECTURE §14.1) | Visible projectiles for Archer (arrow) and Mage (bolt) | A flying arrow reads as "I shot it" and the Mixamo draw/shoot clip invites one | V1-SCOPE §5 never asked for one; the hit recipe carries the read; zero acceptance criteria depend on it. Revisit once at M4 sign-off: if a kid tester cannot tell the troll was hit after an Archer or Mage Attack on device, it becomes a bounded M5 task (code + existing meshes, no new package, no purchase); otherwise V2. |`. The one revisit is at **M4 sign-off, not M5**: M5 is the ship milestone and does not take on new work the kids have not already shown they need.
 - 2026-10-16, **`docs/AWS-INFRA-PLAYBOOK.md`** (untracked) is a Terraform/Lambda playbook for other projects. Nothing in V1 has a backend (V1-SCOPE §10); the only AWS use is Polly from a local narration tool in M3. Do not commit it to this repo and do not build from it. Martin: move it out or add it to `.gitignore`.
 
 ## Decisions the lead took without asking (reversible, free)

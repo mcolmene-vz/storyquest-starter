@@ -44,6 +44,8 @@ FF8-style turn-based, one screen, scripted presentation.
 - Turn order by a speed stat. Enemies act on their turns with simple fixed behaviors.
 - Enemies: **3 troll types** (grunt, thrower, shaman) plus **1 boss**. Each has HP, attack, speed, and a weakness.
 - Weakness: the matching damage type does double damage and triggers the big stagger reaction.
+- **Every Attack and Skill lands.** No accuracy stat, no misses, no critical hits, no damage variance. A kid who taps a button sees it do something every time. (Producer ruling 2026-10-16.)
+- Ranged attacks (Archer, Mage) are read through the draw/shoot or cast animation plus the full hit recipe on the target. **No projectile mesh is required in V1.** (Producer ruling 2026-10-16; see `docs/BACKLOG.md`.)
 - **Hit recipe** on every hit, in this order: wind-up, impact freeze (60–100 ms), victim hit-reaction animation, short knockback slide that eases out, white flash on the model, particle burst, camera impulse, damage number. Camera cuts to the attacker on each action.
 - Combat is **animation-driven**. No physics in combat. Physics is allowed only for loot and decoration.
 - **Difficulty** (parent setting, per device):
@@ -63,7 +65,7 @@ FF8-style turn-based, one screen, scripted presentation.
 
 - All story lines pre-generated with Amazon Polly from a line manifest exported from the Ink files, bundled in the app. One voice for the narrator, distinct voices for up to 4 recurring NPCs.
 - Music: one camp track, one battle track, one boss track. Licensed or CC0.
-- SFX: hit, miss, skill ×4, coins, menu tap, victory, defeat.
+- SFX: hit, skill ×4, coins, menu tap, victory, defeat.
 - Audio plays with the iPhone silent switch on (native AVAudioSession playback category).
 
 ## 8. Saving and settings
@@ -135,4 +137,5 @@ M0–M5 all signed off, the TestFlight build installed on at least two family de
 
 ## Change log
 
-- (empty)
+- 2026-10-16 — **§5: no misses in V1; §7: "miss" struck from the SFX list.** Raised by the architect's M1 design (ARCHITECTURE §5 amendment and §14.3). Reason: §5 already says the hit recipe plays "on every hit" and §4 sets a no-pressure tone; a 5-year-old who taps Attack and sees MISS learns the button sometimes does nothing, which is pressure with no lesson. Removing it also removes one sound (§7) and keeps the §13 test budget at eight for `BattleResolver`. The `missed` field stays in the `Attacked` event record, always false, so the schema does not churn if V2 ever adds accuracy; that is an architecture detail, not scope.
+- 2026-10-16 — **§5: no projectile mesh required for Archer or Mage in V1.** Raised by ARCHITECTURE §14.1 ("arrows are not spawned for the Archer in M1"). Reason: §5 never asked for one, §12 M1/M2/M5 criteria do not depend on one, and the hit recipe (freeze, stagger, knockback, flash, burst, number) is what makes a hit read. Not required for any V1 sign-off. Logged in `docs/BACKLOG.md`; the producer revisits it once, at M4 sign-off, on the evidence named in STATUS.
