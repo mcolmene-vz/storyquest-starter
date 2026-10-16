@@ -19,6 +19,9 @@ Do these top to bottom. Items marked *done* were verified or completed by Claude
 6. **Devices, before the M0 device run.** On your iPhone and on the iPad: Settings → Privacy & Security → Developer Mode → on, restart when asked. Plug the iPad into the Mac once and tap Trust; only two iPhones are paired with this Mac today, no iPad.
 7. **The M0 device run itself.** *Ready since 2026-10-16, build 4 at `Builds/iOS/Unity-iPhone.xcodeproj`.* `docs/DEVICE-TESTING.md` §3, steps 1–5. First time only: pick the Vendoza LLC team under Signing & Capabilities and trust the developer on each device. Report back: tap count goes up, cube spins, and whether the Xcode console shows any red line containing "RenderPass" or "Attachment".
 
+8. **For M0 sign-off, three smoke-checklist items on one device:** time a cold start (kill the app, relaunch, seconds until the cube shows); rotate the device once and confirm it stays landscape; leave it running 10 minutes and confirm no red console line and a smooth cube.
+9. **For M1 (next):** download the free KayKit Adventurers pack (CC0, "name your own price", FBX) from https://kaylousberg.itch.io/kaykit-adventurers and tell me where the zip is. No purchase; enter 0 if asked.
+
 Not needed yet, flagged early so nothing blocks later:
 - **Final app name and bundle ID** (decision, needed before M5). Builds use the working title "StoryQuest" and bundle ID `com.vendoza.storyquest`. Both can change freely until the App Store Connect record is created in M5; after that the bundle ID is permanent.
 - **App Store Connect app record** (M5, needs your account).
@@ -26,7 +29,7 @@ Not needed yet, flagged early so nothing blocks later:
 
 ## Blockers
 
-- None on the code side. T4 and T5 done 2026-10-16. M0 now waits for Martin's device run (Needs Martin item 7) and then the producer's sign-off.
+- None. M0 runs on both devices (2026-10-16). Waiting on Needs Martin item 8, then the producer's sign-off.
 
 ## Decisions the lead took without asking (reversible, free)
 - 2026-10-16: removed `-quit` from the EditMode test command in CLAUDE.md and DEVICE-TESTING.md; with it the editor exits before the test runner starts (verified in logs). Added generated `.vscode/` to `.gitignore`.
