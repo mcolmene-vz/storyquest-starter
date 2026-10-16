@@ -54,7 +54,12 @@ T1–T3 are written before Unity is installed and cannot compile until T4. Their
 - **Commands:** §13.1 steps 2 and 3, then the EditMode test command from DEVICE-TESTING §2.
 - **Verification:** `-runTests` exits 0 with zero tests (else switch the gate to `CompileCheck` and update DEVICE-TESTING); log has no `error CS`; `grep -r UnityEngine Assets/_Game/Scripts/Core` empty; `manifest.json` still equals §13.2 apart from core-package patch rewrites; `packages-lock.json` has no `com.unity.services.*` and no `unityanalytics`; `ProjectSettings.asset` shows landscape only, bundle id, iOS 16.0, IL2CPP ARM64, Linear, analytics/crash reporting off; `Boot.unity` is the only `.unity`; no `.prefab`/`.controller`/`.playable` anywhere. Lead runs the checks.
 - **Not part of it:** the iOS build; any new feature; any test file.
-- **Status:** blocked on Unity install (Needs Martin item 1). A background watcher in the lead's session starts T4 automatically once `/Applications/Unity/Hub/Editor/6000.3.26f1` and its iOS module exist.
+- **Status:** done 2026-10-16, verified by the lead (own gate run: exit 0, zero `error CS`, runner executed with zero tests and wrote `Builds/test-results.xml`; §13.10 structural checks pass). Findings and lead rulings:
+  - `-runTests … -quit` exits the editor before the runner starts; it was a compile gate by accident. Lead removed `-quit` from the test command in DEVICE-TESTING §2 and CLAUDE.md. Architect asked to align §13.3.
+  - API moves fixed in code only: `PostProcessBuild` needs `UnityEditor.Callbacks`; `prepareIOSForRecording` left the public API (flag set through `SerializedObject`); `gpuResidentDrawerMode` enum lives in an unreferenced assembly (set through `SerializedObject`); TMP essentials must be imported synchronously (internal `ImportPackageImmediately` by reflection, one-time step, verified on disk). Architect asked to record these in §13.1/§13.6.
+  - Files the editor placed itself and we commit where they land: `Assets/DefaultVolumeProfile.asset`, `Assets/UniversalRenderPipelineGlobalSettings.asset`, `ProjectSettings/InkSettings.asset`, `SceneTemplateSettings.json`, `ShaderGraphSettings.asset`, Rendering Debugger axes in `InputManager.asset`. Generated `.vscode/` is git-ignored.
+  - `submitAnalytics: 1` (legacy hardware-statistics flag) remains in ProjectSettings; architect asked whether §13.6 adds `PlayerSettings.submitAnalytics = false` (lead recommends yes; applied in T5 if approved).
+  - No editor step needed a click; no `docs/EDITOR-STEPS.md` yet.
 
 ### T5 — iOS build from the CLI and two-aspect simulator check
 
@@ -63,7 +68,7 @@ T1–T3 are written before Unity is installed and cannot compile until T4. Their
 - **Commands:** `SQ_APPLE_TEAM_ID=W727YBJNK6 "$UNITY" -batchmode -projectPath . -executeMethod Game.Editor.BuildPipeline.BuildIOS -logFile - -quit`; then `SQ_SIMULATOR=1` for `Builds/iOS-sim`; `xcodebuild` for the simulator destination; `xcrun simctl boot/install/launch/io screenshot` on one iPad and one notch iPhone simulator.
 - **Verification:** exit 0; `Builds/iOS/Info.plist` contains `ITSAppUsesNonExemptEncryption` = false; `PrivacyInfo.xcprivacy` exists in the generated project; build number went up by one; two screenshots, label fully inside the safe area, iPhone readout shows a non-zero horizontal inset, cube visibly rotating between two screenshots a second apart.
 - **Not part of it:** TestFlight, archive, signing fixes beyond the team id, performance measurement.
-- **Status:** blocked on T4.
+- **Status:** in progress 2026-10-16 (simulator build and screenshots first, device build after the architect's ruling on `submitAnalytics`).
 
 ### T6 — Device run (Martin) and DEVICE-TESTING reconciliation
 

@@ -6,6 +6,7 @@
         "Game.Runtime",
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Universal.Editor",
+        "Unity.TextMeshPro",
         "Unity.TextMeshPro.Editor",
         "Unity.Timeline",
         "Unity.Timeline.Editor",

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
-using TMPro.EditorUtilities;
+using System.Reflection;
+using TMPro;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.SceneManagement;
@@ -47,8 +48,21 @@ namespace Game.Editor
                 return;
             }
 
-            TMP_PackageResourceImporter.ImportResources(true, false, false);
+            // TMP_PackageResourceImporter.ImportResources queues an asynchronous AssetDatabase.ImportPackage that never
+            // runs before a -quit batch run exits. The editor's synchronous import is internal, so it is reached by reflection.
+            var import = typeof(AssetDatabase).GetMethod("ImportPackageImmediately",
+                BindingFlags.Static | BindingFlags.NonPublic, null, new[] { typeof(string) }, null);
+            if (import == null)
+                throw new InvalidOperationException("[ProjectSetup] AssetDatabase.ImportPackageImmediately(string) not found in this editor; import TMP essentials by hand: Window > TextMeshPro > Import TMP Essential Resources");
+
+            var package = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(TMP_Settings).Assembly);
+            if (package == null)
+                throw new InvalidOperationException("[ProjectSetup] could not resolve the package that contains TextMesh Pro");
+            import.Invoke(null, new object[] { package.resolvedPath + "/Package Resources/TMP Essential Resources.unitypackage" });
             AssetDatabase.Refresh();
+
+            if (!File.Exists(TmpSettingsPath))
+                throw new InvalidOperationException("[ProjectSetup] TMP essentials import did not produce " + TmpSettingsPath);
             Log("TMP essentials", true);
         }
 
@@ -107,13 +121,14 @@ namespace Game.Editor
             pipeline.supportsCameraOpaqueTexture = false;
             pipeline.useSRPBatcher = true;
             pipeline.supportsDynamicBatching = false;
-            pipeline.gpuResidentDrawerMode = GPUResidentDrawerMode.Disabled;
             using (var so = new SerializedObject(pipeline))
             {
                 so.FindProperty("m_MainLightRenderingMode").intValue = (int)LightRenderingMode.PerPixel;
                 so.FindProperty("m_MainLightShadowsSupported").boolValue = true;
                 so.FindProperty("m_SoftShadowsSupported").boolValue = false;
                 so.FindProperty("m_AdditionalLightsRenderingMode").intValue = (int)LightRenderingMode.Disabled;
+                // 0 = Disabled. The enum lives in Unity.RenderPipelines.GPUDriven.Runtime, which Game.Editor does not reference.
+                so.FindProperty("m_GPUResidentDrawerMode").intValue = 0;
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
             AssetDatabase.CreateAsset(pipeline, PipelinePath);

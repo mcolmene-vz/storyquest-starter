@@ -3,6 +3,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEditor.Callbacks;
 using UnityEngine;
 using UnityEngine.Rendering;
 #if UNITY_IOS
@@ -45,7 +46,7 @@ namespace Game.Editor
             PlayerSettings.iOS.hideHomeButton = false;
             PlayerSettings.iOS.appInBackgroundBehavior = iOSAppInBackgroundBehavior.Suspend;
             PlayerSettings.iOS.requiresPersistentWiFi = false;
-            PlayerSettings.iOS.prepareIOSForRecording = false;
+            SetPrepareIOSForRecordingOff();
 
             PlayerSettings.SetScriptingBackend(ios, ScriptingImplementation.IL2CPP);
             PlayerSettings.SetArchitecture(ios, ArchitectureArm64);
@@ -69,6 +70,23 @@ namespace Game.Editor
             {
                 PlayerSettings.iOS.appleEnableAutomaticSigning = true;
                 PlayerSettings.iOS.appleDeveloperTeamID = teamId;
+            }
+        }
+
+        // PlayerSettings.iOS.prepareIOSForRecording left the public API in Unity 6; the flag is still serialized.
+        static void SetPrepareIOSForRecordingOff()
+        {
+            var settings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset")[0];
+            using (var so = new SerializedObject(settings))
+            {
+                var flag = so.FindProperty("Prepare IOS For Recording");
+                if (flag == null)
+                    return;
+                if (flag.propertyType == SerializedPropertyType.Boolean)
+                    flag.boolValue = false;
+                else
+                    flag.intValue = 0;
+                so.ApplyModifiedPropertiesWithoutUndo();
             }
         }
 

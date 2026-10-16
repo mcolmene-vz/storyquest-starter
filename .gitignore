@@ -18,6 +18,7 @@ crashlytics-build.properties
 
 # Unity-generated IDE files
 .vs/
+.vscode/
 .vsconfig
 *.csproj
 *.sln

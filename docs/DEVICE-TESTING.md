@@ -19,11 +19,14 @@ Claude Code or you run the editor script. From the repo root:
 # set once per shell; this is the editor version pinned in docs/ARCHITECTURE.md §11
 export UNITY="/Applications/Unity/Hub/Editor/6000.3.26f1/Unity.app/Contents/MacOS/Unity"
 
-# EditMode tests (fast, headless)
-"$UNITY" -batchmode -projectPath . -runTests -testPlatform EditMode -testResults Builds/test-results.xml -logFile - -quit
+# EditMode tests (fast, headless). No -quit here: with -quit the editor shuts down before the
+# test runner starts; without it the runner exits the editor by itself when the run ends.
+# This command is also the compile gate: a C# error makes it exit non-zero before any test.
+"$UNITY" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testResults Builds/test-results.xml -logFile -
 
-# iOS build → Builds/iOS/ (an Xcode project)
-"$UNITY" -batchmode -projectPath . -executeMethod Game.Editor.BuildPipeline.BuildIOS -logFile - -quit
+# iOS build → Builds/iOS/ (an Xcode project). SQ_APPLE_TEAM_ID enables automatic signing;
+# SQ_SIMULATOR=1 builds a simulator project into Builds/iOS-sim instead; SQ_DEV=1 makes a development build.
+SQ_APPLE_TEAM_ID=W727YBJNK6 "$UNITY" -batchmode -nographics -projectPath . -executeMethod Game.Editor.BuildPipeline.BuildIOS -logFile - -quit
 ```
 
 The build script sets: landscape-only orientation, bundle ID, version and build number, minimum iOS 16, `ITSAppUsesNonExemptEncryption = NO`, and turns off Unity Analytics. If the build fails, the log prints to the terminal and Claude Code can read it.

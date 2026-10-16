@@ -26,9 +26,10 @@ Not needed yet, flagged early so nothing blocks later:
 
 ## Blockers
 
-- None since 2026-10-16. T4 (first open, project generation, compile gate) is running.
+- None. T4 done 2026-10-16: the project opens, generates itself from code and compiles clean. T5 (iOS build, simulator aspect check) in progress.
 
 ## Decisions the lead took without asking (reversible, free)
+- 2026-10-16: removed `-quit` from the EditMode test command in CLAUDE.md and DEVICE-TESTING.md; with it the editor exits before the test runner starts (verified in logs). Added generated `.vscode/` to `.gitignore`.
 
 - 2026-10-15: `git init` on `main` in place; the starter kit is the first commit.
 - 2026-10-15: installed the VS Code Unity extension from the CLI.

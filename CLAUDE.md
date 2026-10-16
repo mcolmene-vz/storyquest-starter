@@ -44,11 +44,11 @@ Martin runs the Mac, the Apple account and the money. Batch requests for him und
 Set `UNITY` to the editor binary for the pinned version (see `docs/DEVICE-TESTING.md`). Then:
 
 ```bash
-"$UNITY" -batchmode -projectPath . -runTests -testPlatform EditMode -testResults Builds/test-results.xml -logFile - -quit
-"$UNITY" -batchmode -projectPath . -executeMethod Game.Editor.BuildPipeline.BuildIOS -logFile - -quit
+"$UNITY" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testResults Builds/test-results.xml -logFile -
+"$UNITY" -batchmode -nographics -projectPath . -executeMethod Game.Editor.BuildPipeline.BuildIOS -logFile - -quit
 ```
 
-Compile errors appear in the CLI log. Fix them before anything else.
+The test command has no `-quit` on purpose: with it the editor exits before the runner starts (verified 2026-10-16). Compile errors appear in the CLI log and make it exit non-zero. Fix them before anything else.
 
 ## Repo conventions
 
