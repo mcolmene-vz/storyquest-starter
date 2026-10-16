@@ -1,0 +1,138 @@
+# StoryQuest — V1 Scope
+
+Owner: **Producer** persona. Nobody else changes this file. Any proposed change goes through the producer, who either rejects it or records it under "Change log" with a reason.
+
+"StoryQuest" is a working title. Replace it before the TestFlight build.
+
+## 1. The one-sentence definition
+
+V1 is **one land, five chapters, playable start to finish by one to four kids on a single iPad or iPhone, installed through TestFlight.** Nothing else ships in V1.
+
+If a task does not move the project toward that sentence, it is out of scope.
+
+## 2. Platform and devices
+
+- iOS and iPadOS, minimum iOS 16.
+- **Landscape only.** Orientation locked.
+- Must look and play correctly on both an iPad (4:3) and an iPhone (19.5:9). UI anchors to safe areas; the battle camera frames the party correctly at both aspect ratios.
+- Performance: 60 fps on iPhone 13 / iPad 9th gen and newer; never below 30 fps on iPhone 11 / iPad 8th gen.
+- One device, one screen. No multiplayer, no networking, no accounts.
+
+## 3. Players and heroes
+
+- 1 to 4 kid profiles on the device. A profile is: a chosen name from a preset list or typed by the parent, an avatar, and one hero.
+- A hero is a **class** × **body**:
+  - Classes (4): Swordsman, Archer, Mage, Fighter.
+  - Body (2): boy, girl.
+  - 8 hero variants total. Each class has one skill, one weapon type, one visible armor slot and one charm slot.
+- Party = all active profiles (1–4). Each kid controls their own hero on their turn, on the shared screen.
+
+## 4. Story (Land 1)
+
+- One land, **5 chapters**, each 15–20 minutes of play including battles.
+- Written in **Ink**. Structure is branch-and-rejoin: at least 2 meaningful choices per chapter, all paths rejoin by the end of each chapter, and the land ends in **2 possible endings** decided by choices across the land.
+- Villains: trolls. Their **weakness** (the story writer picks it) is revealed in chapter 2 and matters in battles from chapter 3 onward. The chapter 5 boss cannot be beaten quickly without it.
+- **2 memory callbacks**: moments where the story asks the kids to recall something from an earlier chapter (an NPC's request, a name, a hidden path), with a better outcome if they remember.
+- Every story line is **narrated** (pre-generated audio) and shown as text. No reading is required to play.
+- Tone: funny, warm, mildly spooky. No blood, no death. Defeat is "knocked down" and "retreating to camp."
+
+## 5. Battles
+
+FF8-style turn-based, one screen, scripted presentation.
+
+- Commands per hero turn: **Attack**, **Skill** (one per class), **Item**, **Defend**.
+- Turn order by a speed stat. Enemies act on their turns with simple fixed behaviors.
+- Enemies: **3 troll types** (grunt, thrower, shaman) plus **1 boss**. Each has HP, attack, speed, and a weakness.
+- Weakness: the matching damage type does double damage and triggers the big stagger reaction.
+- **Hit recipe** on every hit, in this order: wind-up, impact freeze (60–100 ms), victim hit-reaction animation, short knockback slide that eases out, white flash on the model, particle burst, camera impulse, damage number. Camera cuts to the attacker on each action.
+- Combat is **animation-driven**. No physics in combat. Physics is allowed only for loot and decoration.
+- **Difficulty** (parent setting, per device):
+  - *Always Win*: a party defeat sends the heroes back to camp with full HP and the battle restarts. Nothing is lost.
+  - *Normal*: a party defeat sets an Ink variable; the story branches to a "retreat" scene and continues. Coins earned that battle are lost.
+- Battle math lives in pure C# with no Unity dependency so it can be tested directly.
+
+## 6. Progression, coins and shop
+
+- XP from battles; levels **1 to 10**. Stats per class per level come from a JSON table.
+- Coins come from story events and battle victories only. **No daily rewards, no login streaks, no spin wheel, no timers.**
+- Shop opens at camp between chapters. **12 equipment items** (per class: one weapon upgrade, one armor piece, one charm) plus **2 consumables** (potion, revive). Prices force a choice; a kid cannot buy everything in one land.
+- Weapons and armor are **visible on the hero model**. Charms are not.
+- Equip screen: weapon, armor, charm slots per hero.
+
+## 7. Narration and audio
+
+- All story lines pre-generated with Amazon Polly from a line manifest exported from the Ink files, bundled in the app. One voice for the narrator, distinct voices for up to 4 recurring NPCs.
+- Music: one camp track, one battle track, one boss track. Licensed or CC0.
+- SFX: hit, miss, skill ×4, coins, menu tap, victory, defeat.
+- Audio plays with the iPhone silent switch on (native AVAudioSession playback category).
+
+## 8. Saving and settings
+
+- Local JSON save per profile in `Application.persistentDataPath`, plus the Ink story state. Autosave at every chapter start, battle end and shop exit.
+- Parent settings screen: difficulty, narration on/off, manage profiles. No purchases in V1, so no parental gate is required.
+
+## 9. Art and assets (decided)
+
+- Characters: **Synty POLYGON Modular Fantasy Hero Characters** (male and female bases, modular armor and weapons). One-time purchase. Prototype milestones may use the free CC0 **KayKit Adventurers** as placeholders.
+- Animations: **Mixamo** (idle, walk, 4 class attacks, cast, draw/shoot, hit reaction, big stagger, defeat, victory, defend).
+- Environments and props: Synty Fantasy Kingdom or KayKit/Kenney CC0 packs.
+- Look: stylized low-poly with a toon shader and outline, URP.
+
+## 10. Privacy and store constraints
+
+- No analytics of any kind (Unity Analytics off). No ads. No external links. No network calls. No third-party SDKs.
+- App Store **Kids** category, age band 6–8 (confirm at submission).
+- Export compliance: no encryption beyond Apple's defaults.
+
+## 11. Explicitly out of scope for V1
+
+Multiplayer or multi-device play. Additional lands. In-app purchases. Daily rewards, streaks, wheels, timers. Android. Accounts or cloud save. Analytics. Mini-games. Achievements. Localization. Voice input. Character creator beyond class × body. Cosmetics beyond the 12 shop items. Any physics-driven combat.
+
+Anything in this list that someone wants becomes a V2 candidate in `docs/BACKLOG.md`, not a V1 task.
+
+## 12. Milestones and acceptance criteria
+
+Work proceeds in order. A milestone is done only when every criterion is met and the producer signs it off in `docs/STATUS.md`.
+
+**M0 — Device loop.** Unity 6 LTS project with URP, packages installed, folder structure, code-first bootstrap scene, landscape lock, bundle ID, iOS build script. *Done when:* a build with a spinning placeholder and a tap counter runs on Martin's iPhone and iPad from Xcode, and `docs/DEVICE-TESTING.md` matches what actually happened.
+
+**M1 — Battle slice.** 4 placeholder heroes vs 1 troll grunt. All four commands, turn order, the full hit recipe, camera cuts, damage numbers, victory and defeat screens, both difficulty behaviors. *Done when:* a kid can win and lose a battle on device and the hit looks crisp on both iPad and iPhone framing.
+
+**M2 — Heroes and gear.** Synty bases, 8 hero variants, Mixamo retargeting, weapon and armor sockets, equip screen, shop UI with the 14 items, coins. *Done when:* buying a weapon in the shop changes the model in the next battle, on device.
+
+**M3 — Story engine.** Ink integration, narration playback, choice UI, chapter flow, camp scene, save/load, parent settings. Uses a 2-chapter test story from the story writer. *Done when:* a profile can play two chapters, quit mid-chapter, relaunch, and continue where it left off.
+
+**M4 — Land 1 content.** All 5 chapters written, narrated and integrated. 3 enemies and boss tuned. Items priced. Both endings reachable. *Done when:* a full playthrough on device reaches each ending and the boss cannot be beaten in under 3 rounds without the weakness.
+
+**M5 — Ship.** iPhone and iPad layout pass, safe areas, performance targets met, icon and launch screen, Kids checklist passed, TestFlight build uploaded, family installed. *Done when:* a kid tester finishes Land 1 on TestFlight without an adult touching the device except for parent settings.
+
+## 13. Test policy
+
+Tests exist only where a bug would be silent and expensive. That means **EditMode tests for pure logic only**:
+
+- `BattleResolver`: damage calculation, weakness multiplier, turn order, victory and defeat detection, Defend behavior.
+- `Progression`: level thresholds, stat table lookup.
+- `SaveService`: save → load round-trip including Ink state.
+
+Target: roughly 12–20 tests in three files. No PlayMode tests, no UI tests, no mocks of Unity systems, no coverage targets. Anything else is verified by the manual smoke checklist below. The lead rejects pull requests that add tests outside this list.
+
+## 14. Manual smoke checklist (run on device before each milestone sign-off)
+
+1. Cold start to title in under 5 seconds.
+2. Create a profile, pick each class and body once; the model matches the choice.
+3. Start a battle; use each command once; win; coins and XP increase.
+4. Lose a battle on Always Win; return to camp with full HP. Lose on Normal; story branches.
+5. Buy an item; it appears on the hero.
+6. Quit mid-chapter; relaunch; continue from the autosave.
+7. Toggle narration off and on; silent switch on; audio still plays.
+8. Rotate the device; orientation stays landscape.
+9. Check the layout on iPhone: no UI under the notch or home indicator.
+10. Play 10 minutes; no console errors; frame rate steady.
+
+## 15. Definition of V1 done
+
+M0–M5 all signed off, the TestFlight build installed on at least two family devices, and one child completing Land 1 without help. At that point the producer closes V1 and opens `docs/BACKLOG.md` for V2 planning. Not before.
+
+## Change log
+
+- (empty)

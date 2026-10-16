@@ -1,0 +1,48 @@
+# Unity
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+/Assets/AssetStoreTools*
+/Assets/Plugins/Editor/JetBrains*
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+crashlytics-build.properties
+
+# Unity-generated IDE files
+.vs/
+.vsconfig
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Xcode output from the iOS build
+/Builds/iOS/
+
+# Narration pipeline
+/Tools/narration/node_modules/
+/Tools/narration/.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (AWS credentials for Polly live outside the repo)
+.env
+.env.*
