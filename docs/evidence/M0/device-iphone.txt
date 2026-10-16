@@ -1,0 +1,7 @@
+iPhone 17 Pro (iPhone18,1), iOS 26.7.1 (23H30), Developer Mode enabled:
+StoryQuest   com.vendoza.storyquest   0.1.0     4              
+Process running at 2026-10-16 12:18:
+818   /private/var/containers/Bundle/Application/6CE80D47-39D6-4B59-B898-13ECA161602E/StoryQuest.app/StoryQuest                                                                                         
+
+First Run attempts failed before install with 'dyld_shared_cache_extract_dylibs failed': Xcode's symbols copy for iOS 26.7.1 died at 11:42 leaving ~/Library/Developer/Xcode/iOS DeviceSupport/iPhone18,1 26.7.1 (23H30) half-written with a .copying_lock. Fix: quit Xcode, delete that folder, replug the phone, let Xcode re-copy, Run again. Installed build 4 about 3 minutes after Xcode reopened.
+Martin's report (chat, 2026-10-16): "everything looks good" on the iPhone: taps count, cube keeps turning, no red line in the Xcode console.

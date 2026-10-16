@@ -4,7 +4,9 @@ Owner: **Producer** persona keeps this current; the lead maintains "Needs Martin
 
 ## Current milestone
 
-**M0 — Device loop.** Started 2026-10-15. Architect confirmed the design and resolved ARCHITECTURE §11 the same day. Plan: `docs/PLAN-M0.md`. T1–T3 (skeleton, editor scripts, runtime scripts) written and reviewed on 2026-10-15 without a compiler. T4 onward (first open, compile, iOS build, device run) wait for the Unity install, Needs Martin item 1.
+**M0 — Device loop: signed off by the producer 2026-10-16** (see Sign-offs). Started 2026-10-15, plan `docs/PLAN-M0.md`, build 4 (0.1.0) running on the iPad (A16) and the iPhone 17 Pro.
+
+**M1 — Battle slice is next.** Not started. Order of operations per CLAUDE.md: architect confirms the M1 design (ARCHITECTURE §13.7 toon shader, §13.9 AVAudioSession file, KayKit import) → lead writes `docs/PLAN-M1.md` → developer delivers → lead verifies → producer signs off. KayKit Adventurers 2.0 FREE is already downloaded (Needs Martin item 9).
 
 ## Needs Martin (in order)
 
@@ -19,17 +21,25 @@ Do these top to bottom. Items marked *done* were verified or completed by Claude
 6. **Devices, before the M0 device run.** On your iPhone and on the iPad: Settings → Privacy & Security → Developer Mode → on, restart when asked. Plug the iPad into the Mac once and tap Trust; only two iPhones are paired with this Mac today, no iPad.
 7. **The M0 device run itself.** *Ready since 2026-10-16, build 4 at `Builds/iOS/Unity-iPhone.xcodeproj`.* `docs/DEVICE-TESTING.md` §3, steps 1–5. First time only: pick the Vendoza LLC team under Signing & Capabilities and trust the developer on each device. Report back: tap count goes up, cube spins, and whether the Xcode console shows any red line containing "RenderPass" or "Attachment".
 
-8. **Smoke-checklist items for M0 sign-off.** *Done 2026-10-16:* cold start under 5 s, landscape held on rotation. The timed 10-minute soak was not reported; the producer rules whether it is needed before M1.
+8. **Smoke-checklist items for M0 sign-off.** *Done 2026-10-16:* cold start under 5 s, landscape held on rotation. The timed 10-minute soak was not reported; producer ruling 2026-10-16: deferred to M1, not waived (see Producer rulings). At M1 you will be asked for a timed 10 minutes on each device with the Xcode console open.
 9. **For M1 (next):** *Done 2026-10-16.* KayKit Adventurers 2.0 FREE downloaded to `/Users/mcolmene/Downloads/KayKit_Adventurers_2.0_FREE`; the M1 import task copies what it needs into `Assets/ThirdParty/KayKit/`.
 
 Not needed yet, flagged early so nothing blocks later:
 - **Final app name and bundle ID** (decision, needed before M5). Builds use the working title "StoryQuest" and bundle ID `com.vendoza.storyquest`. Both can change freely until the App Store Connect record is created in M5; after that the bundle ID is permanent.
 - **App Store Connect app record** (M5, needs your account).
+- **Performance-floor device** (decision, needed before M5). V1-SCOPE §2 names the iPad 8th/9th gen as the floor; the iPad in the house is an A16. Before M5 either borrow a 2020–2021 iPad for one session or tell the producer to amend §2 to the A16. No action now.
 - **Optional:** the repo lives in `~/Downloads/storyquest-starter`. That works, but macOS may ask once whether Unity may access your Downloads folder. Say yes, or move the folder somewhere like `~/Projects/storyquest` before you first open it in Unity (moving a Unity project is safe).
 
 ## Blockers
 
-- None. M0 runs on both devices (2026-10-16). Waiting on Needs Martin item 8, then the producer's sign-off.
+- None. M0 signed off 2026-10-16. M1 waits on the architect's design confirmation and `docs/PLAN-M1.md`.
+
+## Producer rulings
+
+- 2026-10-16, **smoke item 10 at M0: deferred to M1, not waived.** V1-SCOPE §14 item 10 is "play 10 minutes"; M0 has nothing to play, and the soak exists to catch leaks, thermal throttling and per-frame errors under game load, which a cube and a label cannot produce. Martin's two device sessions already cover "no console errors" for the minutes they ran. Conditions: from M1 on, item 10 is a timed 10-minute soak on both devices with the Xcode console attached, reported with the time, and it is a hard requirement for M1 sign-off. The simulator-only render-pass message (ARCHITECTURE §13.5) keeps PLAN-M0 T5's rule on device: once is a disclosed exception, per frame is a blocker.
+- 2026-10-16, **AudioListener on the camera** (PLAN-M0 T3): accepted. One component, needed by ARCHITECTURE §4 `AudioService` in M3, no cost.
+- 2026-10-16, **M0 evidence location.** `Builds/evidence/M0/` is git-ignored, so the sign-off pointer below also names the commits. Lead: copy the text files (`M0-EVIDENCE.md`, `device-ipad.txt`, `device-iphone.txt`) to `docs/evidence/M0/` in the next commit so the record survives a `Builds/` clean; PNGs and logs stay out of git.
+- 2026-10-16, **`docs/AWS-INFRA-PLAYBOOK.md`** (untracked) is a Terraform/Lambda playbook for other projects. Nothing in V1 has a backend (V1-SCOPE §10); the only AWS use is Polly from a local narration tool in M3. Do not commit it to this repo and do not build from it. Martin: move it out or add it to `.gitignore`.
 
 ## Decisions the lead took without asking (reversible, free)
 - 2026-10-16: removed `-quit` from the EditMode test command in CLAUDE.md and DEVICE-TESTING.md; with it the editor exits before the test runner starts (verified in logs). Added generated `.vscode/` to `.gitignore`.
@@ -42,21 +52,21 @@ Not needed yet, flagged early so nothing blocks later:
 
 | Date | Item | Cost | Approved by |
 |---|---|---|---|
-| — | nothing yet | $0 | — |
+| 2026-10-16 | M0 complete; nothing bought (built-in primitive, free Unity Personal, existing Apple Developer Program) | $0 | producer |
 
 ## Compliance checklist (producer runs before M5 sign-off)
 
 - [ ] No analytics, no Unity Gaming Services, zero outbound requests (network capture on device).
 - [ ] No ads, no external links, no purchases.
 - [ ] Kids category, age band 6–8, privacy policy says nothing leaves the device.
-- [ ] `ITSAppUsesNonExemptEncryption = NO` in the built Info.plist.
-- [ ] Privacy manifest in the Xcode project reviewed.
+- [ ] `ITSAppUsesNonExemptEncryption = NO` in the built Info.plist. (Seen `<false/>` in build 4 `Builds/iOS/Info.plist` on 2026-10-16; recheck on the TestFlight build.)
+- [ ] Privacy manifest in the Xcode project reviewed. (`Builds/iOS/UnityFramework/PrivacyInfo.xcprivacy` present in build 4; content review is M5.)
 
 ## Sign-offs
 
 | Milestone | Signed by producer on | Evidence |
 |---|---|---|
-| M0 | — | — |
+| M0 | 2026-10-16 | `Builds/evidence/M0/M0-EVIDENCE.md` (criteria table, smoke items 1/8/9 pass, 10 deferred to M1 by ruling); device reports `device-ipad.txt`, `device-iphone.txt`; commits 42e00ce, 648f498, b1109fa; build 4 / 0.1.0 |
 | M1 | — | — |
 | M2 | — | — |
 | M3 | — | — |

@@ -1,0 +1,7 @@
+M0 device run evidence, 2026-10-16
+
+iPad (9), iPad (A16) iPad15,7, iPadOS 26.5.2, Developer Mode enabled:
+StoryQuest   com.vendoza.storyquest   0.1.0     4             
+
+Martin's report (chat, 2026-10-16): tapping anywhere increments the counter, the cube keeps turning, no red line in the Xcode console.
+First Run attempt at 11:17 failed at install with 'Developer Mode disabled' (com.apple.dt.deviceprep -28); Developer Mode was then enabled, the iPad restarted, and the second Run installed build 4.
