@@ -80,7 +80,7 @@ T1–T3 are written before Unity is installed and cannot compile until T4. Their
 - **Files:** `docs/DEVICE-TESTING.md`, `docs/STATUS.md`.
 - **Verification:** Martin reports taps counting and the cube spinning on both devices; the lead edits DEVICE-TESTING with any step that differed; the developer confirms the privacy manifest in the Xcode project (ARCHITECTURE §10).
 - **Not part of it:** TestFlight (M5).
-- **Status:** iPad done 2026-10-16 (iPad A16, iPadOS 26.5.2: taps count, cube spins, no red console lines; first attempt failed on Developer Mode, recorded in DEVICE-TESTING §6; `Builds/evidence/M0/device-ipad.txt`). iPhone run pending.
+- **Status:** iPad done 2026-10-16 (iPad A16, iPadOS 26.5.2: taps count, cube spins, no red console lines; first attempt failed on Developer Mode, recorded in DEVICE-TESTING §6; `Builds/evidence/M0/device-ipad.txt`). iPhone: build 4 installed and running 2026-10-16 (iPhone 17 Pro, iOS 26.7.1) after Xcode's symbols copy for that iOS version failed and its half-written DeviceSupport folder was removed; recorded in DEVICE-TESTING §6; `Builds/evidence/M0/device-iphone.txt`. Martin's behavioural check on the iPhone pending.
 
 ## Acceptance evidence to assemble for the producer
 
