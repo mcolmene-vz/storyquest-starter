@@ -22,7 +22,7 @@ Do these top to bottom. Items marked *done* were verified or completed by Claude
 7. **The M0 device run itself.** *Ready since 2026-10-16, build 4 at `Builds/iOS/Unity-iPhone.xcodeproj`.* `docs/DEVICE-TESTING.md` §3, steps 1–5. First time only: pick the Vendoza LLC team under Signing & Capabilities and trust the developer on each device. Report back: tap count goes up, cube spins, and whether the Xcode console shows any red line containing "RenderPass" or "Attachment".
 
 8. **Smoke-checklist items for M0 sign-off.** *Done 2026-10-16:* cold start under 5 s, landscape held on rotation. The timed 10-minute soak was not reported; producer ruling 2026-10-16: deferred to M1, not waived (see Producer rulings). At M1 you will be asked for a timed 10 minutes on each device with the Xcode console open.
-9. **For M1 (next):** *Done 2026-10-16.* KayKit Adventurers 2.0 FREE downloaded to `/Users/mcolmene/Downloads/KayKit_Adventurers_2.0_FREE`; the M1 import task copies what it needs into `Assets/ThirdParty/KayKit/`.
+9. **For M1 (next):** *Done 2026-10-16.* KayKit Adventurers 2.0 FREE at `/Users/mcolmene/Downloads/KayKit_Adventurers_2.0_FREE` and KayKit Character Animations 1.1 (free, CC0, same Rig_Medium) at `/Users/mcolmene/Downloads/KayKit_Character_Animations_1.1`; the M1 import task copies what it needs into `Assets/ThirdParty/KayKit/`.
 
 Not needed yet, flagged early so nothing blocks later:
 - **Final app name and bundle ID** (decision, needed before M5). Builds use the working title "StoryQuest" and bundle ID `com.vendoza.storyquest`. Both can change freely until the App Store Connect record is created in M5; after that the bundle ID is permanent.
