@@ -42,6 +42,9 @@ Claude Code runs this to see the game at iPad 4:3 and iPhone 19.5:9 before anyth
 ```bash
 # simulator Xcode project → Builds/iOS-sim/
 SQ_SIMULATOR=1 SQ_APPLE_TEAM_ID=W727YBJNK6 "$UNITY" -batchmode -nographics -projectPath . -executeMethod Game.Editor.BuildPipeline.BuildIOS -logFile - -quit
+# Build the simulator project before a device build, or delete Builds/iOS-sim first: a simulator Append made right
+# after a device build inherits Burst file references the simulator build does not produce, and Xcode then fails
+# with missing lib_burst_generated files.
 
 # compile it for the simulator, unsigned (a few minutes the first time)
 xcodebuild -project Builds/iOS-sim/Unity-iPhone.xcodeproj -scheme Unity-iPhone -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/sq-dd-sim CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
@@ -73,6 +76,8 @@ What to look for: the label `Taps: 0  <width>×<height>  safe (x, y, width, heig
 
 After the first time, Xcode remembers the signing. Rebuilding from Unity with "Append" keeps the Xcode project settings; "Replace" loses them, so always append.
 
+While the app runs from Xcode, the Debug navigator (⌘7) shows the FPS and memory gauges the milestone soaks read, and red lines in the console under it are what we report.
+
 ## 4. TestFlight (so the family can install without a cable)
 
 1. In Xcode, set the run destination to **Any iOS Device (arm64)**, then **Product → Archive**.
@@ -97,3 +102,4 @@ Claude Code on your Mac can edit all code, run the EditMode tests, run the Unity
 - *Run fails before install with "dyld_shared_cache_extract_dylibs failed"* (seen on the iPhone on 2026-10-16): Xcode's one-time copy of that iOS version's symbols from the phone died halfway and left a locked folder behind, so every Run trips over it. Quit Xcode, delete `~/Library/Developer/Xcode/iOS DeviceSupport/<model> <iOS version>` for that phone, unplug and replug it, reopen Xcode, wait in Window → Devices and Simulators until "Preparing" finishes (5–15 minutes), then Run again. Disk space was not the cause here, but the copy needs about 10 GB free.
 - *Run fails right after the build with "Developer Mode disabled"*: step 1.6 was skipped on that device. Turn Developer Mode on (Settings → Privacy & Security), let the device restart, then press Run again; the build does not need to be redone. (Happened on the iPad on 2026-10-16.)
 - *Unity says "The build cannot be appended"*: there was no previous build in that folder. Newer builds of the script handle this by themselves; if you still see it, delete `Builds/iOS` (or `Builds/iOS-sim`) and build again.
+- *Xcode: "Build input file cannot be found: lib_burst_generated…" on a simulator build*: the simulator project was appended on top of a device build (§2b). Delete `Builds/iOS-sim` and build again.
