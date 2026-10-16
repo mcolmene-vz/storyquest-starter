@@ -17,7 +17,7 @@ D2 does not depend on D1 technically, but the developer works one task at a time
 ## Lead's readings (assumptions written down)
 
 - **Impact fractions without a mouse.** §14.2 says the developer "scrubs each clip once in the editor". No one in this loop opens the editor GUI, so the developer may write a small editor utility (`Game.Editor.Import.ImpactFinder`, run by `-executeMethod`) that samples each Attack/Skill clip on the imported rig and prints the normalized time where the striking hand's speed peaks, then records those numbers in `clips.json`. The number stays the artifact; the utility is a tool, not a feature, and is allowed to stay in `Editor/`. Values are confirmed by eye on the device run and adjusted in data, never code.
-- **Verifying taps.** The lead cannot tap a simulator from the CLI with Apple's tools alone. L1 tries Meta's `idb` (free, Homebrew + pip, no permissions) to script taps; if it fails, the fallback is `osascript` clicks on the Simulator window, which needs Martin to grant Accessibility to the terminal once. Until one works, interactive verification of D5/D6 is screenshots of the first hero turn plus Martin's device run; Core logic is covered by the eight tests either way.
+- **Verifying taps.** Solved on day one by L1 (see its status): an XCUITest driver scripts taps and screenshots on the simulator from the terminal, so D5 and D6 are verified by scripted battles, not only by screenshots and Martin's device run. This Xcode (27) ships no standalone Simulator GUI app, so AppleScript clicking was never an option.
 - **Version string.** `bundleVersion` stays `0.1.0` through M1 and becomes `0.2.0` in the sign-off commit (PLAN-M0 reading, §14.9).
 - **Producer rulings 2026-10-16 (both accepted):** no misses in V1 and the miss SFX struck from V1-SCOPE §7; no projectile mesh required for Archer or Mage in V1 (BACKLOG row; one revisit at M4 sign-off).
 - **Weakness placeholder.** The grunt's weakness is `blunt` in M1 so a plain Fighter attack shows BigStagger on device (§14.2). The story writer's real weakness replaces it in M4 as data.
@@ -93,7 +93,7 @@ D2 does not depend on D1 technically, but the developer works one task at a time
 
 - **Goal:** tap the running app on the iOS Simulator from the terminal so D5/D6 can be verified without a human. Try `idb` first; fall back to `osascript` clicks with Martin's one-time Accessibility grant.
 - **Verification:** a tap on the Attack button registers in the player log / a screenshot.
-- **Status:** not started; begins after D4 produces a running build.
+- **Status:** done 2026-10-16. Meta's idb installed cleanly but its injected touches never reached Unity (tested on the iOS 17.2 simulator in both coordinate conventions, with and without a GUI) and was removed. Working route: an XCUITest driver bundle (xcodegen spec + one Swift file) that activates the app by bundle id and runs a `tap/taps/wait/shot/relaunch` script from an environment variable; proven by driving the M0 tap counter to 3 from the terminal (`Builds/evidence/M0/l1-driver-taps3.png`). Lives in `Builds/tools/sqdriver/` until the architect records a home under `Tools/` (asked 2026-10-16). Side finding: Unity's simulator build was x86_64-only (`iOSSimulatorArchitecture: 0`) and cannot install on iOS 26/27 simulators; the arm64 fix goes into `BuildIOS` in D3.
 
 ## Needs Martin for M1 (also in STATUS.md)
 
