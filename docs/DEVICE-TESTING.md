@@ -94,4 +94,5 @@ Claude Code on your Mac can edit all code, run the EditMode tests, run the Unity
 - *UI under the notch on iPhone*: a panel is missing `SafeAreaFitter`.
 - *Build number rejected by TestFlight*: the previous upload used the same number; increment and re-archive.
 - *Xcode "Untrusted Developer"*: step 3.4 above.
+- *Run fails right after the build with "Developer Mode disabled"*: step 1.6 was skipped on that device. Turn Developer Mode on (Settings → Privacy & Security), let the device restart, then press Run again; the build does not need to be redone. (Happened on the iPad on 2026-10-16.)
 - *Unity says "The build cannot be appended"*: there was no previous build in that folder. Newer builds of the script handle this by themselves; if you still see it, delete `Builds/iOS` (or `Builds/iOS-sim`) and build again.

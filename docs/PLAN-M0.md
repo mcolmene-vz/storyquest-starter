@@ -80,7 +80,7 @@ T1–T3 are written before Unity is installed and cannot compile until T4. Their
 - **Files:** `docs/DEVICE-TESTING.md`, `docs/STATUS.md`.
 - **Verification:** Martin reports taps counting and the cube spinning on both devices; the lead edits DEVICE-TESTING with any step that differed; the developer confirms the privacy manifest in the Xcode project (ARCHITECTURE §10).
 - **Not part of it:** TestFlight (M5).
-- **Status:** ready for Martin 2026-10-16 (build 4 at `Builds/iOS`). Waiting for his device report: taps count, cube spins, Xcode console lines containing RenderPass/Attachment.
+- **Status:** iPad done 2026-10-16 (iPad A16, iPadOS 26.5.2: taps count, cube spins, no red console lines; first attempt failed on Developer Mode, recorded in DEVICE-TESTING §6; `Builds/evidence/M0/device-ipad.txt`). iPhone run pending.
 
 ## Acceptance evidence to assemble for the producer
 
