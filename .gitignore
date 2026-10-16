@@ -47,3 +47,7 @@ Thumbs.db
 # Secrets (AWS credentials for Polly live outside the repo)
 .env
 .env.*
+
+# Simulator driver (Tools/sim-driver): generated project and derived data
+/Tools/sim-driver/SQDriver.xcodeproj/
+/Tools/sim-driver/*.xcresult

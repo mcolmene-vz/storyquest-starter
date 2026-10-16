@@ -1,0 +1,32 @@
+name: SQDriver
+options:
+  bundleIdPrefix: com.vendoza.tools
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    CODE_SIGNING_ALLOWED: "NO"
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGN_IDENTITY: ""
+    SWIFT_VERSION: "5.0"
+targets:
+  SQDriverUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: SQDriverUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vendoza.tools.sqdriver
+        GENERATE_INFOPLIST_FILE: "YES"
+        TEST_TARGET_NAME: ""
+schemes:
+  SQDriver:
+    build:
+      targets:
+        SQDriverUITests: [test]
+    test:
+      targets:
+        - SQDriverUITests
+      gatherCoverageData: false
