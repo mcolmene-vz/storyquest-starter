@@ -53,7 +53,7 @@ The test command has no `-quit` on purpose: with it the editor exits before the 
 ## Repo conventions
 
 - Namespaces: `Game.Core`, `Game.Runtime`, `Game.Editor`, `Game.Tests`.
-- Data tables in `Assets/_Game/Data/*.json`; story in `Assets/_Game/Story/land1/`; third-party imports under `Assets/ThirdParty/` and never edited.
+- Data tables in `Assets/_Game/Resources/Data/*.json`; story in `Assets/_Game/Resources/Story/land1/`; third-party imports under `Assets/ThirdParty/` and never edited. (Runtime-loaded content lives under `Resources/`, ARCHITECTURE §3 amendment 2026-10-15.)
 - Commit `.meta` files with their assets. Never commit `Library/`, `Temp/`, `Logs/`, `Builds/`, `UserSettings/`.
 - Commit messages: what changed and why, one short paragraph.
 - Milestone plans in `docs/PLAN-M{n}.md`; keep them current.
