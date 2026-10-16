@@ -19,7 +19,6 @@ namespace Game.Editor
         public const string BootScenePath = "Assets/_Game/Scenes/Boot.unity";
 
         const string TmpSettingsPath = "Assets/TextMesh Pro/Resources/TMP Settings.asset";
-        const string PlaceholderMaterialPath = "Assets/_Game/Resources/Materials/Placeholder.mat";
         const string UrpFolder = "Assets/_Game/Settings/URP";
         const string RendererPath = UrpFolder + "/StoryQuest-Renderer.asset";
         const string PipelinePath = UrpFolder + "/StoryQuest-URP.asset";
@@ -29,7 +28,6 @@ namespace Game.Editor
         public static void Run()
         {
             ImportTmpEssentials();
-            CreatePlaceholderMaterial();
             CreateRenderPipeline();
             SetQualityAntiAliasing();
             ToonShaderCheck();
@@ -41,7 +39,7 @@ namespace Game.Editor
             AssetDatabase.SaveAssets();
 
             if (Application.isBatchMode)
-                Debug.Log("[ProjectSetup] done: TMP essentials, Placeholder.mat, URP assets, quality AA, toon shader, combatants, Boot.unity, Input System only, player settings, iOS target");
+                Debug.Log("[ProjectSetup] done: TMP essentials, URP assets, quality AA, toon shader, combatants, Boot.unity, Input System only, player settings, iOS target");
         }
 
         static void ImportTmpEssentials()
@@ -68,26 +66,6 @@ namespace Game.Editor
             if (!File.Exists(TmpSettingsPath))
                 throw new InvalidOperationException("[ProjectSetup] TMP essentials import did not produce " + TmpSettingsPath);
             Log("TMP essentials", true);
-        }
-
-        static void CreatePlaceholderMaterial()
-        {
-            if (File.Exists(PlaceholderMaterialPath))
-            {
-                Log("Placeholder.mat", false);
-                return;
-            }
-
-            // A committed material is what carries the URP Lit shader into the build (§13.4).
-            var shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null)
-                throw new InvalidOperationException("[ProjectSetup] shader 'Universal Render Pipeline/Lit' not found; is URP installed?");
-
-            EnsureFolder(Path.GetDirectoryName(PlaceholderMaterialPath)!);
-            var material = new Material(shader);
-            material.SetColor("_BaseColor", new Color(0.95f, 0.55f, 0.15f, 1f));
-            AssetDatabase.CreateAsset(material, PlaceholderMaterialPath);
-            Log("Placeholder.mat", true);
         }
 
         static void CreateRenderPipeline()

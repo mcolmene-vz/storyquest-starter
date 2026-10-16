@@ -55,7 +55,7 @@ D2 does not depend on D1 technically, but the developer works one task at a time
 - **Files:** `Runtime/Flow/*.cs`, `Runtime/Services/*.cs`, `Runtime/Battle/{BattleStage,CombatantActor,BattleCameras,DebugParty}.cs`, `Runtime/Boot/GameBootstrap.cs`; deletions of `Runtime/Boot/Spinner.cs`, `TapCounter.cs`.
 - **Verification:** simulator build; screenshots on the iPad (4:3) and iPhone 15 Pro (19.5:9) simulators show all five characters inside the frame, toon-shaded (not pink), ground and sky; player log has no errors or exceptions; `GameBootstrap` still has no serialized fields; compile gate exit 0. Lead looks at both screenshots.
 - **Not part of it:** HUD, command panel, hit recipe, audio.
-- **Status:** blocked on D3.
+- **Status:** done 2026-10-16, verified by the lead (own gate 8/8; no serialized fields; no physics; both simulator screenshots in `Builds/evidence/M1/d4-*.png`: five toon-shaded characters, weapons in hand, feet on the ground, clean player logs). Framing drift found and sent to the architect the same day: group framing on the roots centres the feet (heads clipped on 19.5:9, bottom third empty) and the end-on view stacks the four heroes; the architect's new numbers are applied as D5's first step. Build-tool note: the simulator build leaves `iOSSimulatorArchitecture: 1` and flips `m_Automatic` back to 1 in ProjectSettings; D5 reorders the two graphics-API calls so the file stops churning.
 
 ### D5 — Battle UI, difficulty and result screens
 

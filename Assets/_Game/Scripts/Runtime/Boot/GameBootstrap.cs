@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.EnhancedTouch;
@@ -11,6 +10,8 @@ namespace Game.Runtime
     /// to rewrite the scene (ARCHITECTURE §13.4); everything comes from code and Resources.
     public sealed class GameBootstrap : MonoBehaviour
     {
+        FlowController? flow;
+
         void Awake()
         {
             DontDestroyOnLoad(gameObject);
@@ -24,8 +25,13 @@ namespace Game.Runtime
 #endif
             CreateCamera();
             CreateLight();
-            CreatePlaceholder();
-            CreateUI();
+            var safeArea = CreateUI();
+
+            // §14.9: services once, the M1 battle, then the flow takes over.
+            Services.Create();
+            Services.Battle.Start(DebugParty.Create());
+            flow = new FlowController(this, safeArea);
+            flow.Go(FlowState.Battle);
         }
 
         void CreateCamera()
@@ -41,6 +47,7 @@ namespace Game.Runtime
             camera.backgroundColor = new Color(0.53f, 0.78f, 0.92f, 1f);
             // Without a listener Unity warns every frame; AudioService (M1) plays through this one.
             go.AddComponent<AudioListener>();
+            // BattleCameras adds the CinemachineBrain when the battle view shows.
         }
 
         void CreateLight()
@@ -55,29 +62,7 @@ namespace Game.Runtime
             light.shadows = LightShadows.Hard;
         }
 
-        void CreatePlaceholder()
-        {
-            var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            cube.name = "Placeholder";
-            cube.transform.SetParent(transform, false);
-            cube.transform.position = Vector3.zero;
-
-            // No physics on characters; the habit starts with the placeholder.
-            var collider = cube.GetComponent<Collider>();
-            if (collider != null)
-                Destroy(collider);
-
-            // A committed material is what carries the shader into the build; looking the shader up by name at runtime renders pink on device.
-            var material = Resources.Load<Material>("Materials/Placeholder");
-            if (material == null)
-                Debug.LogError("[GameBootstrap] Resources/Materials/Placeholder.mat is missing; run Game.Editor.ProjectSetup.Run");
-            else
-                cube.GetComponent<Renderer>().sharedMaterial = material;
-
-            cube.AddComponent<Spinner>().DegreesPerSecond = 90f;
-        }
-
-        void CreateUI()
+        RectTransform CreateUI()
         {
             var canvasGo = new GameObject("UI");
             canvasGo.transform.SetParent(transform, false);
@@ -101,22 +86,7 @@ namespace Game.Runtime
             safeArea.offsetMin = Vector2.zero;
             safeArea.offsetMax = Vector2.zero;
             safeArea.gameObject.AddComponent<SafeAreaFitter>();
-
-            var labelRect = new GameObject("TapLabel", typeof(RectTransform)).GetComponent<RectTransform>();
-            labelRect.SetParent(safeArea, false);
-            labelRect.anchorMin = new Vector2(0f, 1f);
-            labelRect.anchorMax = new Vector2(0f, 1f);
-            labelRect.pivot = new Vector2(0f, 1f);
-            labelRect.anchoredPosition = new Vector2(24f, -24f);
-            labelRect.sizeDelta = new Vector2(1600f, 90f);
-
-            var label = labelRect.gameObject.AddComponent<TextMeshProUGUI>();
-            label.fontSize = 64f;
-            label.color = Color.white;
-            label.alignment = TextAlignmentOptions.TopLeft;
-            label.raycastTarget = false;
-
-            labelRect.gameObject.AddComponent<TapCounter>().Bind(label);
+            return safeArea;
         }
     }
 }
