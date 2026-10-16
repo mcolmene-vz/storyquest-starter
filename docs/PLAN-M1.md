@@ -31,7 +31,7 @@ D2 does not depend on D1 technically, but the developer works one task at a time
 - **Files:** `Assets/ThirdParty/KayKit/{Characters,Weapons,Animations,Textures}/…` + `License-Adventurers.txt`, `License-Animations.txt` (copied, never edited) and their `.meta`; `Assets/_Game/Scripts/Editor/Import/KayKitPostprocessor.cs`; `Assets/_Game/Scripts/Editor/Import/KayKitImportCheck.cs` (`-executeMethod`, lists every clip under `Animations/`, fails naming any §14.1 clip that is missing, prints each character's renderer-bounds height); `Assets/_Game/Resources/Data/clips.json` (loop flags; provisional `impact` values from §14.2, refined in D6); optionally `Editor/Import/ImpactFinder.cs`.
 - **Verification:** headless open then `KayKitImportCheck` exit 0 with all clips found and heights 1.2–2.4 m; `.meta` of a character shows `animationType: 2` (Generic), `materialImportMode: 0`; a texture `.meta` shows max size 512 and ASTC for iOS; compile gate exit 0; `git status` shows only the files above. Lead reads the postprocessor against §14.1.
 - **Not part of it:** materials, prefabs, controllers (D3); any `.cs` under `Runtime/` or `Core/`; glTF/OBJ/Samples/Rig_Large files.
-- **Status:** not started.
+- **Status:** done 2026-10-16, verified by the lead (own run of `KayKitImportCheck`: 5 rig files, 78 clips, all 22 table clips found with loop flags and one `OnImpact` each; heights Barbarian 1.80, Knight 1.90, Mage 1.98, Ranger 1.72, Mannequin 1.63 m at globalScale 0.70; zero compile errors). `ImpactFinder` supplied the provisional impact fractions (melee from peak hand or foot speed; ranged at release plus a 0.15 beat), to be confirmed by eye in D6.
 
 ### D2 — Core battle model, data tables, Progression, tests
 
