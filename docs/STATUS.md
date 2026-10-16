@@ -6,7 +6,7 @@ Owner: **Producer** persona keeps this current; the lead maintains "Needs Martin
 
 **M0 — Device loop: signed off by the producer 2026-10-16** (see Sign-offs). Started 2026-10-15, plan `docs/PLAN-M0.md`, build 4 (0.1.0) running on the iPad (A16) and the iPhone 17 Pro.
 
-**M1 — Battle slice: in progress since 2026-10-16.** Plan `docs/PLAN-M1.md`. Done and verified by the lead: D1 KayKit import, D2 Core rules + tables + 8 tests, D3 toon shader + generator, D4 runtime skeleton, D5 battle UI and result screens, D6 presenter and hit recipe, L1 simulator driver. In progress: D7 audio (plus the architect's fix for the action-camera pose). Next: D8 device build and Martin's 10-minute soak on both devices.
+**M1 — Battle slice: code complete 2026-10-16, waiting on Martin's device soak and the architect's review, then the producer.** Plan `docs/PLAN-M1.md`; evidence draft `docs/evidence/M1/M1-EVIDENCE.md`. All eight developer tasks and the lead's simulator driver are done and verified; build 15 is the soak build.
 
 ## Needs Martin (in order)
 
@@ -21,8 +21,9 @@ Do these top to bottom. Items marked *done* were verified or completed by Claude
 6. **Devices, before the M0 device run.** On your iPhone and on the iPad: Settings → Privacy & Security → Developer Mode → on, restart when asked. Plug the iPad into the Mac once and tap Trust; only two iPhones are paired with this Mac today, no iPad.
 7. **The M0 device run itself.** *Ready since 2026-10-16, build 4 at `Builds/iOS/Unity-iPhone.xcodeproj`.* `docs/DEVICE-TESTING.md` §3, steps 1–5. First time only: pick the Vendoza LLC team under Signing & Capabilities and trust the developer on each device. Report back: tap count goes up, cube spins, and whether the Xcode console shows any red line containing "RenderPass" or "Attachment".
 
-8. **Smoke-checklist items for M0 sign-off.** *Done 2026-10-16:* cold start under 5 s, landscape held on rotation. The timed 10-minute soak was not reported; producer ruling 2026-10-16: deferred to M1, not waived (see Producer rulings). At M1 you will be asked for a timed 10 minutes on each device with the Xcode console open.
-9. **For M1 (next):** *Done 2026-10-16.* KayKit Adventurers 2.0 FREE at `/Users/mcolmene/Downloads/KayKit_Adventurers_2.0_FREE` and KayKit Character Animations 1.1 (free, CC0, same Rig_Medium) at `/Users/mcolmene/Downloads/KayKit_Character_Animations_1.1`; the M1 import task copies what it needs into `Assets/ThirdParty/KayKit/`.
+8. **M1 device soak (hard requirement for M1 sign-off).** *Ready since 2026-10-16: build 15 (0.1.0) at `Builds/iOS/Unity-iPhone.xcodeproj`.* Follow `docs/evidence/M1/SOAK-CHECKLIST.md` on the iPhone and then the iPad: ten timed minutes each with the Xcode console attached, every command, two wins, one defeat per difficulty, Revive once, silent switch on during the iPhone session. Report start/end times, red console lines, FPS, memory, warmth.
+9. **Smoke-checklist items for M0 sign-off.** *Done 2026-10-16:* cold start under 5 s, landscape held on rotation. The timed 10-minute soak was not reported; producer ruling 2026-10-16: deferred to M1, not waived (see Producer rulings). At M1 you will be asked for a timed 10 minutes on each device with the Xcode console open.
+10. **For M1 (next):** *Done 2026-10-16.* KayKit Adventurers 2.0 FREE at `/Users/mcolmene/Downloads/KayKit_Adventurers_2.0_FREE` and KayKit Character Animations 1.1 (free, CC0, same Rig_Medium) at `/Users/mcolmene/Downloads/KayKit_Character_Animations_1.1`; the M1 import task copies what it needs into `Assets/ThirdParty/KayKit/`.
 
 Not needed yet, flagged early so nothing blocks later:
 - **Final app name and bundle ID** (decision, needed before M5). Builds use the working title "StoryQuest" and bundle ID `com.vendoza.storyquest`. Both can change freely until the App Store Connect record is created in M5; after that the bundle ID is permanent.
