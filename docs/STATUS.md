@@ -10,7 +10,7 @@ Owner: **Producer** persona keeps this current; the lead maintains "Needs Martin
 
 Do these top to bottom. Items marked *done* were verified or completed by Claude Code on 2026-10-15 and need nothing from you.
 
-1. **Unity Hub + Unity 6000.3.26f1 with iOS Build Support.** Unity Hub 3.22.3 is already installed; no editor is. Open Unity Hub, sign in with your Unity ID (Unity Personal is free and activates on sign-in), then click this link or paste it in a browser: `unityhub://6000.3.26f1/de8167e7440c`. In the module list tick **iOS Build Support**, nothing else. About 8 GB, 20–40 minutes on a normal connection. The editor must end up at `/Applications/Unity/Hub/Editor/6000.3.26f1/`. (Claude Code tried a headless Hub install at the same time; if the Hub already shows 6000.3.26f1 installed, just sign in and confirm the iOS module is ticked under the gear → Add modules.)
+1. **Unity Hub + Unity 6000.3.26f1 with iOS Build Support.** Unity Hub 3.22.3 is already installed; no editor is. Open Unity Hub, sign in with your Unity ID (Unity Personal is free and activates on sign-in), then click this link or paste it in a browser: `unityhub://6000.3.26f1/de8167e7440c`. In the module list tick **iOS Build Support**, nothing else. About 8 GB, 20–40 minutes on a normal connection. The editor must end up at `/Applications/Unity/Hub/Editor/6000.3.26f1/`. (A headless install attempt from the terminal hung and was stopped, so this one is really yours.)
 2. **Xcode.** *Done.* Xcode 27.0 is installed, the license is accepted and the iOS platform is present. Nothing to do.
 3. **VS Code with the Unity extension.** *Done.* Claude Code installed `VisualStudioToolsForUnity.vstuc` (it pulled in C# Dev Kit and the .NET runtime). Two clicks remain for you, only after Unity is installed and the project opens once: in Unity, Preferences → External Tools → External Script Editor → Visual Studio Code. If VS Code asks to install the .NET SDK the first time it opens a `.cs` file, say yes.
 4. **Apple account in Xcode.** *Probably done; confirm.* Your keychain already holds "Apple Development: martin@vendariz.com" and "Apple Distribution: Vendoza LLC (W727YBJNK6)". Open Xcode → Settings → Accounts and confirm the Vendoza LLC team is listed. If it is not, sign in with that Apple ID.
@@ -32,7 +32,7 @@ Not needed yet, flagged early so nothing blocks later:
 
 - 2026-10-15: `git init` on `main` in place; the starter kit is the first commit.
 - 2026-10-15: installed the VS Code Unity extension from the CLI.
-- 2026-10-15: started a headless Unity Hub download of 6000.3.26f1 + iOS module. If it did not complete, item 1 above covers it.
+- 2026-10-15: tried a headless Unity Hub install of 6000.3.26f1 + iOS module. The Hub CLI started and then idled with no download for 18 minutes, so it was stopped. Item 1 above is the way to install.
 
 ## Budget log
 

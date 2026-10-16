@@ -29,7 +29,7 @@ T1–T3 are written before Unity is installed and cannot compile until T4. Their
 - **Files:** `Packages/manifest.json`; `ProjectSettings/ProjectVersion.txt`; `Assets/_Game/Scripts/Core/Game.Core.asmdef` + `csc.rsp`; `Assets/_Game/Scripts/Runtime/Game.Runtime.asmdef` + `csc.rsp`; `Assets/_Game/Scripts/Editor/Game.Editor.asmdef` + `csc.rsp`; `Assets/_Game/Tests/EditMode/Game.Tests.asmdef` + `csc.rsp`; `Assets/_Game/link.xml`; `docs/DEVICE-TESTING.md` §2 editor path only.
 - **Verification:** every `.json`/`.asmdef` parses (`node -e 'JSON.parse(...)'`); manifest equals §13.2 byte-for-byte in content; asmdef fields match the §13.3 table; `link.xml` preserves `Game.Core` and `Newtonsoft.Json` with `preserve="all"`; `git diff` touches only the files above. Lead reviews.
 - **Not part of it:** any `.cs` file, any `.meta` file (Unity writes them in T4), `ProjectSettings/*.asset`, `packages-lock.json`, `.gitkeep` files.
-- **Status:** not started.
+- **Status:** done 2026-10-15, verified by the lead (JSON/XML parse, manifest equals §13.2, asmdefs equal §13.3 table, Runtime references `Ink` and `Ink-Libraries` as found in the package's upm branch).
 
 ### T2 — Editor scripts: ProjectSetup and BuildPipeline (blind)
 

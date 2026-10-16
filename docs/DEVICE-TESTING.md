@@ -16,8 +16,8 @@ Owner: **Developer** persona keeps this accurate. It is written for Martin, who 
 Claude Code or you run the editor script. From the repo root:
 
 ```bash
-# set once per shell; adjust the version folder to the pinned one
-export UNITY="/Applications/Unity/Hub/Editor/6000.0.xxf1/Unity.app/Contents/MacOS/Unity"
+# set once per shell; this is the editor version pinned in docs/ARCHITECTURE.md §11
+export UNITY="/Applications/Unity/Hub/Editor/6000.3.26f1/Unity.app/Contents/MacOS/Unity"
 
 # EditMode tests (fast, headless)
 "$UNITY" -batchmode -projectPath . -runTests -testPlatform EditMode -testResults Builds/test-results.xml -logFile - -quit
