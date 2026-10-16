@@ -54,8 +54,9 @@ namespace Game.Editor
             PlayerSettings.SetApiCompatibilityLevel(NamedBuildTarget.Standalone, ApiCompatibilityLevel.NET_Standard);
             PlayerSettings.SetManagedStrippingLevel(ios, ManagedStrippingLevel.Low);
             PlayerSettings.colorSpace = ColorSpace.Linear;
-            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.iOS, false);
+            // Explicit list first: SetUseDefaultGraphicsAPIs(false) after it keeps m_Automatic at 0 in ProjectSettings.
             PlayerSettings.SetGraphicsAPIs(BuildTarget.iOS, new[] { GraphicsDeviceType.Metal });
+            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.iOS, false);
 
             PlayerSettings.insecureHttpOption = InsecureHttpOption.NotAllowed;
             // Legacy hardware statistics, off so nothing phones home (ARCHITECTURE §13.6, 2026-10-16).

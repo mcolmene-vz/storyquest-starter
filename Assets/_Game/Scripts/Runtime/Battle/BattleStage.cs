@@ -9,7 +9,8 @@ namespace Game.Runtime
         public const float HeroX = -2.4f;
         public const float EnemyX = 2.4f;
         const float SlotSpacing = 1.2f;
-        const float GroundScale = 3f;
+        // 100 m: the group camera sits ~10 m out at a 12 degree pitch, and a 30 m plane put the grass edge across the heads.
+        const float GroundScale = 10f;
         const string GroundMaterial = "Materials/Toon/ground";
         static readonly Color AmbientFill = new Color(0.55f, 0.60f, 0.70f, 1f);
 

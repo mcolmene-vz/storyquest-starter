@@ -28,9 +28,9 @@ namespace Game.Runtime
             view.Show(uiRoot);
         }
 
-        static IView CreateView(FlowState state) => state switch
+        IView CreateView(FlowState state) => state switch
         {
-            FlowState.Battle => new BattleView(),
+            FlowState.Battle => new BattleView(this),
             _ => throw new NotSupportedException("FlowState." + state + " has no view yet"),
         };
     }
