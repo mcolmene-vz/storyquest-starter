@@ -10,7 +10,7 @@ Owner: **Producer** persona keeps this current; the lead maintains "Needs Martin
 
 Do these top to bottom. Items marked *done* were verified or completed by Claude Code on 2026-10-15 and need nothing from you.
 
-1. **Unity Hub + Unity 6000.3.26f1 with iOS Build Support.** Unity Hub 3.22.3 is already installed; no editor is. Open Unity Hub, sign in with your Unity ID (Unity Personal is free and activates on sign-in), then click this link or paste it in a browser: `unityhub://6000.3.26f1/de8167e7440c`. In the module list tick **iOS Build Support**, nothing else. About 8 GB, 20–40 minutes on a normal connection. The editor must end up at `/Applications/Unity/Hub/Editor/6000.3.26f1/`. (A headless install attempt from the terminal hung and was stopped, so this one is really yours.)
+1. **Unity Hub + Unity 6000.3.26f1 with iOS Build Support.** *Done 2026-10-16* (editor, iOS module and license present). You also installed 6000.6.6f1; the project does not use it, so you can remove it in the Hub to free disk whenever you like. Original ask kept for the record: Unity Hub 3.22.3 is already installed; no editor is. Open Unity Hub, sign in with your Unity ID (Unity Personal is free and activates on sign-in), then click this link or paste it in a browser: `unityhub://6000.3.26f1/de8167e7440c`. In the module list tick **iOS Build Support**, nothing else. About 8 GB, 20–40 minutes on a normal connection. The editor must end up at `/Applications/Unity/Hub/Editor/6000.3.26f1/`. (A headless install attempt from the terminal hung and was stopped, so this one is really yours.)
 2. **Xcode.** *Done.* Xcode 27.0 is installed, the license is accepted and the iOS platform is present. Nothing to do.
 3. **VS Code with the Unity extension.** *Done.* Claude Code installed `VisualStudioToolsForUnity.vstuc` (it pulled in C# Dev Kit and the .NET runtime). Two clicks remain for you, only after Unity is installed and the project opens once: in Unity, Preferences → External Tools → External Script Editor → Visual Studio Code. If VS Code asks to install the .NET SDK the first time it opens a `.cs` file, say yes.
 4. **Apple account in Xcode.** *Probably done; confirm.* Your keychain already holds "Apple Development: martin@vendariz.com" and "Apple Distribution: Vendoza LLC (W727YBJNK6)". Open Xcode → Settings → Accounts and confirm the Vendoza LLC team is listed. If it is not, sign in with that Apple ID.
@@ -26,7 +26,7 @@ Not needed yet, flagged early so nothing blocks later:
 
 ## Blockers
 
-- No Unity editor on the Mac yet (item 1). Code can be written, but nothing compiles or builds until it is installed. This is the only blocker for M0.
+- None since 2026-10-16. T4 (first open, project generation, compile gate) is running.
 
 ## Decisions the lead took without asking (reversible, free)
 
