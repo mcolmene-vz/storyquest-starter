@@ -6,7 +6,7 @@ Owner: **Producer** persona keeps this current; the lead maintains "Needs Martin
 
 **M0 — Device loop: signed off by the producer 2026-10-16** (see Sign-offs). Started 2026-10-15, plan `docs/PLAN-M0.md`, build 4 (0.1.0) running on the iPad (A16) and the iPhone 17 Pro.
 
-**M1 — Battle slice is next.** Not started. Architect's M1 design is written (ARCHITECTURE §14, 2026-10-16; §5 and §6 amended). Its two scope questions (no misses; no Archer/Mage projectile) were ruled by the producer 2026-10-16, see Producer rulings; V1-SCOPE §5 and §7 amended to match. Remaining order of operations per CLAUDE.md: lead writes `docs/PLAN-M1.md` → developer delivers → lead verifies → producer signs off. Both KayKit packs are on disk (Needs Martin item 9).
+**M1 — Battle slice: in progress since 2026-10-16.** Plan `docs/PLAN-M1.md`. Done and verified: D1 KayKit import, D2 Core battle rules + tables + the eight BattleResolver tests (all green in the CLI gate), L1 simulator driver (`Tools/sim-driver`). In progress: D3 toon shader and combatant generator. Then D4 runtime skeleton, D5 battle UI, D6 presenter and hit recipe, D7 audio, D8 device build and the 10-minute soak.
 
 ## Needs Martin (in order)
 
