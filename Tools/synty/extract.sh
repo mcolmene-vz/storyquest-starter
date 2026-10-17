@@ -6,14 +6,16 @@
 # Each package must be a row of Tools/synty/packs.txt (matched by file name, checked by SHA-256) and is unpacked
 # with tar into a fresh Builds/synty-extract/<stem>/. Then, across every pack in packs.txt:
 #   - Tools/synty/package-contents.txt is rewritten: every pathname, grouped by pack;
-#   - every Tools/synty/keep.txt line is copied, `asset` only, to Assets/ThirdParty/Synty/<subfolder>/<basename>.
+#   - every Tools/synty/keep.txt line is copied, `asset` only, to Assets/ThirdParty/Synty/<subfolder>/<basename>;
+#     the same pathname may be kept twice under different subfolders, but no two lines may write the same file.
 #     Synty's asset.meta is never copied: Unity writes fresh .meta files and SyntyPostprocessor sets every rule.
 #   - any file under Assets/ThirdParty/Synty/ that is not a keep.txt line fails the run.
 # Identical files are left untouched, so a second run changes nothing.
 # Nothing inside a package is executed; pathname files are read as text and used only for matching.
 #
 # keep.txt: `# pack: <store_name>` starts a group (store_name as in packs.txt); each line after it is
-# `<package pathname> -> <Characters|Weapons|Textures|Animations>`; other `#` lines and blank lines are comments.
+# `<package pathname> -> <Characters|Weapons|Textures|Animations|EditorOnly>`; other `#` lines and blank lines are
+# comments. EditorOnly/ holds readable measuring inputs that no material may reference (§15.18.2).
 set -euo pipefail
 export LC_ALL=C
 
@@ -24,7 +26,7 @@ keep="$here/keep.txt"
 contents="$here/package-contents.txt"
 scratch="$repo/Builds/synty-extract"
 dest="$repo/Assets/ThirdParty/Synty"
-subfolders="Characters Weapons Textures Animations"
+subfolders="Characters Weapons Textures Animations EditorOnly"
 tab="$(printf '\t')"
 
 die() { echo "extract.sh: $*" >&2; exit 1; }

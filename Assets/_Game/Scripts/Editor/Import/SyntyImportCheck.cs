@@ -11,9 +11,10 @@ using Object = UnityEngine.Object;
 
 namespace Game.Editor.Import
 {
-    /// -executeMethod report for the Synty import (PLAN-M2 D5). Prints ARCHITECTURE §15.1/§15.15.2 facts (a)–(g) and the
-    /// modular part names, and exits 1 if a SyntyPostprocessor rule is missing from a file, an avatar is not a valid
-    /// Humanoid, or a §15.15.5 clip is not on disk.
+    /// -executeMethod report for the Synty import (PLAN-M2 D5, D6.1). Prints ARCHITECTURE §15.1/§15.15.2 facts (a)–(g),
+    /// the modular part names and the §15.18.2 skin measurement, and exits 1 if a SyntyPostprocessor rule is missing from
+    /// a file, an avatar is not a valid Humanoid on the shared bone map, a §15.15.5 clip is not on disk, a material
+    /// references EditorOnly/, or the skin mask channel is not skin-coloured.
     /// Run without -nographics: fact (b)'s swatch-grid measurement blits the atlas, which needs a graphics device.
     /// Fact (b) and the package lists come from Builds/synty-extract (Tools/synty/extract.sh); the check prints names,
     /// sizes, counts and texture slot assignments only, never file contents.
@@ -55,6 +56,37 @@ namespace Game.Editor.Import
         {
             HumanBodyBones.Hips, HumanBodyBones.Chest, HumanBodyBones.UpperChest, HumanBodyBones.Head,
             HumanBodyBones.LeftHand, HumanBodyBones.RightHand,
+            HumanBodyBones.LeftThumbProximal, HumanBodyBones.RightIndexProximal, HumanBodyBones.RightMiddleDistal,
+        };
+
+        // §15.18.2. Synty's POLYGON_CustomCharacters.shadergraph lerps _Color_Skin in with T = Mask_03's red channel, the
+        // colour on the Lerp's A side, so skin is where red is low (read from the scratch extract on 2026-10-17). Every
+        // Synty mask marks its regions black on white. ReportSkin confirms both from the pixels.
+        const string ReferenceAtlas = "PolygonFantasyHero_Texture_01_A";
+        const string SkinMask = "PolygonFantasyHero_Texture_Mask_03";
+        const int SkinChannel = 0;
+        const float SameClothesTolerance = 3f; // §15.18.2: at most 3/255 mean absolute difference outside the skin
+        // Our reading of "clearly lighter or darker": a skin luma change of at least a sixth of the light–dark gap below.
+        const float ClearlyDifferentLuma = 16f;
+
+        // Which colour each mask channel gates in Synty's shader graph (its Lerp chain), so an outside-skin difference can be
+        // placed. Mask_06 is not in the graph.
+        static readonly (string Mask, int Channel, string Region)[] MaskRegions =
+        {
+            ("PolygonFantasyHero_Texture_Mask_01", 0, "primary"), ("PolygonFantasyHero_Texture_Mask_01", 1, "secondary"),
+            ("PolygonFantasyHero_Texture_Mask_01", 2, "body art"), ("PolygonFantasyHero_Texture_Mask_02", 0, "metal primary"),
+            ("PolygonFantasyHero_Texture_Mask_02", 1, "metal secondary"), ("PolygonFantasyHero_Texture_Mask_02", 2, "metal dark"),
+            ("PolygonFantasyHero_Texture_Mask_03", 1, "scar"), ("PolygonFantasyHero_Texture_Mask_03", 2, "stubble"),
+            ("PolygonFantasyHero_Texture_Mask_04", 0, "leather primary"), ("PolygonFantasyHero_Texture_Mask_04", 1, "leather secondary"),
+            ("PolygonFantasyHero_Texture_Mask_04", 2, "hair"), ("PolygonFantasyHero_Texture_Mask_05", 0, "eyes"),
+        };
+
+        // §15.14.3's skinTones, the classes a measured skin colour is sorted into (nearest by luma).
+        static readonly (string Tone, Color32 Colour)[] ReferenceTones =
+        {
+            ("light", new Color32(0xF6, 0xC0, 0x9C, 0xFF)),
+            ("medium", new Color32(0xC6, 0x86, 0x42, 0xFF)),
+            ("dark", new Color32(0x8D, 0x55, 0x24, 0xFF)),
         };
 
         public static void Run()
@@ -70,6 +102,7 @@ namespace Game.Editor.Import
             var packs = LoadPacks();
             ReportCharacters(failures);
             ReportColour(failures, packs);
+            ReportSkin(failures);
             ReportWeapons(failures, packs);
             ReportAnimations(failures);
 
@@ -101,6 +134,8 @@ namespace Game.Editor.Import
                 if (importer.importAnimation)
                     failures.Add($"{path}: importAnimation is on");
                 var avatar = CheckAvatar(failures, path);
+                if (path == SyntyPostprocessor.HeroModel)
+                    CheckBoneMap(failures, path, avatar);
 
                 var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 var instance = Object.Instantiate(model);
@@ -110,7 +145,7 @@ namespace Game.Editor.Import
                     var bounds = Encapsulate(renderers);
                     Log($"(a) {path}: fileScale {F(importer.fileScale)}, globalScale {F(importer.globalScale)}, {renderers.Length} renderers " +
                         $"({renderers.OfType<SkinnedMeshRenderer>().Count()} skinned), {Triangles(renderers)} triangles in all, " +
-                        $"avatar isHuman {avatar != null && avatar.isHuman} isValid {avatar != null && avatar.isValid}");
+                        $"avatar isHuman {avatar != null && avatar.isHuman} isValid {avatar != null && avatar.isValid}, {MappedBones(avatar)}");
 
                     var animator = instance.GetComponent<Animator>();
                     if (animator != null && animator.avatar == null)
@@ -302,6 +337,228 @@ namespace Game.Editor.Import
             Log($"(b)   {Path.GetFileName(path)} grid: " + string.Join("; ", lines));
         }
 
+        // ---- §15.18.2 skin tones ---------------------------------------------------------------------------------
+
+        /// Which mask channel is skin, then each alternative hero atlas against 01_A: the mean colour inside the skin
+        /// mask and the mean absolute difference outside it. Prints means and counts only.
+        static void ReportSkin(List<string> failures)
+        {
+            var paths = AssetPaths("t:Texture2D", SyntyPostprocessor.EditorOnlyFolder);
+            foreach (string path in paths)
+                CheckEditorOnlyRules(failures, path, (TextureImporter)AssetImporter.GetAtPath(path));
+            CheckNoEditorOnlyReferences(failures);
+
+            var textures = paths.ToDictionary(p => Path.GetFileNameWithoutExtension(p), p => AssetDatabase.LoadAssetAtPath<Texture2D>(p));
+            if (!textures.TryGetValue(ReferenceAtlas, out var reference) || !textures.TryGetValue(SkinMask, out var skinMask) ||
+                !reference.isReadable || !skinMask.isReadable)
+            {
+                failures.Add($"§15.18.2: {ReferenceAtlas} or {SkinMask} is missing or not readable under {SyntyPostprocessor.EditorOnlyFolder}");
+                return;
+            }
+            int w = reference.width, h = reference.height;
+            var refPx = reference.GetPixels32();
+
+            foreach (var mask in textures.Where(t => t.Key.Contains("_Mask_")).OrderBy(t => t.Key, StringComparer.Ordinal))
+            {
+                var m = Resample(mask.Value, w, h);
+                var cells = new List<string>();
+                for (int c = 0; c < 3; c++)
+                {
+                    var inside = Inside(m, c);
+                    int count = inside.Count(x => x);
+                    var mean = Mean(refPx, inside);
+                    cells.Add($"{"RGB"[c]} {100f * count / inside.Length:F1}%" + (count == 0 ? "" : $" {Hex(mean)}{(IsSkinColour(mean) ? " skin-like" : "")}"));
+                }
+                Log($"(skin) {mask.Key}: share of texels where the channel < 0.5, and the 01_A mean there: {string.Join("; ", cells)}");
+            }
+
+            var skin = Inside(Resample(skinMask, w, h), SkinChannel);
+            var skinMean = Mean(refPx, skin);
+            bool confirmed = IsSkinColour(skinMean);
+            Log($"(skin) skin = {SkinMask} channel {"RGB"[SkinChannel]} < 0.5 (Synty's shader graph), {100f * skin.Count(x => x) / skin.Length:F1}% of texels; " +
+                $"01_A mean there {Hex(skinMean)}, " + (confirmed ? "skin-coloured: confirmed" : "NOT skin-coloured"));
+            if (!confirmed)
+                failures.Add($"§15.18.2: 01_A where {SkinMask}.{"RGB"[SkinChannel]} < 0.5 averages {Hex(skinMean)}, not a skin colour");
+            foreach (var old in textures.Where(t => t.Key.Contains("_Mask_Skin_")).OrderBy(t => t.Key, StringComparer.Ordinal))
+            {
+                var o = Inside(Resample(old.Value, w, h), 0);
+                int both = 0, either = 0;
+                for (int i = 0; i < o.Length; i++)
+                {
+                    if (o[i] && skin[i]) both++;
+                    if (o[i] || skin[i]) either++;
+                }
+                Log($"(skin) {old.Key} (Old/): red < 0.5 overlaps the skin region by {(either == 0 ? 0 : 100f * both / either):F1}% (intersection over union)");
+            }
+
+            float refLuma = Luma(skinMean);
+            var tones = new Dictionary<string, List<string>>();
+            var regionDiffs = new List<string>();
+            Log("(skin) atlas | skin mean | skin luma (vs 01_A) | outside-skin mean abs diff /255 | qualifies | tone");
+            foreach (var atlas in textures.Where(t => t.Key.StartsWith("PolygonFantasyHero_Texture_0", StringComparison.Ordinal))
+                         .OrderBy(t => t.Key, StringComparer.Ordinal))
+            {
+                string shortName = atlas.Key.Substring("PolygonFantasyHero_Texture_".Length);
+                if (atlas.Value.width != w || atlas.Value.height != h || !atlas.Value.isReadable)
+                {
+                    failures.Add($"§15.18.2: {atlas.Key} is {atlas.Value.width}×{atlas.Value.height}, readable {atlas.Value.isReadable}; expected {w}×{h} readable");
+                    continue;
+                }
+                var px = atlas.Value.GetPixels32();
+                var mean = Mean(px, skin);
+                double diff = 0;
+                int outside = 0;
+                for (int i = 0; i < px.Length; i++)
+                {
+                    if (skin[i])
+                        continue;
+                    diff += (Math.Abs(px[i].r - refPx[i].r) + Math.Abs(px[i].g - refPx[i].g) + Math.Abs(px[i].b - refPx[i].b)) / 3.0;
+                    outside++;
+                }
+                diff = outside == 0 ? 0 : diff / outside;
+                float dLuma = Luma(mean) - refLuma;
+                bool isReference = atlas.Key == ReferenceAtlas;
+                bool qualifies = isReference || (diff <= SameClothesTolerance && Math.Abs(dLuma) >= ClearlyDifferentLuma);
+                string tone = ToneClass(mean);
+                if (qualifies)
+                {
+                    if (!tones.TryGetValue(tone, out var list))
+                        tones[tone] = list = new List<string>();
+                    list.Add(shortName);
+                }
+                Log($"(skin) {shortName} | {Hex(mean)} | {Luma(mean):F1} ({dLuma:+0.0;-0.0;0.0}) | {diff:F2} | " +
+                    $"{(isReference ? "reference" : qualifies ? "yes" : "no")} | {tone}");
+                if (!qualifies && Math.Abs(dLuma) >= ClearlyDifferentLuma)
+                    regionDiffs.Add($"(skin) {shortName} outside the skin, mean abs diff /255 by mask region: " + RegionDiffs(textures, px, refPx, skin, w, h));
+            }
+            foreach (string line in regionDiffs)
+                Log(line);
+            bool allThree = ReferenceTones.All(t => tones.ContainsKey(t.Tone));
+            Log("(skin) qualifying tones: " + string.Join("; ", ReferenceTones.Select(t => $"{t.Tone} [{(tones.TryGetValue(t.Tone, out var l) ? string.Join(", ", l) : "")}]")) +
+                $"; light, medium and dark all qualify: {(allThree ? "yes (§15.18.2 step 1)" : "no (§15.18.2 step 2)")}");
+        }
+
+        /// Where an atlas differs from 01_A outside the skin: each mask region over 1/255, then the texels in no region.
+        static string RegionDiffs(Dictionary<string, Texture2D> textures, Color32[] px, Color32[] refPx, bool[] skin, int w, int h)
+        {
+            var claimed = new bool[px.Length];
+            var parts = new List<string>();
+            foreach (var group in MaskRegions.GroupBy(r => r.Mask))
+            {
+                if (!textures.TryGetValue(group.Key, out var mask))
+                    continue;
+                var m = Resample(mask, w, h);
+                foreach (var (_, channel, region) in group)
+                {
+                    var inside = Inside(m, channel);
+                    for (int i = 0; i < inside.Length; i++)
+                    {
+                        inside[i] &= !skin[i];
+                        claimed[i] |= inside[i];
+                    }
+                    var (d, n) = MeanDiff(px, refPx, inside);
+                    if (d > 1)
+                        parts.Add($"{region} ({100f * n / px.Length:F1}% of texels) {d:F1}");
+                }
+            }
+            var rest = new bool[px.Length];
+            for (int i = 0; i < rest.Length; i++)
+                rest[i] = !skin[i] && !claimed[i];
+            var (rd, rn) = MeanDiff(px, refPx, rest);
+            parts.Add($"no region ({100f * rn / px.Length:F1}%) {rd:F1}");
+            return string.Join("; ", parts);
+        }
+
+        static (double Diff, int Count) MeanDiff(Color32[] px, Color32[] refPx, bool[] inside)
+        {
+            double sum = 0;
+            int n = 0;
+            for (int i = 0; i < px.Length; i++)
+            {
+                if (!inside[i])
+                    continue;
+                sum += (Math.Abs(px[i].r - refPx[i].r) + Math.Abs(px[i].g - refPx[i].g) + Math.Abs(px[i].b - refPx[i].b)) / 3.0;
+                n++;
+            }
+            return (n == 0 ? 0 : sum / n, n);
+        }
+
+        static void CheckEditorOnlyRules(List<string> failures, string path, TextureImporter importer)
+        {
+            var defaults = importer.GetDefaultPlatformTextureSettings();
+            importer.GetSourceTextureWidthAndHeight(out int sw, out int sh);
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            var wrong = new List<string>();
+            if (!importer.isReadable) wrong.Add("not readable");
+            if (importer.mipmapEnabled) wrong.Add("mipmaps");
+            if (importer.textureCompression != TextureImporterCompression.Uncompressed || defaults.format != TextureImporterFormat.RGBA32)
+                wrong.Add($"{importer.textureCompression} {defaults.format}");
+            if (tex == null || tex.width != sw || tex.height != sh) wrong.Add($"imported {(tex == null ? "none" : tex.width + "×" + tex.height)}, source {sw}×{sh}");
+            if (wrong.Count > 0)
+                failures.Add($"{path}: {string.Join(", ", wrong)} (postprocessor did not run? try SQ_REIMPORT=1)");
+        }
+
+        /// EditorOnly/ must never reach a build, so no material may point into it (§15.18.2; the D8 audit repeats this).
+        static void CheckNoEditorOnlyReferences(List<string> failures)
+        {
+            foreach (string path in AssetDatabase.FindAssets("t:Material", new[] { "Assets" }).Select(AssetDatabase.GUIDToAssetPath).Distinct())
+            {
+                var hits = AssetDatabase.GetDependencies(path, false).Where(d => d.StartsWith(SyntyPostprocessor.EditorOnlyFolder, StringComparison.Ordinal)).ToList();
+                if (hits.Count > 0)
+                    failures.Add($"{path} references {string.Join(", ", hits)}; nothing may reference {SyntyPostprocessor.EditorOnlyFolder}");
+            }
+        }
+
+        /// Nearest-texel resample, so a mask of another size lines up texel for texel with the atlas.
+        static Color32[] Resample(Texture2D tex, int w, int h)
+        {
+            var src = tex.GetPixels32();
+            if (tex.width == w && tex.height == h)
+                return src;
+            var dst = new Color32[w * h];
+            for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                dst[y * w + x] = src[(y * tex.height / h) * tex.width + x * tex.width / w];
+            return dst;
+        }
+
+        /// The texels a black-on-white mask channel marks.
+        static bool[] Inside(Color32[] mask, int channel)
+        {
+            var inside = new bool[mask.Length];
+            for (int i = 0; i < mask.Length; i++)
+                inside[i] = (channel == 0 ? mask[i].r : channel == 1 ? mask[i].g : mask[i].b) < 128;
+            return inside;
+        }
+
+        static Color32 Mean(Color32[] px, bool[] inside)
+        {
+            long r = 0, g = 0, b = 0, n = 0;
+            for (int i = 0; i < px.Length; i++)
+            {
+                if (!inside[i])
+                    continue;
+                r += px[i].r;
+                g += px[i].g;
+                b += px[i].b;
+                n++;
+            }
+            return n == 0
+                ? new Color32(0, 0, 0, 0)
+                : new Color32((byte)Math.Round((double)r / n), (byte)Math.Round((double)g / n), (byte)Math.Round((double)b / n), 255);
+        }
+
+        /// Kovac, Peer and Solina's RGB skin rule (daylight), on sRGB bytes: enough to tell skin from cloth, hair or metal.
+        static bool IsSkinColour(Color32 c) =>
+            c.r > 95 && c.g > 40 && c.b > 20 && Math.Max(c.r, Math.Max(c.g, c.b)) - Math.Min(c.r, Math.Min(c.g, c.b)) > 15 &&
+            Math.Abs(c.r - c.g) > 15 && c.r > c.g && c.r > c.b;
+
+        static float Luma(Color32 c) => 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+
+        static string ToneClass(Color32 c) => ReferenceTones.OrderBy(t => Math.Abs(Luma(t.Colour) - Luma(c))).First().Tone;
+
+        static string Hex(Color32 c) => $"#{c.r:X2}{c.g:X2}{c.b:X2}";
+
         // ---- (c), (e) --------------------------------------------------------------------------------------------
 
         static void ReportWeapons(List<string> failures, Dictionary<string, string> packs)
@@ -360,8 +617,9 @@ namespace Game.Editor.Import
                 if (!importer.importAnimation)
                     failures.Add($"{path}: importAnimation is off");
                 var avatar = CheckAvatar(failures, path);
+                CheckBoneMap(failures, path, avatar);
 
-                ReportRig(path, importer);
+                ReportRig(path, avatar);
 
                 string fileName = Path.GetFileNameWithoutExtension(path);
                 var settings = importer.clipAnimations;
@@ -379,7 +637,7 @@ namespace Game.Editor.Import
                 {
                     found[clip.name] = clip;
                     var events = AnimationUtility.GetAnimationEvents(clip);
-                    Log($"(g) {Path.GetFileName(path)}: avatar isHuman {avatar != null && avatar.isHuman} isValid {avatar != null && avatar.isValid}; " +
+                    Log($"(g) {Path.GetFileName(path)}: avatar isHuman {avatar != null && avatar.isHuman} isValid {avatar != null && avatar.isValid}, {MappedBones(avatar)}; " +
                         $"clip {clip.name} {F(clip.length)}s {F(clip.frameRate)}fps loop={clip.isLooping} events={events.Length} humanMotion={clip.humanMotion}");
                 }
             }
@@ -394,22 +652,42 @@ namespace Game.Editor.Import
                 Log($"(f) Archer candidate {name}: " + (found.TryGetValue(name, out var c) ? $"{F(c.length)}s" : "not found"));
         }
 
-        /// Whether an animation file's automatic Humanoid map puts the body on the same transform names as the
-        /// character's explicit map (the same POLYGON rig), and how many finger bones it maps.
-        static void ReportRig(string path, ModelImporter importer)
+        /// The finger bones an animation file's avatar maps, so the log shows the renamed L_/R_ transforms are reached.
+        static void ReportRig(string path, Avatar? avatar)
         {
-            var human = importer.humanDescription.human.ToDictionary(h => h.humanName, h => h.boneName);
-            var differences = SyntyPostprocessor.CharacterBoneMap
-                .Where(m => !human.TryGetValue(HumanTrait.BoneName[(int)m.Bone], out var b) || b != m.Transform)
-                .Select(m => $"{m.Bone}: {(human.TryGetValue(HumanTrait.BoneName[(int)m.Bone], out var b) ? b : "unmapped")} vs {m.Transform}")
+            if (avatar == null)
+                return;
+            var fingers = avatar.humanDescription.human.Where(h => IsFinger(h.humanName)).OrderBy(h => h.humanName, StringComparer.Ordinal).ToList();
+            Log($"(g) {Path.GetFileName(path)}: {fingers.Count} finger bones" +
+                (fingers.Count == 0 ? "" : $" (e.g. {fingers[0].humanName} -> {fingers[0].boneName}, {fingers[fingers.Count - 1].humanName} -> {fingers[fingers.Count - 1].boneName})"));
+        }
+
+        /// The built avatar must carry exactly SyntyPostprocessor's shared map: same human bones on the same transforms.
+        static void CheckBoneMap(List<string> failures, string path, Avatar? avatar)
+        {
+            if (avatar == null)
+                return;
+            var human = avatar.humanDescription.human.ToDictionary(h => h.humanName, h => h.boneName);
+            var expected = SyntyPostprocessor.CharacterBoneMap.ToDictionary(m => HumanTrait.BoneName[(int)m.Bone], m => m.Transform);
+            var differences = expected.Where(e => !human.TryGetValue(e.Key, out var b) || b != e.Value)
+                .Select(e => $"{e.Key}: {(human.TryGetValue(e.Key, out var b) ? b : "unmapped")} vs {e.Value}")
+                .Concat(human.Keys.Where(k => !expected.ContainsKey(k)).Select(k => $"{k}: {human[k]} not in the shared map"))
                 .ToList();
-            var fingers = human.Where(h => FingerWords.Any(w => h.Key.Contains(w))).OrderBy(h => h.Key, StringComparer.Ordinal).ToList();
-            Log($"(g) {Path.GetFileName(path)}: {human.Count} bones mapped; body " +
-                (differences.Count == 0 ? "on the same transforms as the character map" : "differs: " + string.Join("; ", differences)) +
-                $"; {fingers.Count} finger bones" + (fingers.Count == 0 ? "" : $" (e.g. {fingers[0].Key} -> {fingers[0].Value})"));
+            if (differences.Count > 0)
+                failures.Add($"{path}: avatar map differs from SyntyPostprocessor.CharacterBoneMap: {string.Join("; ", differences)}");
+        }
+
+        static string MappedBones(Avatar? avatar)
+        {
+            if (avatar == null)
+                return "no avatar";
+            var human = avatar.humanDescription.human;
+            return $"{human.Length} bones mapped ({human.Count(h => IsFinger(h.humanName))} finger)";
         }
 
         static readonly string[] FingerWords = { "Thumb", "Index", "Middle", "Ring", "Little" };
+
+        static bool IsFinger(string humanName) => FingerWords.Any(humanName.Contains);
 
         // ---- shared ----------------------------------------------------------------------------------------------
 

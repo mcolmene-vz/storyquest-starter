@@ -244,7 +244,17 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
     - Verified by: an avatar with 52 mapped bones, a Swordsman front capture with curled fingers, the atlas table, extract still repeatable, gate 13/13.
     - The lead then records the skin branch (atlases as data, or the shader skin mask) from the measurement, per §15.18.2's rule.
   - **D6.2, Synty heroes and data:** the goal above, on the branch D6.1 chose. `keep.txt` is trimmed to what's used.
-- **Status:** D6.1 started 2026-10-17. D6.2 waits on D6.1.
+- **Status:** D6.1 done 2026-10-17, verified by the lead.
+  - The lead's own checks: a second `extract.sh` run changed nothing; 59 files against 59 keep lines; gate 13/13 with zero warnings.
+  - The lead looked at `Builds/evidence/M2/d6-1-fingers.png`: flat fingers at bind pose, curled around the grip once mapped, and a closed fist on the hilt in the attack frame.
+  - Developer facts:
+    - The rig has three finger chains per hand (thumb, index, `Finger_` as middle), so the avatar maps 40 bones (22 body + 18 finger), not §15.18's 52.
+    - All 18 clips now use the same explicit 40-bone map, because Unity's automatic map was inconsistent across files.
+    - `OnPreprocessModel` renames the stored skeleton entries to match. A brand-new `.meta` needs one `SQ_REIMPORT=1` pass.
+    - The skin mask is `Mask_03.r`, black-on-white (skin where r < 0.5).
+  - **Skin branch recorded by the lead (§15.18.2's rule): step 2, the skin mask in `Toon.shader`.** Only `01_A` qualifies: the `_B`/`_C` atlases change scar, stubble, hair and unmasked texels by 10–57/255, and 02–04 are other clothing schemes.
+  - Developer readings sent to the architect: "clearly lighter or darker" read as a luma change of at least 16/255; tone class by nearest luma.
+  - Facts for D6.2: weapon FBX roots carry scene offsets (zero them); a grip offset is needed; editor URP rendering flips two `GraphicsSettings.asset` flags (reverted).
 
 ### D6a — Stop the graphics-API line churning (ARCHITECTURE §13.6 note, 2026-10-16)
 

@@ -1,5 +1,7 @@
+using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,8 +17,11 @@ namespace Game.Editor.Import
         public const string WeaponsFolder = Root + "Weapons/";
         public const string AnimationsFolder = Root + "Animations/";
         public const string TexturesFolder = Root + "Textures/";
+        public const string EditorOnlyFolder = Root + "EditorOnly/";
         public const string HeroModel = CharactersFolder + "ModularCharacters.fbx";
         public const int MaxTextureSize = 1024;
+        // EditorOnly/ holds measuring and baking inputs (§15.18.2); none may be downscaled.
+        public const int EditorOnlyMaxTextureSize = 8192;
 
         // Measured 2026-10-17 by SyntyImportCheck: FixedScale/ModularCharacters.fbx is authored in centimetres (file scale
         // 0.01, applied by useFileScale) with unit bone scales, and its base bodies span 1.93 m from feet to head top, inside
@@ -24,13 +29,18 @@ namespace Game.Editor.Import
         // heights, sockets and weapons agree (the §14.1 rule).
         public const float GlobalScale = 1f;
 
-        // Synty's modular rig gives the finger bones the same names under both hands (Thumb_01 under Hand_L and Hand_R),
-        // so Unity's automatic mapping fails, and a Humanoid map, which addresses bones by name, cannot reach them. The
-        // body is mapped explicitly (§15.7) and the fingers stay unmapped: they hold the bind pose in every clip. Only the
-        // hero FBX gets this map; another character file keeps Unity's automatic mapping until its own rig needs one.
+        public const string LeftHandBone = "Hand_L";
+        public const string RightHandBone = "Hand_R";
+        public const string LeftPrefix = "L_";
+        public const string RightPrefix = "R_";
+
+        // One explicit Humanoid map for the hero FBX and every animation FBX (§15.7, §15.18.1), so source and target map
+        // the same transforms. Synty's modular rig repeats the finger names under both hands (Thumb_01 under Hand_L and
+        // Hand_R), which a map that addresses bones by name cannot reach, so OnPostprocessMeshHierarchy renames them L_/R_
+        // first. The animation files cannot keep Unity's automatic map: it maps fingers inconsistently from file to file (the
+        // Finger_ chain as Ring, Middle or Little; in one file the thumb as Little and the prop bone as a finger).
         // Transform names as SyntyImportCheck printed them on 2026-10-17. The toes go on Toes_L/R, not Ball_L/R, because
-        // that is where Unity's automatic map puts them in every Synty animation file, and retargeting is most faithful
-        // when source and target map the same transforms.
+        // that is where Unity's automatic map put them in every Synty animation file.
         public static readonly (HumanBodyBones Bone, string Transform)[] CharacterBoneMap =
         {
             (HumanBodyBones.Hips, "Hips"),
@@ -55,10 +65,36 @@ namespace Game.Editor.Import
             (HumanBodyBones.RightLowerLeg, "LowerLeg_R"),
             (HumanBodyBones.RightFoot, "Ankle_R"),
             (HumanBodyBones.RightToes, "Toes_R"),
+
+            // Each POLYGON hand has three chains, not five: Thumb_01..03, IndexFinger_01..04 and Finger_01..04 (the other
+            // three fingers as one), where _04 is a tip end. So 9 bones per hand map, not Humanoid's 15. Finger_ goes on
+            // Middle, as in Synty's own .meta for the hero and every clip pack (read from the scratch extract, 2026-10-17).
+            (HumanBodyBones.LeftThumbProximal, LeftPrefix + "Thumb_01"),
+            (HumanBodyBones.LeftThumbIntermediate, LeftPrefix + "Thumb_02"),
+            (HumanBodyBones.LeftThumbDistal, LeftPrefix + "Thumb_03"),
+            (HumanBodyBones.LeftIndexProximal, LeftPrefix + "IndexFinger_01"),
+            (HumanBodyBones.LeftIndexIntermediate, LeftPrefix + "IndexFinger_02"),
+            (HumanBodyBones.LeftIndexDistal, LeftPrefix + "IndexFinger_03"),
+            (HumanBodyBones.LeftMiddleProximal, LeftPrefix + "Finger_01"),
+            (HumanBodyBones.LeftMiddleIntermediate, LeftPrefix + "Finger_02"),
+            (HumanBodyBones.LeftMiddleDistal, LeftPrefix + "Finger_03"),
+            (HumanBodyBones.RightThumbProximal, RightPrefix + "Thumb_01"),
+            (HumanBodyBones.RightThumbIntermediate, RightPrefix + "Thumb_02"),
+            (HumanBodyBones.RightThumbDistal, RightPrefix + "Thumb_03"),
+            (HumanBodyBones.RightIndexProximal, RightPrefix + "IndexFinger_01"),
+            (HumanBodyBones.RightIndexIntermediate, RightPrefix + "IndexFinger_02"),
+            (HumanBodyBones.RightIndexDistal, RightPrefix + "IndexFinger_03"),
+            (HumanBodyBones.RightMiddleProximal, RightPrefix + "Finger_01"),
+            (HumanBodyBones.RightMiddleIntermediate, RightPrefix + "Finger_02"),
+            (HumanBodyBones.RightMiddleDistal, RightPrefix + "Finger_03"),
         };
 
+        // The animation files were exported with unique names, so their right hand reads Thumb_01_1; stripping that
+        // suffix gives every file the same names. Matches only a two-digit bone index followed by a copy number.
+        static readonly Regex CopySuffix = new Regex(@"^(.+_\d{2})_\d+$");
+
         // Part of the import hash: bump it when a rule below changes so already-imported files pick the change up.
-        public override uint GetVersion() => 1;
+        public override uint GetVersion() => 2;
 
         void OnPreprocessModel()
         {
@@ -83,7 +119,7 @@ namespace Game.Editor.Import
                 importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
                 importer.importAnimation = false;
                 if (assetPath == HeroModel)
-                    importer.humanDescription = CharacterHumanDescription(importer.humanDescription);
+                    ApplyBoneMap(importer);
             }
             else if (assetPath.StartsWith(WeaponsFolder))
             {
@@ -95,10 +131,102 @@ namespace Game.Editor.Import
                 importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
                 importer.importAnimation = true;
                 importer.animationCompression = ModelImporterAnimationCompression.Optimal;
+                ApplyBoneMap(importer);
             }
         }
 
-        static HumanDescription CharacterHumanDescription(HumanDescription description)
+        static bool HasRenamedHands(string path) => path == HeroModel || path.StartsWith(AnimationsFolder);
+
+        /// Runs before the avatar and clips are built from the hierarchy, so both see the renamed finger bones. Skinning
+        /// binds to transforms, not names, so the rename changes nothing else.
+        void OnPostprocessMeshHierarchy(GameObject root)
+        {
+            if (!HasRenamedHands(assetPath))
+                return;
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == LeftHandBone)
+                    PrefixDescendants(t, LeftPrefix);
+                else if (t.name == RightHandBone)
+                    PrefixDescendants(t, RightPrefix);
+            }
+        }
+
+        static void PrefixDescendants(Transform hand, string prefix)
+        {
+            foreach (var t in hand.GetComponentsInChildren<Transform>(true))
+            {
+                if (t != hand)
+                    t.name = HandBoneName(t.name, prefix);
+            }
+        }
+
+        /// Idempotent, because the stored skeleton below may already carry the prefix from an earlier import.
+        static string HandBoneName(string name, string prefix)
+        {
+            if (name.StartsWith(prefix))
+                return name;
+            var copy = CopySuffix.Match(name);
+            return prefix + (copy.Success ? copy.Groups[1].Value : name);
+        }
+
+        static void ApplyBoneMap(ModelImporter importer)
+        {
+            importer.humanDescription = SyntyHumanDescription(importer.humanDescription);
+            RenameStoredSkeleton(importer);
+        }
+
+        /// Unity builds the avatar from the explicit map only together with the stored skeleton, its record of the
+        /// hierarchy's rest pose written at the first import: with the skeleton emptied it auto-maps instead, or with
+        /// autoGenerateAvatarMappingIfUnspecified off builds no Humanoid at all (both tried 2026-10-17). So the stored
+        /// entries are renamed exactly as the hierarchy is. The skeleton is depth-first, so an entry's parent is the latest
+        /// earlier entry of that name, which tells the left Thumb_01 from the right. Its parent names have no script API,
+        /// hence SerializedObject. A file with no stored skeleton yet (a new .meta) gets Unity's automatic map on its first
+        /// import; SyntyImportCheck then fails, and a second import (SQ_REIMPORT=1) applies this map.
+        static void RenameStoredSkeleton(ModelImporter importer)
+        {
+            var serialized = new SerializedObject(importer);
+            var skeleton = serialized.FindProperty("m_HumanDescription.m_Skeleton");
+            if (skeleton == null || !skeleton.isArray)
+            {
+                Debug.LogError("[SyntyPostprocessor] " + importer.assetPath + ": m_HumanDescription.m_Skeleton not found; the finger map cannot apply");
+                return;
+            }
+            int n = skeleton.arraySize;
+            var names = new string[n];
+            var parents = new string[n];
+            for (int i = 0; i < n; i++)
+            {
+                var bone = skeleton.GetArrayElementAtIndex(i);
+                names[i] = bone.FindPropertyRelative("m_Name").stringValue;
+                parents[i] = bone.FindPropertyRelative("m_ParentName").stringValue;
+            }
+
+            var parentIndex = new int[n];
+            var prefix = new string?[n];
+            var renamed = (string[])names.Clone();
+            for (int i = 0; i < n; i++)
+            {
+                parentIndex[i] = Array.LastIndexOf(names, parents[i], Math.Max(i - 1, 0));
+                if (parentIndex[i] >= i)
+                    parentIndex[i] = -1;
+                int p = parentIndex[i];
+                if (p >= 0)
+                    prefix[i] = names[p] == LeftHandBone ? LeftPrefix : names[p] == RightHandBone ? RightPrefix : prefix[p];
+                if (prefix[i] != null)
+                    renamed[i] = HandBoneName(names[i], prefix[i]!);
+            }
+            for (int i = 0; i < n; i++)
+            {
+                var bone = skeleton.GetArrayElementAtIndex(i);
+                bone.FindPropertyRelative("m_Name").stringValue = renamed[i];
+                if (parentIndex[i] >= 0)
+                    bone.FindPropertyRelative("m_ParentName").stringValue = renamed[parentIndex[i]];
+            }
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        static HumanDescription SyntyHumanDescription(HumanDescription description)
         {
             description.human = CharacterBoneMap
                 .Select(m => new HumanBone
@@ -165,6 +293,11 @@ namespace Game.Editor.Import
 
         void OnPreprocessTexture()
         {
+            if (assetPath.StartsWith(EditorOnlyFolder))
+            {
+                PreprocessEditorOnlyTexture();
+                return;
+            }
             if (!assetPath.StartsWith(TexturesFolder))
                 return;
 
@@ -183,6 +316,32 @@ namespace Game.Editor.Import
             ios.maxTextureSize = MaxTextureSize;
             ios.format = TextureImporterFormat.ASTC_6x6;
             ios.textureCompression = TextureImporterCompression.Compressed;
+            importer.SetPlatformTextureSettings(ios);
+        }
+
+        /// SyntyImportCheck reads these pixels exactly as Synty authored them (§15.18.2). No material may reference this
+        /// folder, so nothing in it reaches a build; the shipped copies in Textures/ stay compressed and non-readable.
+        void PreprocessEditorOnlyTexture()
+        {
+            var importer = (TextureImporter)assetImporter;
+            importer.textureType = TextureImporterType.Default;
+            importer.sRGBTexture = !Path.GetFileName(assetPath).Contains("_Mask_");
+            importer.isReadable = true;
+            importer.mipmapEnabled = false;
+            importer.maxTextureSize = EditorOnlyMaxTextureSize;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.filterMode = FilterMode.Point;
+            importer.wrapMode = TextureWrapMode.Clamp;
+
+            var defaults = importer.GetDefaultPlatformTextureSettings();
+            defaults.maxTextureSize = EditorOnlyMaxTextureSize;
+            defaults.format = TextureImporterFormat.RGBA32;
+            defaults.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SetPlatformTextureSettings(defaults);
+
+            var ios = importer.GetPlatformTextureSettings("iPhone");
+            ios.overridden = false;
             importer.SetPlatformTextureSettings(ios);
         }
     }
