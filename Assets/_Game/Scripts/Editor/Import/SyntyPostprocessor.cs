@@ -19,6 +19,10 @@ namespace Game.Editor.Import
         public const string TexturesFolder = Root + "Textures/";
         public const string EditorOnlyFolder = Root + "EditorOnly/";
         public const string HeroModel = CharactersFolder + "ModularCharacters.fbx";
+        // §15.16.2: the troll's file. Synty's Big Rig skeleton uses the hero rig's transform names, finger chains included,
+        // and Unity's automatic map fails on it (Hips on Root, duplicate Thumb_01; first import 2026-10-17), so it takes the
+        // same explicit map and finger rename as the hero.
+        public const string BigRigModel = CharactersFolder + "Characters_BR.fbx";
         // §15.18.2, §15.18.8: the skin and stubble mask the hero materials sample. Linear data, so it gets its own rule below.
         public const string SkinMask = TexturesFolder + "PolygonFantasyHero_Texture_Mask_03.png";
         public const TextureImporterFormat SkinMaskFormat = TextureImporterFormat.RG16;
@@ -38,7 +42,7 @@ namespace Game.Editor.Import
         public const string LeftPrefix = "L_";
         public const string RightPrefix = "R_";
 
-        // One explicit Humanoid map for the hero FBX and every animation FBX (§15.7, §15.18.1), so source and target map
+        // One explicit Humanoid map for the hero FBX, the Big Rig FBX and every animation FBX (§15.7, §15.18.1), so source and target map
         // the same transforms. Synty's modular rig repeats the finger names under both hands (Thumb_01 under Hand_L and
         // Hand_R), which a map that addresses bones by name cannot reach, so OnPostprocessMeshHierarchy renames them L_/R_
         // first. The animation files cannot keep Unity's automatic map: it maps fingers inconsistently from file to file (the
@@ -122,7 +126,7 @@ namespace Game.Editor.Import
                 importer.animationType = ModelImporterAnimationType.Human;
                 importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
                 importer.importAnimation = false;
-                if (assetPath == HeroModel)
+                if (UsesSharedMap(assetPath))
                     ApplyBoneMap(importer);
             }
             else if (assetPath.StartsWith(WeaponsFolder))
@@ -139,7 +143,10 @@ namespace Game.Editor.Import
             }
         }
 
-        static bool HasRenamedHands(string path) => path == HeroModel || path.StartsWith(AnimationsFolder);
+        /// The character files mapped by CharacterBoneMap; every animation file is too.
+        public static bool UsesSharedMap(string path) => path == HeroModel || path == BigRigModel;
+
+        static bool HasRenamedHands(string path) => UsesSharedMap(path) || path.StartsWith(AnimationsFolder);
 
         /// Runs before the avatar and clips are built from the hierarchy, so both see the renamed finger bones. Skinning
         /// binds to transforms, not names, so the rename changes nothing else.

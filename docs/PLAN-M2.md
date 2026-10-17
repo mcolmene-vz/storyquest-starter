@@ -311,7 +311,18 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
   - After step 3: scripted simulator battles on both ratios, with the troll's Attack and Skill firing `OnImpact` and framing within §15.13.
   - After step 4: no `KayKit` path or string left in `Assets/` (grep), regeneration byte-identical, the gate 13/13, and `packs.txt` with exactly five lines.
 - **Not part of it:** the M4 thrower, shaman and boss (M4); environments (M3).
-- **Status:** waits on D5 (Synty import pipeline) and D6. Step 3 also waits on the producer's troll decision.
+- **Status:** steps 1–2 done 2026-10-17, verified by the lead. Step 3 waits on the producer's troll decision.
+  - The lead looked at `d6b-troll-colours-sheet.png` and `d6b-troll-iphone-FantasyRivals_01_C.png`.
+  - Step 1 files:
+    - `packs.txt` gains Fantasy Rivals 1.4.2 (5 rows).
+    - `keep.txt` adds `Characters_BR.fbx`, `SM_Wep_Troll_01.fbx` and `FantasyRivals_01_{A,B,C,D}.png`.
+    - Excluded: the demon, golem and emissive art, the blood FX, skull and bone props, the troll helmet, `Characters.fbx`, atlases 02–04, and every material, prefab, scene and script.
+    - `SyntyPostprocessor` gives the Big Rig the hero's explicit 40-bone map; the avatar is valid.
+  - Step 2 numbers: 2.30 m at ×1.173; 2 renderers; 5,164 unique triangles; head at 86.5 % in the group shot (the KayKit troll was at 86.2 %).
+  - For the producer:
+    - a small skull hangs from the troll's belt; it is part of the body mesh in all four colours;
+    - `Characters_BR.fbx` also contains the other ten Big Rig bodies (demons, golems), unused and never in a prefab;
+    - colour 01_C (olive green) reads friendliest.
 
 ### D7 — Runtime gear swap
 

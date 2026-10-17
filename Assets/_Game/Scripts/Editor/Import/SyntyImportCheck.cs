@@ -136,7 +136,7 @@ namespace Game.Editor.Import
                 if (importer.importAnimation)
                     failures.Add($"{path}: importAnimation is on");
                 var avatar = CheckAvatar(failures, path);
-                if (path == SyntyPostprocessor.HeroModel)
+                if (SyntyPostprocessor.UsesSharedMap(path))
                     CheckBoneMap(failures, path, avatar);
 
                 var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);

@@ -3,3 +3,4 @@ POLYGON - Modular Fantasy Hero Characters	1.4.1	2026-10-17	subscription		add66c1
 ANIMATION - Sword Combat	1.2.0	2026-10-17	subscription		00aec40d70a12dab9915819295fcd51ceba47654babf8aa4cbd6230522e8ffac	ANIMATION_Sword_Combat_Unity_2021_1_v1_2_0.unitypackage
 ANIMATION - Bow Combat	1.0.0	2026-10-17	subscription		377356d2d023030117f50621c5214195fe18e00066b7d5fc7fe60477d174eb70	ANIMATION_Bow_Combat_Unity_2022_3_v1_0_0.unitypackage
 ANIMATION - Emotes and Taunts	1.0.0	2026-10-17	subscription		62c4b03ff30b533a93007a51fd1c096a1a02ab20dcd1042bbdbfa6c4f376d3ba	ANIMATION_Emotes_And_Taunts_Unity_2022_3_v1_0_0.unitypackage
+POLYGON - Fantasy Rivals Pack	1.4.2	2026-10-17	subscription		6cadb0a0e0d0e7a30297a79e619f4b9b4dddbe59f5a8a21fefa11ce82e3f7d05	POLYGON_Fantasy_Rivals_Unity_2022_3_v1_4_2.unitypackage

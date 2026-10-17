@@ -57,3 +57,16 @@ Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Masculine/Happy/A_POLY_
 Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Feminine/Happy/A_POLY_EMOT_Happy_ArmsRaised_Femn.fbx -> Animations
 Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Masculine/Happy/A_POLY_EMOT_Happy_FistPump_Masc.fbx -> Animations
 Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Feminine/Happy/A_POLY_EMOT_Happy_FistPump_Femn.fbx -> Animations
+
+# pack: POLYGON - Fantasy Rivals Pack
+# The troll (ARCHITECTURE §15.16.2). The pack has no troll-only model: SM_Chr_BR_Troll_01 is Characters_BR.fbx with
+# only Character_Troll_01 active, so the file brings the other ten Big Rig bodies too. Only the troll's GameObjects reach
+# a prefab; nothing else from the pack (no demon, golem, skull, bones, blood FX, emissive maps or the troll helmet).
+Assets/Synty/PolygonFantasyRivals/Models/Characters_BR.fbx -> Characters
+# The troll's club, on the same atlas as the troll.
+Assets/Synty/PolygonFantasyRivals/Models/SM_Wep_Troll_01.fbx -> Weapons
+# The atlas SM_Chr_BR_Troll_01 samples (FantasyRivals_01_A.mat in the scratch extract) and its three colour variants.
+Assets/Synty/PolygonFantasyRivals/Textures/FantasyRivals_01_A.png -> Textures
+Assets/Synty/PolygonFantasyRivals/Textures/FantasyRivals_01_B.png -> Textures
+Assets/Synty/PolygonFantasyRivals/Textures/FantasyRivals_01_C.png -> Textures
+Assets/Synty/PolygonFantasyRivals/Textures/FantasyRivals_01_D.png -> Textures
