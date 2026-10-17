@@ -53,7 +53,19 @@ D4 and D5 do not depend on each other. Whichever download arrives first goes fir
   - `grep -r UnityEngine Core` empty;
   - the lead reads `Buy` and `Equip` against §15.5: validate first, then mutate; `ArgumentException` on illegal calls; buying equipment also equips it.
 - **Not part of it:** any Runtime or UI code; `SaveService`; tests for `Equip`, `AwardCoins` or the generator; class `variants` fields.
-- **Status:** not started.
+- **Status:** done 2026-10-16, verified by the lead.
+  - The lead's own gate: 13/13 passed, zero warnings.
+  - `BattleResolver.cs` and `BattleResolverTests.cs` unchanged; Core has no `UnityEngine` reference.
+  - `Buy` and `Equip` read against §15.5: every check comes before any change; buying equipment also equips it; an unknown item id throws `ArgumentException` from `GameTables.Item`.
+  - The developer's negative run broke `items.json` three ways and the loader named all four problems.
+  
+  Developer readings accepted:
+  - the camp types sit in namespace `Game.Core`;
+  - armor `Parts` is keyed by body;
+  - provisional values are `TBD_D6_*`;
+  - names for the nine items §15.4 left unnamed are placeholders until M5 (Hunter Bow, Crystal Staff, Spiked Mace, Ranger Cape, Wizard Hat, Shoulder Pads, Tough Charm, Wise Charm, Quick Charm);
+  - `HeroStats` throws on a slot or class mismatch (a bug guard);
+  - test 2 hard-codes three `levels.json` rows, so M4 tuning updates those lines.
 
 ### D2 — Party service, flow and Camp screens
 

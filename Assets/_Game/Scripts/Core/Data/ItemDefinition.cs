@@ -13,12 +13,16 @@ namespace Game.Core.Data
         public string? Effect { get; set; }
         public double Amount { get; set; }
 
-        // Equipment (M2 shop); Core carries the fields, nothing reads them in M1.
+        // Equipment: Progression reads the class, stat and bonus.
         public string? ClassId { get; set; }
         public string? Stat { get; set; }
         public int Bonus { get; set; }
+
+        // Presentation fields: a weapon's mesh goes under its class's weaponSocket; armor parts are keyed by body.
+        // Core carries them for the generator and HeroAppearance and never reads them.
         public string? Mesh { get; set; }
-        public string? Socket { get; set; }
+        public Dictionary<string, List<string>> Parts { get; set; } = new Dictionary<string, List<string>>();
+        public string? Tint { get; set; }
     }
 
     public static class ItemKinds
@@ -39,7 +43,18 @@ namespace Game.Core.Data
 
     public static class StatNames
     {
-        public static readonly string[] All = { "hp", "attack", "defence", "speed" };
+        public const string Hp = "hp";
+        public const string Attack = "attack";
+        public const string Defence = "defence";
+        public const string Speed = "speed";
+        public static readonly string[] All = { Hp, Attack, Defence, Speed };
+    }
+
+    public static class Bodies
+    {
+        public const string Boy = "boy";
+        public const string Girl = "girl";
+        public static readonly string[] All = { Boy, Girl };
     }
 
     public sealed class ItemsTable : IVersionedTable

@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace Game.Core.Data
 {
-    /// Reads the four tables through an ITableSource, validates them against ARCHITECTURE §14.2 and returns
+    /// Reads the four tables through an ITableSource, validates them against ARCHITECTURE §14.2 and §15.4 and returns
     /// GameTables, or throws one TableValidationException listing every problem found.
     public static class TableLoader
     {
@@ -195,10 +195,13 @@ namespace Game.Core.Data
             }
         }
 
+        static readonly string[] EquipmentKinds = { ItemKinds.Weapon, ItemKinds.Armor, ItemKinds.Charm };
+
         static void ValidateItems(ItemsTable table, HashSet<string>? classIds, List<string> problems)
         {
             const string file = ItemsTable + ".json";
             var ids = new HashSet<string>();
+            var perClassAndKind = new Dictionary<(string ClassId, string Kind), int>();
             for (int i = 0; i < table.Items.Count; i++)
             {
                 var item = table.Items[i];
@@ -237,8 +240,31 @@ namespace Game.Core.Data
                         problems.Add($"{who} stat '{item.Stat}' is not one of {string.Join("/", StatNames.All)}");
                     if (item.Bonus < 1)
                         problems.Add($"{who} bonus {item.Bonus} must be >= 1");
+                    if (item.Kind == ItemKinds.Weapon && string.IsNullOrEmpty(item.Mesh))
+                        problems.Add($"{who} has no mesh");
+                    if (item.Kind == ItemKinds.Armor)
+                        foreach (var body in Bodies.All)
+                            if (!item.Parts.TryGetValue(body, out var parts) || parts == null || parts.Count == 0
+                                || parts.Exists(string.IsNullOrEmpty))
+                                problems.Add($"{who} parts.{body} is missing, empty or has an empty name");
+                    if (!string.IsNullOrEmpty(item.ClassId))
+                    {
+                        var key = (item.ClassId!, item.Kind);
+                        perClassAndKind.TryGetValue(key, out int count);
+                        perClassAndKind[key] = count + 1;
+                    }
                 }
             }
+
+            // The shop shows each hero exactly one weapon, one armor and one charm (ARCHITECTURE §15.4).
+            if (classIds != null)
+                foreach (var classId in classIds)
+                    foreach (var kind in EquipmentKinds)
+                    {
+                        perClassAndKind.TryGetValue((classId, kind), out int count);
+                        if (count != 1)
+                            problems.Add($"{file}: class '{classId}' has {count} {kind} item(s), expected exactly 1");
+                    }
         }
 
         static void CheckDamageType(string what, string? value, List<string> problems)

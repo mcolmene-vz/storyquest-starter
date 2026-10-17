@@ -24,7 +24,8 @@ namespace Game.Core.Battle
                 var skill = cls.Skill ?? throw new ArgumentException($"class '{cls.Id}' has no skill", nameof(tables));
                 var name = string.IsNullOrEmpty(spec.Name) ? cls.Name : spec.Name;
                 combatants.Add(new Combatant(nextId++, name, Team.Hero, cls.Id, slot,
-                    Progression.StatsFor(cls.Id, spec.Level, tables), DamageTypes.Parse(cls.DamageType), cls.AttackPower)
+                    Progression.HeroStats(cls.Id, spec.Level, spec.Equipment ?? Equipment.None, tables),
+                    DamageTypes.Parse(cls.DamageType), cls.AttackPower)
                 {
                     Skill = new SkillSpec(skill.Id, DamageTypes.Parse(skill.DamageType), skill.Power, skill.CooldownTurns),
                 });
