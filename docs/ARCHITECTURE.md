@@ -706,7 +706,25 @@ Totals: 8 + 5 = 13 after M2. With M3's 3–4 `SaveServiceTests`, the total is 16
   - Each of the four Synty heroes has about 15–19 skinned parts (12–13 body parts, hair, 1–4 attachments) plus a weapon; the troll has 6–9 parts.
   - Each renderer draws three passes: toon, outline and shadow caster. `DepthOnly` never runs, because the depth texture and depth priming are off (§13.5). That makes about 250 draw calls. SetPass does not grow (one shader, SRP Batcher).
   - Triangle counts come from the import task.
-- **§14.8 budget amended for M2.** In the group shot (Frame Debugger, Game view at device resolution): at most 90 SkinnedMeshRenderers, 280 draw calls, 12 SetPass and 60k triangles. The iPad GPU reading (15.8, under 6 ms) decides whether that holds up.
+- **§14.8 budget amended for M2.** In the group shot (Frame Debugger, Game view at device resolution): at most 90 SkinnedMeshRenderers, 280 draw calls, 12 SetPass and 60k triangles. The iPad GPU reading (15.8, under 6 ms) decides whether that holds up. *Superseded 2026-10-16 by the counter budget in the next bullet: the Frame Debugger needs the editor GUI, and its SetPass figure was a modelling error.*
+- **Budget in the probe's counters (amended 2026-10-16, ruling on M2-D3 finding 1).**
+  - **What the counters count.** The `ProfilerRecorder` Render counters (`Draw Calls Count`, `SetPass Calls Count`, `Triangles Count`) count every draw the frame submits: toon, outline and shadow caster for each renderer (one shadow cascade, §13.5), plus the ground, the turn ring and the UI. `Triangles Count` counts triangles per draw, so each mesh counts about three times.
+  - **Simulator numbers are device numbers.** These are CPU-side engine counts, so a simulator gives the same values as a device for the same content and resolution; only GPU timings differ. No device run is needed for them.
+  - **They exist only in development players,** and every simulator build is one (next bullet).
+  - **M1 reading on unchanged content** (iPhone 15 Pro simulator, group shot):
+    - Draws 131 ≈ 42 renderers × 3 plus the UI. That is within §14.8's 160, which already included every pass.
+    - Triangles 111k ≈ 37k unique mesh triangles × 3. That is within §14.8's 40k unique; §14.8's "2–4k per KayKit character" was low, the real figure is about 7k.
+    - **SetPass 89 is real and was never within 12.** The outline is a second pass in the same shader. 89 ≈ 2 × 42 + UI is what happens when each object's forward and outline passes are drawn back to back, so the SRP Batcher cannot group across objects. §14.8's "≤ 12 SetPass" was the architect's modelling error, not something M1 broke, and M1's device soak held 60 fps with it.
+  - **M2 budget, group shot,** read as the probe's `group draws / setpass / tris` (the maximum over a window) on a simulator development player:
+    - draws ≤ 300 (about 3 × 90 renderers, plus ground, ring and UI);
+    - SetPass ≤ 200 (about 2 × 90 + 20);
+    - tris ≤ 180k (60k unique × 3);
+    - at most 90 SkinnedMeshRenderers, summed from the generator's per-prefab renderer log for the four on-screen variants plus the troll.
+  - **SetPass is a render-thread CPU cost**, so the iPad GPU reading does not judge it. The probe gains `rt` (15.8). Review rule: on the A16 iPad, `cpu` and `rt` each stay under 6 ms in the group shot (the same headroom argument as the GPU, §14.8).
+  - **If `rt` misses, the first CPU lever** is to draw the outline in its own pass: URP's built-in `RenderObjects` feature, with the outline pass's `LightMode` changed to `Outline` and the feature added to the renderer by `ProjectSetup`. The SRP Batcher can then group every outline, and SetPass falls back to a handful. Taking it amends §11.3 ("no outline render feature"), and it is not taken before a device miss. Lever 2 below (mesh merge) cuts draws and SetPass together.
+- **Every simulator build is a development player (amended 2026-10-16, M2-D3 finding 2).** Unity 6000.3 ships the iOS simulator player only as `Development_sim*`, so a simulator build logs Build type 'Development' whatever `SQ_DEV` and the Xcode configuration say.
+  - Simulator runs are evidence for layout, framing and the render counters. They are never evidence for fps, `cpu`, `rt`, `gpu` or `mem`.
+  - Device builds without `SQ_DEV` are release players; those numbers come from them (the D8 soak).
 - **Levers, in this order, and only after a measurement misses** (the §14.8 rule):
   1. `shadowCastingMode = Off` on small parts (eyebrows, facial hair, hands): one generator rule.
   2. Merge each variant's parts into one SkinnedMeshRenderer per outfit state at generation time. That takes about 80 renderers down to about 10, and the armor swap becomes a mesh swap. Not built unless needed, because it adds sixteen generated meshes to git.
@@ -740,16 +758,23 @@ Totals: 8 + 5 = 13 after M2. With M3's 3–4 `SaveServiceTests`, the total is 16
   - Screenshots: `xcrun devicectl device capture screenshot --device <UDID> --destination <file>.png` (verified) gives the lead the device screenshots M1 never got, with Martin pressing nothing.
 - **Producer condition (c): GPU, FPS and memory come from the app.**
   - `SoakProbe` (`Runtime/Services/`) is a MonoBehaviour on the bootstrap object, created by `Services.Create`, with no per-frame allocation.
-  - It calls `FrameTimingManager.CaptureFrameTimings()` every frame, and every 30 s it logs one line: `[Probe] t=…s fps avg … min … | gpu group avg … max … ms | cpu … ms | mem … MB`. GPU is averaged only while the group shot is live (a static `BattleCameras.GroupShotLive`); memory is `Profiler.GetTotalReservedMemoryLong`.
+  - It calls `FrameTimingManager.CaptureFrameTimings()` every frame, and every 30 s it logs one line: `[Probe] t=…s fps avg … min … | gpu group avg … max … ms | cpu … ms | mem … MB`. GPU is averaged only while the group shot is live (a static `BattleCameras.GroupShotLive`). The memory field is defined in the 2026-10-16 note below.
   - `BuildPipeline.ApplyPlayerSettings` sets `PlayerSettings.enableFrameTimingStats = true` and stack-trace type `None` for `Log` and `Warning`; errors and exceptions keep `ScriptOnly`. The saved console is then one line per message.
   - The iPad's `gpu group avg` is the §14.8 reading (under 6 ms).
   - Fallback: if the probe prints a GPU time of 0 on a device, Martin reads it from Xcode's Debug navigator (Cmd+7) → GPU → frame time during a group shot. That one reading needs Xcode attached.
   - **Line format for the pass thresholds (amended 2026-10-16, producer ruling 4).** The thresholds are the producer's and live in STATUS (Producer rulings, 2026-10-16, item 4 (i)–(v)); the lead judges each saved log against them. The probe's job is to make every one of them readable from the lines:
-    - **Format:** `[Probe] t=…s flow=Camp|Battle fps avg 59.8 min 52.1 | gpu group avg 3.9 max 5.2 ms | cpu 6.1 ms | mem 187.4 MB`.
+    - **Format** (amended 2026-10-16 for M2-D3: `rt` added, `mem` redefined, see the note below): `[Probe] t=…s flow=Camp|Battle fps avg 59.8 min 52.1 | gpu group avg 3.9 max 5.2 ms | cpu 4.1 rt 3.2 ms | mem 212.4 MB unity 140.2 MB`. Development players only add `| group draws … setpass … tris …` (15.7).
     - **Timing:** one line every 30 s, against the ruling's 60 s ceiling, so a single dropped line is not yet a gap.
     - **Precision:** `fps avg` and `mem` have one decimal, for the ≥ 58 and ±5 MB thresholds.
     - **`flow`** shows where the first battle starts.
     - **GPU field:** `gpu group -` when the window had no group-shot frame (camp, action shots). `0` appears only when `FrameTimingManager` returned zeros during group-shot frames; that is the Xcode fallback case, not a pass.
+  - **Probe fields `mem` and `rt` (amended 2026-10-16, rulings on M2-D3 findings 1 and 3).** This is the exact change to `SoakProbe.cs`:
+    - **`mem`.** Becomes the OS-reported app memory: `ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory")`, started in `Awake` in every probe build (release players included), printed as `LastValue` in MB, and disposed in `OnDestroy`. It is meant to be the figure Xcode's memory gauge shows (the whole app, Metal allocations included), so the producer's thresholds (under 300 MB on the iPhone, ±5 MB flat; STATUS ruling item 4) apply to `mem` as printed.
+    - **`unity`.** `Profiler.GetTotalReservedMemoryLong` stays as a second field, for telling a Unity leak from driver or OS growth. It is not a threshold field.
+    - **Fallback.** If the recorder is not valid, or reads 0 in a release iOS player, print `mem -`. That device's memory then comes from Martin reading Xcode's gauge at the start and end of the session, like the GPU fallback.
+    - **`rt`.** The average of `FrameTiming.cpuRenderThreadFrameTime` over group-shot frames where it is non-zero, printed after `cpu`; `-` when there are none.
+    - **Confirming `mem`.** During Needs Martin item 3 (the install Run from Xcode), Martin reads Xcode's memory gauge once at Camp, and the lead compares it with the `mem` printed in the same minute in Xcode's console. Within about 10 % confirms the counter; otherwise the architect rules before the soak.
+    - If `mem` turns out noisier than ±5 MB with no trend while `unity` stays flat, the architect brings the log to the producer. The threshold is the producer's.
   - **What `--console` captures and what it drops** (answering ruling 4's last line). It bridges the app's stdout and stderr.
     - Captured: Unity's iOS player writes its log to stdout: every `Debug.Log*` and the engine's own warnings and errors. The M0 render-pass pair came from Unity's Metal backend, so it is expected in the file.
     - Dropped, though Xcode shows them: os_log lines from iOS frameworks, and Metal API-validation messages, which exist only under an Xcode debug session.
@@ -760,7 +785,10 @@ Totals: 8 + 5 = 13 after M2. With M3's 3–4 `SaveServiceTests`, the total is 16
   - **Code guards.**
     - `SoakProbe.cs` is wrapped in `#if SQ_PROBE || UNITY_EDITOR`, so the compile gate still compiles it.
     - `Services.Create` adds the component only under `#if SQ_PROBE`, so the editor never runs it.
-    - A TestFlight build therefore has neither the class nor the `[Probe]` literal. `BattleCameras.GroupShotLive` is a plain bool and may stay.
+    - A TestFlight build therefore has no probe code, no `SoakProbe` type and no `[Probe]` literal. `BattleCameras.GroupShotLive` is a plain bool and may stay.
+    - **Script table (amended 2026-10-16, M2-D3 finding 4).** Unity's script table in `globalgamemanagers.assets` still lists the name `SoakProbe`, because Unity records every script file of an included assembly, compiled or not.
+      - That entry is an inert file name, with no type behind it, and the compliance check (no `[Probe]` string, no probe line) does not need to exclude it.
+      - If the producer's M5 privacy review wants the name gone too, the route is recorded, not built: move `SoakProbe.cs` into its own `Game.Probe` assembly with `defineConstraints: ["SQ_PROBE || UNITY_EDITOR"]`. It would install itself through `[RuntimeInitializeOnLoadMethod]` under `#if SQ_PROBE`, since `Game.Runtime` cannot reference it.
   - **Engine settings.** `enableFrameTimingStats` and the stack-trace types stay on in every build: they are engine settings that measure nothing unless code reads them, and toggling them per build would dirty Player Settings.
   - **Compliance check** (STATUS checklist): `grep -rla '\[Probe\]'` over `Builds/iOS/Data` and over the archived `.app` must return nothing on the TestFlight build. Run it first on a probe build as the positive control: it must find `Data/Managed/Metadata/global-metadata.dat`, where IL2CPP keeps string literals. If the positive control finds nothing, the grep pattern is wrong (for example, UTF-16 text), not the build; fix the pattern before trusting a negative.
 - **Producer condition (d): Silent mode** is Martin's explicit yes or no on the iPhone (Action button or Control Center; a hit must still be audible). The lead's fill-in block asks it as a question.
@@ -832,7 +860,7 @@ In addition to §13.10 and §14.10 (Core purity, Boot the only scene, generated 
 - **Runtime gear.** `HeroAppearance` only calls `SetActive`; nothing instantiates gear at runtime; renderers are cached after `Apply`.
 - **Camp screens.** Simulator screenshots on the iPad (10th generation) and the iPhone 15 Pro, Shop and Equip tabs: everything inside the safe area and inside the 1600 × 900 box, every control at least 170 reference px.
 - **Framing.** With the Synty party on both ratios: feet at or above 27 %, tallest head at or below 86 %, no combatant under a card. The Fighter's action shot reads on both. All eight variants seen (two battles, one either side of the Body toggle).
-- **Performance in the editor.** The Frame Debugger in the group shot is within 15.7's budget. The build log shows only the referenced Synty parts.
+- **Performance.** On a simulator development player, the probe's `group draws / setpass / tris` stay within 15.7's counter budget (amended 2026-10-16). On the A16 iPad's release soak build, `gpu`, `cpu` and `rt` in the group shot are each under 6 ms. `mem` was confirmed against Xcode's gauge at the install Run. The build log shows only the referenced Synty parts.
 - **Skin tones** (producer ruling 7). `TableLoader` passes the tone rule. There are eight front captures, `Builds/evidence/M2/variant-*.png`, made by `VariantCapture.Run`; battle shots do not count.
 - **`SQ_PROBE`** (producer ruling 9b). The soak build's log says `SQ_PROBE on`. `ProjectSettings.asset` holds no `SQ_PROBE` define. The positive-control grep finds `[Probe]` in the soak build's `Data/`. The TestFlight negative is M5's compliance item.
 - **On device**, per device:

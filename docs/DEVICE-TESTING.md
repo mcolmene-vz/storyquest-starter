@@ -65,7 +65,7 @@ for UDID in 9897FBFE-0795-45F7-9207-CE75AC2C028E ADE26594-6F5C-4977-AF3F-B193642
 done
 ```
 
-What to look for: the label `Taps: 0  <width>×<height>  safe (x, y, width, height)` sits top-left inside the safe area on both (on the iPhone it starts to the right of the Dynamic Island, x is not 0), and the cube is at a different angle in the second screenshot. The Debug configuration shows Unity's Development Console along the bottom; that is expected and does not appear in Release builds.
+What to look for: the label `Taps: 0  <width>×<height>  safe (x, y, width, height)` sits top-left inside the safe area on both (on the iPhone it starts to the right of the Dynamic Island, x is not 0), and the cube is at a different angle in the second screenshot. Every simulator build is a Unity development player: Unity 6000.3 ships the iOS simulator player only as a development build, so the log says Build type 'Development' whatever `SQ_DEV` and the Xcode configuration say. Unity's Development Console can appear along the bottom, and the `[Probe]` line carries the render counters. Use simulator runs for layout, framing and those counters, never for fps, CPU, GPU or memory (ARCHITECTURE §15.7, 2026-10-16). Device builds without `SQ_DEV` are release players and do not show the console.
 
 ## 3. Run on a connected device (first time, Martin at the Mac)
 

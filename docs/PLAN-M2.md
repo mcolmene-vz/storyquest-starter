@@ -10,7 +10,7 @@ Lead's plan for V1-SCOPE §12 M2. The design is in ARCHITECTURE §15 (15.1–15.
 ## Dependency order
 
 ```
-D1 Core camp model + items + tests ─► D2 party, flow and Camp screens ─► D3 soak probe + build settings + capture commands
+D1 Core camp model + items + tests ─► D2 party, flow and Camp screens ─► D3 soak probe + build settings + capture commands ─► D3a probe amendment
    (D1–D3 need no Synty or Mixamo files and start now)
 D4 Synty extract + postprocessor ──┐   (needs Needs Martin 11)
 D5 Mixamo import ──────────────────┴─► D6 hero generator, 8 variants ─► D7 runtime gear swap ─► D8 device build, soak, evidence
@@ -26,7 +26,7 @@ D4 and D5 do not depend on each other. Whichever download arrives first goes fir
 - **Coins.** Each hero has their own coins and every hero receives a Victory's full award (producer ruling 5). Seed: 60 coins each and a pool of `{potion: 2, revive: 1}` (ruling 9c). Lost on quit until M3.
 - **Smoke item 1 until M3.** The "title" is the Camp screen (ruling 9c), and the M2 evidence says so.
 - **Body toggle and SoakProbe.** The Body toggle is in M2 builds only and is deleted in M3 with `DebugParty`. SoakProbe is compiled out of the TestFlight build, using the mechanism the architect records in §15.8 (ruling 9b).
-- **Performance counts without the editor GUI.** §15.7 asks for Frame Debugger numbers. No one in this loop opens the editor GUI, so D3's probe also prints draw calls, SetPass calls and triangles from `ProfilerRecorder` render counters in development builds only. D8 reads them in a `SQ_DEV=1` simulator build in the group shot. The architect confirms the substitute at the M2 review.
+- **Performance counts without the editor GUI.** D3's probe prints draw calls, SetPass calls and triangles from `ProfilerRecorder` render counters in development players. These count every pass. The architect restated the §15.7 budget in those terms on 2026-10-16: draws ≤ 300, SetPass ≤ 200, triangles ≤ 180k, ≤ 90 skinned renderers, read on a simulator development player. On the A16 iPad device build, `cpu` and `rt` must each be under 6 ms in the group shot. Simulator runs never count for fps, CPU, GPU or memory.
 - **`ProjectSettings.asset` churn.** M1 showed a simulator build flipping `m_Automatic` and `iOSSimulatorArchitecture`. The sign-off commit 6a8bcda set `m_Automatic: 0` from the generator. A task diff that changes either line is reverted or explained, never committed silently.
 - **Version string.** `bundleVersion` stays `0.2.0` through M2 and becomes `0.3.0` in the sign-off commit (§15.9).
 - **Tests.** `ProgressionTests.cs` holds exactly the five §15.6 tests and is closed at five (ruling 3). The total after M2 is 13.
@@ -147,6 +147,22 @@ D4 and D5 do not depend on each other. Whichever download arrives first goes fir
   2. The render counters on unchanged M1 content read 131 draws, 89 SetPass and about 111k triangles against §15.7's 280 / 12 / 60k. Either they count every pass or M1 was already over, so the budget's terms need reconciling before D8.
   3. `mem` is Unity-reserved memory, not Xcode's whole-app figure.
   4. The TestFlight build still lists the class name `SoakProbe` in Unity's script table, with no code and no literal.
+
+### D3a — Probe amendment from the architect's D3 rulings
+
+- **Goal:** the §15.8 probe change of 2026-10-16:
+  - `mem` becomes `ProfilerRecorder(ProfilerCategory.Memory, "System Used Memory")`. It is started in `Awake` in every probe build, printed as `LastValue` in MB and disposed in `OnDestroy`. It prints `mem -` if the recorder is invalid or reads 0.
+  - `GetTotalReservedMemoryLong` stays as a second field, `unity … MB`.
+  - A new `rt` field is the average `cpuRenderThreadFrameTime` over group-shot frames (`-` when there are none).
+  - Line format: `| cpu 4.1 rt 3.2 ms | mem 212.4 MB unity 140.2 MB`.
+  - DEVICE-TESTING §3b's probe-line key matches.
+- **Files:** `Runtime/Services/SoakProbe.cs`, `docs/DEVICE-TESTING.md` (§3b only).
+- **Verification:**
+  - The gate passes 13/13.
+  - A simulator probe build prints lines in the new format, with a non-zero `mem` and `unity` and an `rt` value or `-`.
+  - `git status` shows only these two files.
+- **Not part of it:** any other probe change; the render budget itself (that is the architect's §15.7 text).
+- **Status:** not started.
 
 ### D4 — Synty extraction and import (needs Needs Martin 11)
 
