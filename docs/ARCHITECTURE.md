@@ -1116,3 +1116,202 @@ This replaces 15.13's first five bullets (third-party folders, postprocessors, p
 #### 15.14.9 Needs Martin
 
 Items 11 (Synty) and 12 (Mixamo) are withdrawn: nothing is bought or downloaded for M2. Items 13 and 14 stand; in item 14, "flip one hero's Body" becomes "flip one hero's Look". The lead updates STATUS and PLAN-M2.
+
+### 15.15 SyntyPass (owner, 2026-10-16)
+
+Martin is subscribing to SyntyPass, which gives the whole Synty library while the subscription is active, and will download the files himself. Hero work waits for those files.
+
+This section brings back Synty heroes in place of §15.14, but only after the producer has ruled on 15.15.8. Until then V1-SCOPE §3, §9, §11 and §12 M2 still say KayKit and class × look, so nothing below is built. D6a (§13.6) does not depend on any of this and can run now.
+
+**Verified on syntystore.com, 2026-10-16:**
+- the store name and list price of every pack named below;
+- the ANIMATION packs' rig-support wording and the clip names their pages list;
+- the hero pack's weapon list;
+- the Standard Subscription Licence (text last updated 9 July 2026).
+
+**Not verifiable until the files are on disk:**
+- file names inside a package, apart from the clip names the store pages list;
+- whether the hero pack's skeleton is the "standard POLYGON" rig the animation packs name. Humanoid retargeting works either way, and the import check proves it;
+- how the trolls and environments look;
+- download sizes, except the hero pack's: 156.9 MB in the Asset Store listing of the same package.
+
+#### 15.15.1 Download list for Martin
+
+**How, for every pack:**
+1. Download it from syntystore.com while subscribed.
+2. Pick the **Unity package** file, labelled "Unity 2022.3 package". If a pack also offers a Unity 6 ("2023.3") package, take that one instead.
+3. Do not take the Unreal, Godot, "FBX Source Files" or "Animation FBX Zip" downloads.
+4. Save each pack in its own folder, `~/Downloads/Synty/<exact pack name>/`, zipped or not.
+5. Do not open the file, and do not double-click it: that imports it into whatever Unity project is open.
+6. Tell the lead when a group is done. The developer extracts only what the keep-list names.
+
+**M2: download now (4 packs).** No Adobe or Mixamo account is needed.
+
+| # | Pack (exact store name) | What it is for | Size |
+|---|---|---|---|
+| 1 | POLYGON - Modular Fantasy Hero Characters | The heroes: male and female bodies, modular outfits, swords, staffs, maces | about 157 MB |
+| 2 | ANIMATION - Sword Combat | Attacks for the Swordsman, Fighter and Mage, plus the hit, block and knocked-down clips every hero uses | not listed |
+| 3 | ANIMATION - Bow Combat | The Archer's idle and shots, plus the Archer's two bows (the hero pack's weapon list names no bow; this pack has 14) | not listed |
+| 4 | ANIMATION - Emotes and Taunts | The victory cheer and the Mage's spell pose | not listed |
+
+**Not needed:**
+- ANIMATION - Base Locomotion, ANIMATION - Idles, ANIMATION - Goblin Locomotion, and the Bundle: no V1 state uses their clips.
+- POLYGON - Bow and Crossbow (free): Bow Combat's bows cover it.
+
+**M3: download when M3 starts.** The final list follows the land outline (STORY-BIBLE §2).
+
+| # | Pack | For |
+|---|---|---|
+| 5 | POLYGON - Meadow Forest - Nature Biome | The camp (campfire, tents), the forest and a stream |
+| 6 | POLYGON - Fantasy Village | The village, river, bridges and windmill |
+
+The hill fort is pack 7 below, which doubles as the trolls' fort. Only if the outline wants a stone castle instead: POLYGON - Fantasy Kingdom Pack.
+
+**M4: download when M4 starts.** Download only what the troll ruling picks; it is due by M3 sign-off (producer ruling 2). The KayKit option stays the free fallback.
+
+| # | Pack | For |
+|---|---|---|
+| 7 | POLYGON - Goblin War Camp | A Troll character and a log-walled war camp that can serve as the hill fort. Its skull, spike and bone props are left out. |
+| 8 | POLYGON - Fantasy Rivals Pack | Troll, Big Ork, Barbarian Giant and Forest Guardian, each in four colours: candidates for the grunt, thrower, shaman and boss. Its package is Unity 2023.3 (Unity 6). Its demons and blood props are left out. |
+
+**List prices** (US$, 2026-10-16), for the budget comparison in 15.15.8:
+
+| Pack | Price |
+|---|---|
+| Hero pack | 149.99 |
+| Sword Combat | 59.99 |
+| Bow Combat | 99.99 |
+| Emotes and Taunts | 59.99 |
+| Meadow Forest | 54.99 |
+| Fantasy Village | 299.99 |
+| Goblin War Camp | 179.99 |
+| Fantasy Rivals | 99.99 |
+
+Bought one-time, all eight would cost US$1,004.92 (M2's four: US$369.96).
+
+#### 15.15.2 What comes back from 15.1–15.13
+
+- **15.1, as written.**
+  - The extract route: `Tools/synty/extract.sh`, `keep.txt` and `package-contents.txt`; `asset` files only, never Synty's `.meta`; scratch output under `Builds/synty-extract/`.
+  - The no-bytes rule and the compliance line.
+  - What changes: the source is the SyntyPass download page, not a purchase, and the licence is the subscription licence (15.15.6).
+  - The import task's report gains three facts: (e) the Bow Combat bow meshes; (f) the Archer's draw-and-release clip names, which the store page truncates; (g) whether the animation FBX files make a valid Humanoid avatar.
+- **15.3, as written.**
+  - Boy and girl variants with explicit `parts` lists.
+  - Sockets from `GetBoneTransform`, with the Archer on `Socket_HandL`.
+  - `HeroGenerator` at generation time, the height check, the art rules (faces visible, nothing scary, readable from behind), and the skin-tone rule per variant (`tone` plus `skinTones`, enforced by `TableLoader`).
+  - `VariantCapture`: eight `variant-{classId}_{body}` captures plus one with armor.
+  - **Material: three branches, chosen by fact (b).** §15.14.3's cell tint is already in `Toon.shader`, which makes this choice cheaper:
+    1. If the colour is in a texture and the skin area is one cell of a regular grid, the cell tint recolours skin per variant: one material per variant, no new texture.
+    2. If the colour is in a texture but the skin is not grid-aligned, the baker runs in recolour mode.
+    3. If the colour lives only in masks, the 15.3 baker runs.
+- **15.4, as written.**
+  - The item table and ids, which D1 already holds: `sword_2`, `bow_2`, `staff_2`, `mace_2`, `helm_swordsman`, `cape_archer`, `hat_mage`, `pads_fighter`, the four charms and the two consumables. §15.14.2's renames were never applied.
+  - Armor `parts` keyed by body, and the part-group rule. The Fighter is a mace fighter.
+  - **Archer:** the starter bow and `bow_2` are two different Bow Combat bow meshes, so no tint is needed. They are used static; the bow rig is not animated.
+  - **Weapon children** keep §15.14.2's role names: `starter`, and the item id. Naming by role holds even when two weapons share a mesh.
+- **15.7, as written.** The `SyntyPostprocessor` rules, plus a rule for animations (15.15.5).
+  - The counter budget is the one amended 2026-10-16 (draws ≤ 300, SetPass ≤ 200, triangles ≤ 180k, at most 90 SkinnedMeshRenderers). The import task's triangle counts re-check it before D6.
+  - The device rule (`gpu`, `cpu` and `rt` each under 6 ms on the A16 iPad) is unchanged.
+- **15.13, as written.** Read "Mixamo" as "Synty animations". The third-party audit is `keep.txt` plus `packs.txt` (15.15.6).
+
+#### 15.15.3 What stays from 15.14
+
+- **The cell tint in `Toon.shader`** (D4) stays. Material branch 1 above uses it, and so does the KayKit troll option in M4.
+- **The four KayKit weapons** (D4) stay in the repo, unused by heroes, until the M4 troll decision, because a KayKit troll might carry one. They leave with the rest of KayKit after that decision.
+- **The troll** stays the KayKit mannequin on its Generic rig until M4.
+- **Dropped from 15.14:** the KayKit gear table, the Look rename, the KayKit budget, and 15.14.6's checks.
+- **Unchanged throughout:** 15.5 (camp, coins, flow), 15.6 (tests), 15.8's probe and soak capture, and 15.10 (no new packages).
+
+#### 15.15.4 `Body`, not `Look`
+
+**Decision: keep `HeroRecord.Body` and `HeroSpec.Body` (`"boy"` or `"girl"`) as D1 and D2 built them. §15.14.4's rename is not done.**
+
+Reason: on Synty the field holds exactly a body. 15.14.4 objected to the name only because, on KayKit, it would have held a skin tone. Keeping it means no code change, and the Body toggle stays under ruling 9a in its original form. If the producer keeps class × look instead (15.15.8 q1), 15.14.4 comes back unchanged.
+
+#### 15.15.5 Animation pipeline (replaces 15.2)
+
+- **Files.** From Sword Combat, Bow Combat, and Emotes and Taunts, keep:
+  - the POLYGON files only: `A_POLY_*`, plus Sword Combat's unprefixed `A_Attack_*`, `A_Hit_*` and so on;
+  - never the Sidekick files (`A_MOD_*`), never `RootMotion` or `_RM` variants, never `FPV` variants;
+  - both `_Masc` and `_Femn` where a clip has both.
+
+  They go through `extract.sh` into `Assets/ThirdParty/Synty/Animations/`. The Sword pack's prop bone is ignored: weapons sit in the sockets.
+- **`SyntyPostprocessor` rule for `Animations/`.**
+  - `animationType = Human`, `avatarSetup = CreateFromThisModel`, animation imported, `materialImportMode = None`, blend shapes, cameras and lights off, read/write off, `globalScale` the same constant as the hero FBX, `animationCompression = Optimal`.
+  - The clip is renamed to its file name without the extension (15.2's rule).
+  - `loopTime` and `OnImpact` come from `clips.json`.
+  - Root rotation, height and XZ are baked into the pose, based on Original (15.2's rule).
+  - If an avatar is not valid, the fallback is `CopyFromOther` with the hero FBX's avatar.
+- **Masculine and feminine clips.** Data writes `{g}` where a clip has Masc and Femn files; the generator substitutes `Masc` for boy and `Femn` for girl.
+  - So the override controllers become one per variant, `{classId}_{body}.overrideController` (eight), replacing the four per class.
+  - `Combatant.controller` is unchanged.
+
+| State | Swordsman | Archer | Mage | Fighter |
+|---|---|---|---|---|
+| Idle | `A_Idle_Base_Sword` | `A_POLY_BOW_Stand_Idle_Base_WithBow_{g}` | `A_Idle_Base_Sword` | `A_Idle_Base_Sword` |
+| Walk | the class's Idle clip | the class's Idle clip | the class's Idle clip | the class's Idle clip |
+| Attack | `A_Attack_LightCombo01A_ReturnToIdle_Sword` | Bow Combat draw-and-release (name at import, fact f) | `A_Attack_HeavyStab01_ReturnToIdle_Sword` (staff thrust) | `A_Attack_HeavyCombo01A_ReturnToIdle_Sword` |
+| Skill | `A_Attack_HeavyFlourish01_ReturnToIdle_Sword` | Bow Combat heavier shot (name at import) | `A_POLY_EMOT_Happy_ArmsRaised_{g}` (staff raised, the spell) | `A_Attack_LightLeaping01_ReturnToIdle_Sword` (leap: Ground Pound) |
+| Hit | `A_Hit_F_React_Sword` | `A_Hit_F_React_Sword` | `A_Hit_F_React_Sword` | `A_Hit_F_React_Sword` |
+| BigStagger | `A_Hit_F_Stagger_Sword` | `A_Hit_F_Stagger_Sword` | `A_Hit_F_Stagger_Sword` | `A_Hit_F_Stagger_Sword` |
+| Defend | `A_Block_Loop_Sword` | `A_Block_Loop_Sword` | `A_Block_Loop_Sword` | `A_Block_Loop_Sword` |
+| Defeat | `A_Death_B_01_Sword` | `A_Death_B_01_Sword` | `A_Death_B_01_Sword` | `A_Death_B_01_Sword` |
+| Victory | `A_POLY_EMOT_Happy_FistPump_{g}` | `A_POLY_EMOT_Happy_FistPump_{g}` | `A_POLY_EMOT_Happy_FistPump_{g}` | `A_POLY_EMOT_Happy_FistPump_{g}` |
+
+- **Walk** maps to Idle because no V1 code plays Walk. If a later feature needs a walk, the pack is ANIMATION - Base Locomotion.
+- **The Mage.** Synty has no magic animation pack. The spell is read through the staff motion plus the violet burst and the rest of the hit recipe (V1-SCOPE §5 asks for no projectile).
+- **`clips.json`.** Loop: both idles and `A_Block_Loop_Sword`. The six Attack and Skill clips named above, plus the Archer's two, get an impact from `ImpactFinder` with Humanoid sampling, confirmed by eye.
+- **Supporting code.** `CombatantActor` gets the Humanoid bone lookup (15.7).
+- **A clip that reads wrong** is fixed by a different name in the table, never by code.
+
+#### 15.15.6 The subscription and the repo
+
+**Licence facts** (Standard Subscription Licence, 9 July 2026):
+- Development use is licensed while the subscription is active (clause 1.3).
+- After cancellation or expiry:
+  - Synty's assets may not be used in any new IP created after that date (12.2);
+  - minor bug fixes are allowed only if the product is not substantially developed, or if the assets are being removed (12.2);
+  - substantial development needs an active subscription (12.3);
+  - downloads stop on the date of cancellation.
+- The AI exclusion (1.4) matches the one-time licence, so 15.1's no-bytes rule applies.
+- The licence is silent on continuing to sell a product released while subscribed.
+
+**What the repo keeps:**
+1. **The extracted files are committed,** as 15.1 says, in the local, private repo.
+2. **`Tools/synty/packs.txt` (new).** One line per downloaded pack: store name, version as shown on the store page, date downloaded, licence (`subscription`), and the SHA-256 of the downloaded file. Together with `keep.txt` and `package-contents.txt`, it is the exact record of which files in the repo are Synty's and under which licence.
+3. **Synty files stay identifiable.** Every Synty file lives under `Assets/ThirdParty/Synty/`, and the generator log names every generated asset derived from one (prefabs, materials, baked textures). So everything Synty can be removed or replaced if the subscription ends.
+4. **A one-time licence bought later** for a pack (for example with the store credit) changes that pack's `packs.txt` licence to `perpetual`, with the date.
+5. **Review audit:** every file under `Synty/` is in `keep.txt`, and every `keep.txt` line belongs to a `packs.txt` pack.
+
+#### 15.15.7 PLAN-M2
+
+- **D4** is done and stays: the cell tint and the KayKit weapons (15.15.3).
+- **D5 becomes *Synty extract and import*.** It waits on Martin's M2 downloads and the producer's rulings.
+  - Work: `extract.sh`, `keep.txt`, `package-contents.txt`, `packs.txt`; `SyntyPostprocessor` for models, textures and animations; the import check.
+  - It reports facts (a)–(g), including heights and triangle counts against 15.7's budget.
+- **D6 becomes *Synty heroes and data*,** with no Look rename.
+  - Data: `classes.json` variants, `parts` and `tone`; `skinTones`; clips with `{g}`; `items.json` meshes and parts; `clips.json`.
+  - `HeroGenerator`: eight prefabs, sockets, the two weapon children, armor parts inactive, materials per fact (b), eight override controllers.
+  - `CombatantActor`'s Humanoid lookup; `BattleView` spawns `{ClassId}_{Body}`; `VariantCapture`; deletion of the M1 class prefabs and materials.
+- **D6a** is unchanged and can run now.
+- **D7:** 15.4's part-group armor rule plus the role-named weapon children.
+- **D8:** 15.7's budget, the soak, the evidence, and the audit in 15.15.6.
+- **Needs Martin:** the M2 download (15.15.1) before D5. Items 13 and 14 stand, with "Body" toggle.
+
+#### 15.15.8 Questions for the producer
+
+1. **Reverse the 15.14.8 rulings, q1–q6?**
+   - §9 characters become Synty Modular Fantasy Hero through SyntyPass; §9 animations become the three Synty ANIMATION packs.
+   - §3 and §11 go back to class × body: eight variants, 4 classes × boy and girl, each with a fixed tone under ruling 7's original wording ("the boy and girl of each class differ").
+   - §12 M2 goes back to "Synty bases, 8 hero variants, Synty animations, weapon and armor sockets" with *Done when* unchanged; ruling 9a goes back to the Body toggle.
+   - §9 environments become Synty packs from M3.
+   - *Recommend yes, if q2 and q3 are approved.* The code is already class × body (D1, D2), so this path costs less code than the Look path. It also answers the M4 kid-session question about boy and girl heroes before the session.
+2. **Licence.** Under clauses 12.2 and 12.3, after a lapse the game may not be substantially developed with Synty assets, and the licence is silent on continued sales. That is the producer's SyntyPass condition (b).
+   - *Recommend approving with this condition:* the subscription stays active from the first Synty file committed until V1's last substantial update.
+   - Also: the lead writes now to `licencing@syntystudios.com` (the address in the licence) and asks whether a game released while subscribed may keep being sold, and receive minor fixes, after cancellation. The answer is filed in STATUS.
+   - Whether that answer is enough for a public release is still the lawyer question the producer named.
+3. **Budget, condition (c).** The packs V1 would use cost US$1,004.92 one-time (15.15.1). SyntyPass costs US$40 a month with a 3-month minimum (US$120), or US$360 a year. So the subscription is cheaper for about 25 months on monthly billing, or about 33 months on yearly.
+   - *Recommend:* monthly now, while M2 proves the art; switch to yearly at M3 start if it holds.
+   - Put the US$10 monthly store credit (the lead's figure; the rules are not verified here) towards the hero pack's one-time licence (US$149.99). That makes the most-used pack perpetual and shrinks the lapse risk in q2.
+4. **Condition (a)** asked for SyntyPass to come through the M4 revisit. The owner has decided earlier; waiving (a) is the producer's call. *Recommend waiving it.* With paid art landing in M2, the framing, troll and environment work does not move into M5.
