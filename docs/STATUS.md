@@ -8,7 +8,7 @@ Owner: **Producer** persona keeps this current; the lead maintains "Needs Martin
 
 **M1 — Battle slice: signed off by the producer 2026-10-16** (see Sign-offs). Build 15 (0.1.0) soaked on the iPhone 17 Pro and the iPad (A16); the soak report was accepted once without times or readings (Producer rulings, 2026-10-16). Plan `docs/PLAN-M1.md`, evidence `docs/evidence/M1/M1-EVIDENCE.md`. The sign-off commit sets `bundleVersion` to 0.2.0.
 
-**M2 — Heroes and gear: design confirmed by the architect 2026-10-16** (ARCHITECTURE §15); producer rulings on §15.11 and the lead's four questions given 2026-10-16 (Producer rulings). Next: `docs/PLAN-M2.md`. Work that does not need the Synty or Mixamo files (Core camp model, camp screens, soak probe) can start before they arrive.
+**M2 — Heroes and gear: design confirmed by the architect 2026-10-16** (ARCHITECTURE §15); producer rulings on §15.11 and the lead's four questions given 2026-10-16 (Producer rulings). Plan `docs/PLAN-M2.md`. D1–D3 are done and lead-verified 2026-10-16: the Core camp model with 13 tests; the Camp screen (shop, equip, coins), which the app now opens on; and the soak probe with terminal capture. D4–D8 wait on Needs Martin 11 (Synty) and 12 (Mixamo). The architect is reconciling the §15.7 render budget with what the probe's counters measure.
 
 ## Needs Martin (in order)
 
