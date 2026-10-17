@@ -28,6 +28,10 @@ namespace Game.Runtime
             party = DebugParty.CreateParty();
             battle = new BattleService(tables, party);
             audio = AudioService.Create(host);
+#if SQ_PROBE
+            // §15.8: probe builds only; the TestFlight build has neither this line nor the class.
+            host.AddComponent<SoakProbe>();
+#endif
         }
 
         static InvalidOperationException NotCreated() =>

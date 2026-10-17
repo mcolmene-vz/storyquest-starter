@@ -17,7 +17,8 @@ namespace Game.Runtime
         }
 
         public MonoBehaviour Host { get; }
-        public FlowState Current { get; private set; } = FlowState.Boot;
+        // Static so SoakProbe can print it without holding the controller (§15.8); there is only one flow.
+        public static FlowState Current { get; private set; } = FlowState.Boot;
 
         public void Go(FlowState next)
         {

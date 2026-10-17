@@ -22,6 +22,7 @@ namespace Game.Editor
 
         const string CompanyName = "Vendoza LLC";
         const int ArchitectureArm64 = 1;
+        const string ProbeDefine = "SQ_PROBE";
 
         public static void ApplyPlayerSettings()
         {
@@ -54,6 +55,14 @@ namespace Game.Editor
             PlayerSettings.SetApiCompatibilityLevel(NamedBuildTarget.Standalone, ApiCompatibilityLevel.NET_Standard);
             PlayerSettings.SetManagedStrippingLevel(ios, ManagedStrippingLevel.Low);
             PlayerSettings.colorSpace = ColorSpace.Linear;
+            // §15.8: on in every build. They measure nothing unless SoakProbe reads them, and one console line per
+            // Log or Warning keeps the saved soak log readable; errors keep the script frames.
+            PlayerSettings.enableFrameTimingStats = true;
+            PlayerSettings.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
+            PlayerSettings.SetStackTraceLogType(LogType.Warning, StackTraceLogType.None);
+            PlayerSettings.SetStackTraceLogType(LogType.Error, StackTraceLogType.ScriptOnly);
+            PlayerSettings.SetStackTraceLogType(LogType.Assert, StackTraceLogType.ScriptOnly);
+            PlayerSettings.SetStackTraceLogType(LogType.Exception, StackTraceLogType.ScriptOnly);
             // Explicit list first: SetUseDefaultGraphicsAPIs(false) after it keeps m_Automatic at 0 in ProjectSettings.
             PlayerSettings.SetGraphicsAPIs(BuildTarget.iOS, new[] { GraphicsDeviceType.Metal });
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.iOS, false);
@@ -99,6 +108,10 @@ namespace Game.Editor
 
         public static void BuildIOS()
         {
+            // §15.8: the probe define goes to this one player compile only, never into Player Settings, so a TestFlight
+            // build carries no probe code and ProjectSettings.asset does not churn between the two kinds of build.
+            bool probe = Environment.GetEnvironmentVariable("SQ_TESTFLIGHT") != "1";
+            Debug.Log("[BuildIOS] " + ProbeDefine + (probe ? " on" : " off"));
             ApplyPlayerSettings();
 
             int previous = int.TryParse(PlayerSettings.iOS.buildNumber, out var parsed) ? parsed : 0;
@@ -132,6 +145,7 @@ namespace Game.Editor
                     locationPathName = location,
                     target = BuildTarget.iOS,
                     options = options,
+                    extraScriptingDefines = probe ? new[] { ProbeDefine } : Array.Empty<string>(),
                 });
             }
             finally

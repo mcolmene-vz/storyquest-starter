@@ -25,7 +25,8 @@ export UNITY="/Applications/Unity/Hub/Editor/6000.3.26f1/Unity.app/Contents/MacO
 "$UNITY" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testResults Builds/test-results.xml -logFile -
 
 # iOS build → Builds/iOS/ (an Xcode project). SQ_APPLE_TEAM_ID enables automatic signing;
-# SQ_SIMULATOR=1 builds a simulator project into Builds/iOS-sim instead; SQ_DEV=1 makes a development build.
+# SQ_SIMULATOR=1 builds a simulator project into Builds/iOS-sim instead; SQ_DEV=1 makes a development build;
+# SQ_TESTFLIGHT=1 leaves the soak probe out (every TestFlight upload, §3b).
 SQ_APPLE_TEAM_ID=W727YBJNK6 "$UNITY" -batchmode -nographics -projectPath . -executeMethod Game.Editor.BuildPipeline.BuildIOS -logFile - -quit
 ```
 
@@ -77,6 +78,73 @@ What to look for: the label `Taps: 0  <width>×<height>  safe (x, y, width, heig
 After the first time, Xcode remembers the signing. Rebuilding from Unity with "Append" keeps the Xcode project settings; "Replace" loses them, so always append.
 
 While the app runs from Xcode, the Debug navigator (⌘7) shows the FPS and memory gauges the milestone soaks read, and red lines in the console under it are what we report.
+
+## 3b. Soak capture from the terminal (lead)
+
+The milestone soak (ARCHITECTURE §14.8 and §15.8) is judged from a console log the lead saves from the terminal while Martin plays. The pass rules are the producer's (STATUS, Producer rulings 2026-10-16, item 4). Nothing here sends anything off the Mac.
+
+**Which build.** Every `BuildIOS` build is a probe build unless `SQ_TESTFLIGHT=1` is set. The first `[BuildIOS]` line in the build log says `SQ_PROBE on` or `SQ_PROBE off`; that line goes in the evidence. A probe build writes one `[Probe]` line to the console every 30 s. The TestFlight upload (§4) is always built with `SQ_TESTFLIGHT=1`.
+
+```bash
+# the soak build (a probe build) → Builds/iOS/
+SQ_APPLE_TEAM_ID=W727YBJNK6 "$UNITY" -batchmode -nographics -projectPath . -executeMethod Game.Editor.BuildPipeline.BuildIOS -logFile Builds/build-soak.log -quit
+grep -m1 "SQ_PROBE" Builds/build-soak.log      # must say: [BuildIOS] SQ_PROBE on
+
+# iPhone 17 Pro = 00008150-00025D6811F0401C, iPad (A16) = 00008120-001C198908A14032
+# (on another Mac, `xcrun devicectl list devices` shows the identifiers)
+
+# install: the normal route is Martin's Xcode Run (§3) on each device, then Stop; the app stays installed.
+# The terminal route needs a .app signed for the device (a signed xcodebuild; not yet tried on this Mac):
+xcrun devicectl device install app --device <UDID> <path>/StoryQuest.app
+
+# launch and capture; <device> is iphone or ipad. Every line gets the wall-clock time in front.
+mkdir -p Builds/evidence/M2
+xcrun devicectl device process launch --console --terminate-existing --device <UDID> com.vendoza.storyquest 2>&1 \
+  | while IFS= read -r l; do printf '%s %s\n' "$(date +%H:%M:%S)" "$l"; done > Builds/evidence/M2/soak-<device>.log
+# It returns when the app exits. Ctrl-C ends the capture early; the lines already written stay in the file.
+
+# a device screenshot, with nobody touching the device (works while the capture runs, from a second terminal)
+xcrun devicectl device capture screenshot --device <UDID> --destination Builds/evidence/M2/<name>.png
+```
+
+`--console` captures the app's stdout and stderr: Unity's startup lines, every `Debug.Log`, and the engine's own warnings and errors. It drops what only Xcode shows: os_log lines from iOS frameworks and Metal API-validation messages. Unity's startup lines and the first `[Probe]` line must be in the file; if they are not, that device's soak falls back to Xcode as in M1.
+
+**Judging the log.** For each device:
+
+```bash
+LOG=Builds/evidence/M2/soak-iphone.log
+head -1 "$LOG"; tail -1 "$LOG"                            # start and end time: at least 10 minutes apart
+grep '\[Probe\]' "$LOG"                                   # one line every 30 s; a gap over 60 s means re-run that device
+grep -nE 'Error|Exception|RenderPass|Attachment' "$LOG"   # red lines: write down each text
+grep -E 'Error|Exception|RenderPass|Attachment' "$LOG" | cut -d' ' -f2- | sort | uniq -c   # and whether it repeats
+```
+
+A probe line reads:
+
+```
+[Probe] t=212s flow=Battle fps avg 59.8 min 52.1 | gpu group avg 3.9 max 5.2 ms | cpu 6.1 ms | mem 187.4 MB
+```
+
+- `t`: seconds since the app started. `flow`: the screen when the line was written; the first `flow=Battle` is where the first battle starts.
+- `fps avg`: frames divided by seconds over the 30 s. `min`: the slowest whole second in them. Pass: avg 58 or more in every line after the first battle starts, with no downward drift over the last 3 minutes.
+- `gpu group`: GPU time per frame, averaged only over frames in the group shot (the wide battle camera). `-` means those 30 s had no group-shot frame (Camp, or only action shots). `avg 0 max 0` means the device returned no GPU time: read it from Xcode instead (Debug navigator ⌘7 → GPU, during a group shot); it is not a pass. Pass: the iPad's avg under 6 ms.
+- `cpu`: main-thread time per frame, averaged. `mem`: the memory Unity itself has reserved (`Profiler.GetTotalReservedMemoryLong`), in MB of 1,048,576 bytes. It is not the whole-app figure in Xcode's memory gauge. Pass: within ±5 MB after the first battle starts, and under 300 MB on the iPhone.
+- Development players add `| group draws … setpass … tris …`: the highest draw-call, SetPass and triangle counts of any group-shot frame in those 30 s, against the ARCHITECTURE §15.7 budget. They stand in for the Frame Debugger; a release player has no such counters. Development players are every `SQ_DEV=1` build and every simulator build: Unity 6000.3 ships the simulator player only in its development variant.
+
+The simulator log from §2b carries the same lines. The simulator's GPU numbers say nothing about a device.
+
+**The probe is out of the TestFlight build.** Before trusting an empty result, run the grep on a probe build, where it must find the string:
+
+```bash
+grep -rla '\[Probe\]' Builds/iOS/Data      # probe build: prints Builds/iOS/Data/Managed/Metadata/global-metadata.dat
+SQ_TESTFLIGHT=1 SQ_APPLE_TEAM_ID=W727YBJNK6 "$UNITY" -batchmode -nographics -projectPath . -executeMethod Game.Editor.BuildPipeline.BuildIOS -logFile Builds/build-testflight.log -quit
+grep -m1 "SQ_PROBE" Builds/build-testflight.log   # must say: [BuildIOS] SQ_PROBE off
+grep -rla '\[Probe\]' Builds/iOS/Data      # TestFlight build: prints nothing
+# after Product → Archive, the same grep over the archived app must print nothing too:
+grep -rla '\[Probe\]' ~/Library/Developer/Xcode/Archives/<date>/<name>.xcarchive/Products/Applications/StoryQuest.app
+```
+
+If the probe build's grep prints nothing, the pattern is wrong (IL2CPP keeps string literals in `global-metadata.dat`), not the build; fix the pattern before believing a TestFlight result.
 
 ## 4. TestFlight (so the family can install without a cable)
 

@@ -133,7 +133,20 @@ D4 and D5 do not depend on each other. Whichever download arrives first goes fir
   - `git status` after both builds shows no settings drift.
   - The gate passes 13/13.
 - **Not part of it:** sending anything anywhere, an on-screen FPS counter, any change to gameplay.
-- **Status:** not started (the architect's §15.8 notes are in, 2026-10-16).
+- **Status:** done 2026-10-16, verified by the lead.
+  - The lead's own gate: 13/13, zero warnings.
+  - `SoakProbe` read against §15.8: no per-frame allocation, invariant culture, the exact line format, `-` and `avg 0 max 0` as specified.
+  - ProjectSettings diff: exactly `enableFrameTimingStats` and `m_StackTraceTypes` (Log and Warning to None); no `SQ_PROBE` anywhere; `buildNumber` reverted.
+  - The developer's runs:
+    - a probe simulator build logged `SQ_PROBE on` and wrote twelve probe lines 30 s apart over 6 min, with `flow` going Camp → Battle → Camp, fps 58–60 and memory flat at 219–225 MB;
+    - an `SQ_TESTFLIGHT=1` build logged `SQ_PROBE off`; the grep found nothing in its Data or its `.app`, and found `global-metadata.dat` on the probe build.
+  - `FlowController.Current` is now static (the smallest change; the brief allowed it).
+
+  Findings sent to the architect the same day:
+  1. Unity 6000.3 ships only a development simulator runtime, so every simulator build is a development player. The release `mem` value was confirmed instead on a throwaway macOS standalone player (`GetTotalReservedMemoryLong` is non-zero in release).
+  2. The render counters on unchanged M1 content read 131 draws, 89 SetPass and about 111k triangles against §15.7's 280 / 12 / 60k. Either they count every pass or M1 was already over, so the budget's terms need reconciling before D8.
+  3. `mem` is Unity-reserved memory, not Xcode's whole-app figure.
+  4. The TestFlight build still lists the class name `SoakProbe` in Unity's script table, with no code and no literal.
 
 ### D4 — Synty extraction and import (needs Needs Martin 11)
 

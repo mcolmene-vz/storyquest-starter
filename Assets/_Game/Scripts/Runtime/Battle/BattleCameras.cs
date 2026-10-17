@@ -105,7 +105,11 @@ namespace Game.Runtime
                 PropagationSpeed = 343f,
             };
             Impulse.DefaultVelocity = ImpulseVelocity;
+            GroupShotLive = true;
         }
+
+        /// True while CM_Group has priority; SoakProbe averages GPU time over these frames only (§15.8).
+        public static bool GroupShotLive { get; private set; }
 
         public Transform Root { get; }
         public CinemachineCamera Group { get; }
@@ -122,7 +126,11 @@ namespace Game.Runtime
             Action.transform.SetPositionAndRotation(position, Quaternion.LookRotation(aim - position));
         }
 
-        public void SetActionActive(bool active) => Action.Priority = active ? ActionPriority : 0;
+        public void SetActionActive(bool active)
+        {
+            Action.Priority = active ? ActionPriority : 0;
+            GroupShotLive = !active;
+        }
 
         // World offset, not local: the troll's 1.35 root scale must not lift its anchor. Parented so it follows knockback.
         static Transform CreateAnchor(CombatantActor actor)
@@ -135,6 +143,7 @@ namespace Game.Runtime
 
         public void Destroy()
         {
+            GroupShotLive = false;
             if (brain != null && brain.CustomBlends == blends)
                 brain.CustomBlends = null;
             Object.Destroy(blends);
