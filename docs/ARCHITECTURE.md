@@ -1766,3 +1766,59 @@ Both are inside the budget. The renderer count is at the cap only if every hero 
   - the `EditorOnly/` copies only if the baker (step 3) is used.
 
   The rest leave, so `keep.txt` stays the exact record of what V1 uses.
+
+#### 15.18.8 D6.2 open items (2026-10-17), fixed in D6.2a
+
+These rest on the evidence in `Builds/evidence/M2/`: `d6-variants-sheet`, `d6-grips-sheet`, `variant-fighter_boy`, and the `d6-{iphone,ipad}-{A,B}` actions sheets, which the architect has seen.
+
+**1. Male stubble: the chin becomes skin.**
+- **Decision: the stubble swatch takes the tone exactly, so there is no stubble.**
+  - The heroes are what a 5–11-year-old picks to be. A grey jaw reads as dirt on medium and dark skin, and as a pale chin today.
+  - "No stubble" is the same on every tone and every boy.
+  - It is still a multiply, so any shading inside the swatch survives. It needs one more Vector, not a second texture.
+- **Measure the blue channel's polarity first** (in `SyntyImportCheck`). For `Mask_03.b`, print the share of texels above and below 0.5, and `01_A`'s mean colour in each set.
+  - The stubble set is the small one whose mean is about #CDB3A1.
+  - Expected: white-on-black (`stubble = b`). That is why `min(r, b)` tinted the whole body: `b` is near 0 almost everywhere.
+  - If the stubble set also covers swatches other than the stubble swatch, the check lists them and the architect rules (likely a UV-rectangle clamp) before the shader is changed.
+- **Mask format.** `Mask_03` needs red and blue.
+  - Use **RG16 with the importer's swizzle putting source blue into green** (`swizzleG = B`), if 6000.3's `TextureImporter` has the swizzle; otherwise **RGBA32**.
+  - Uncompressed either way, for the same reason R8 was chosen: compression would bleed swatch edges.
+  - Linear, 1024, mips on, bilinear, clamp. About 2.7 MB with mips for RG16, 5.3 MB for RGBA32.
+- **Shader** (`ToonForward`, under `_SKIN_TINT`, replacing §15.18.2's two lines):
+  ```hlsl
+  half4 m = SAMPLE_TEXTURE2D(_SkinMask, sampler_SkinMask, saturate(input.uv));
+  half skin = 1.0h - m.r;          // Mask_03.r, black-on-white
+  half stubble = m.g;              // Mask_03.b swizzled to G (m.b in the RGBA32 fallback); polarity as measured
+  albedo *= lerp(lerp(half3(1,1,1), _SkinTint.rgb, skin), _StubbleTint.rgb, stubble);
+  ```
+  - Stubble wins where both are set.
+  - `_StubbleTint` is a Vector in `UnityPerMaterial`, default `(1,1,1,1)`. It is set by the generator per tone material as `tone.linear / stubbleReference.linear`.
+  - `classes.json` gets `"stubbleReference": "#CDB3A1"`, the measured mean. Light boys lose their stubble too, which is consistent.
+- **Verification:** `variant-{archer,mage,fighter}_boy` show one even skin colour from forehead to chin on all three tones.
+
+**2. Mage Skill length: trimmed, at most 2.5 s, like the Archer.**
+- `clips.json` gets an optional `"start"` (seconds) beside `"end"`, applied as the clip's first frame.
+- `A_POLY_EMOT_Happy_ArmsRaised_Masc` and `_Femn` are each trimmed by eye to the raise, the peak (the impact) and as much of the lowering as fits in 2.5 s. Each file gets its own numbers.
+- If the lowering does not fit, the end falls after the peak and the 0.1 s exit blend takes the arms down. If that reads as a snap on the captures, the Mage's Skill uses its Attack clip (`A_Attack_HeavyStab01_ReturnToIdle_Sword`) instead.
+- **New guard:** the generator fails if any Attack or Skill clip, after trimming, runs over 2.5 s, naming the clip. No action shot then holds longer than 2.5 s plus §14.4's 0.7 s rule.
+
+**3. Action-shot framing: at D6b's re-measure, not in D6.2a.**
+- The troll changes in D6b, and the action pose aims at the attacker–target midpoint. So one framing pass on final content beats two.
+- The troll and the number read in every D6.2 shot, which is what §14.4 requires. The attacker, with a 2.1 m bow or a 2 m staff close to the lens, takes too much of the frame.
+- **The change D6b tries first.** Scale the §14.4 offsets by 1.6 about the attacker: back 4.8, right 0.48, up 4.48, all times the attacker's `s`. Narrow `CM_Action`'s FOV from 32 to 24. The aim (midpoint + 1.4 m) is unchanged.
+  - Modelled, this shrinks the attacker by about 16 % and keeps the target's on-screen height within about 5 % of D6.2's.
+  - Scaling about the attacker keeps §14.4's look-over-the-neighbours geometry.
+- **D6b's checks,** on both ratios, every class's Attack and Skill and the troll's attack, at the impact frame:
+  - the target's hips-to-head is at least 20 % of the frame height;
+  - the damage number is fully visible and not crossed by the attacker or its weapon;
+  - no neighbour's head is over the target.
+- If 1.6 fails a check, D6b tries 1.4 with FOV 26 and records the numbers in §14.4 with a dated note.
+
+**4. Schema additions, recorded.**
+- **Weapon item `texture`** (optional): the material for that item uses this texture instead of the mesh's default. `bow_2` = `AnimationBowCombat_Texture_04_C` (gold), chosen from D6.2's captures; that settles 15.18.4's "one alternative atlas". Only `04_C` stays on `keep.txt` beside `01_A`.
+- **Per-mesh `parts`** (optional): the child GameObjects to keep from the weapon file. Everything else is stripped at generation. The Long bow file holds three overlapping bow bodies, and only `Wep_Longbow_01` and its string are kept. The bow's renderer and triangle counts in 15.18.6 drop accordingly, and the generator log reports the new numbers.
+- **The weapon's default atlas becomes data, not a mesh-name prefix.** D6.2's `SM_Wep_` → hero `01_A`, `Wep_` → Bow Combat `01_A` rule would give D6b's troll club, `SM_Wep_Troll_01`, the hero atlas.
+  - In D6.2a, `classes.json` `weaponGrips` is renamed **`weaponMeshes`**. Each entry carries `pos`, `euler`, optional `parts`, and a required `texture`, the default atlas.
+  - `TableLoader` checks that every class, item and enemy weapon mesh has an entry with a `texture`.
+  - The rename costs one data and code change now, and the table no longer holds only grips.
+- **`ClipEntry.End` (and now `Start`)** lives in `KayKitPostprocessor` until D6b moves the clip-table reader to `Editor/Import/ClipTable.cs` (15.16.1). D6.2a adds `Start` there, unchanged in place.
