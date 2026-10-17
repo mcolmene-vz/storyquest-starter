@@ -269,7 +269,7 @@ namespace Game.Editor
             foreach (var name in names)
             {
                 var clip = FindClip(name);
-                var impacts = AnimationUtility.GetAnimationEvents(clip).Where(e => e.functionName == KayKitPostprocessor.ImpactFunction).ToList();
+                var impacts = AnimationUtility.GetAnimationEvents(clip).Where(e => e.functionName == ClipTable.ImpactFunction).ToList();
                 if (impacts.Count != 1)
                     missing++;
                 Debug.Log(Tag + string.Format(CultureInfo.InvariantCulture, "impact {0}: {1:F3} s, OnImpact {2}", name, clip.length,
@@ -541,7 +541,7 @@ namespace Game.Editor
             camera.fieldOfView = cameras.Action.Lens.FieldOfView;
 
             var clip = StateClip(attacker.Actor.Animator, state);
-            var impact = AnimationUtility.GetAnimationEvents(clip).FirstOrDefault(e => e.functionName == KayKitPostprocessor.ImpactFunction);
+            var impact = AnimationUtility.GetAnimationEvents(clip).FirstOrDefault(e => e.functionName == ClipTable.ImpactFunction);
             float impactTime = impact?.time ?? 0f;
             clip.SampleAnimation(attacker.Actor.Animator.gameObject, impactTime);
 

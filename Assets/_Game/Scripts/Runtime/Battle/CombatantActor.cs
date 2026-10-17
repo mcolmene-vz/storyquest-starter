@@ -9,9 +9,6 @@ namespace Game.Runtime
     public sealed class CombatantActor
     {
         public const string PrefabFolder = "Prefabs/Combatants/";
-        const string ChestBone = "chest";
-        const string HeadBone = "head";
-        const string HandRBone = "handslot.r";
 
         CombatantActor(int id, GameObject instance, Vector3 slotPosition)
         {
@@ -25,21 +22,15 @@ namespace Game.Runtime
             Renderers = instance.GetComponentsInChildren<Renderer>();
             BodyHeight = MeasureBodyHeight(Renderers);
 
+            if (!Animator.isHuman)
+                throw new InvalidOperationException(instance.name + " has no Humanoid avatar; regenerate the prefab");
+
+            // Every combatant is Synty and Humanoid (ARCHITECTURE §15.7, §15.16.1): the avatar names the bones, whatever
+            // the rig calls them.
             var model = Animator.transform;
-            if (Animator.isHuman)
-            {
-                // Synty heroes (ARCHITECTURE §15.7): the avatar names the bones, whatever the rig calls them.
-                Chest = Animator.GetBoneTransform(HumanBodyBones.Chest) ?? Missing(instance.name, nameof(HumanBodyBones.Chest), model);
-                Head = Animator.GetBoneTransform(HumanBodyBones.Head) ?? Missing(instance.name, nameof(HumanBodyBones.Head), model);
-                HandR = Animator.GetBoneTransform(HumanBodyBones.RightHand);
-            }
-            else
-            {
-                Chest = FindBone(model, ChestBone) ?? Missing(instance.name, ChestBone, model);
-                Head = FindBone(model, HeadBone) ?? Missing(instance.name, HeadBone, model);
-                // The troll's mannequin rig has no hand slots; weapons and hand effects check for null.
-                HandR = FindBone(model, HandRBone);
-            }
+            Chest = Animator.GetBoneTransform(HumanBodyBones.Chest) ?? Missing(instance.name, nameof(HumanBodyBones.Chest), model);
+            Head = Animator.GetBoneTransform(HumanBodyBones.Head) ?? Missing(instance.name, nameof(HumanBodyBones.Head), model);
+            HandR = Animator.GetBoneTransform(HumanBodyBones.RightHand);
         }
 
         public int Id { get; }
@@ -83,19 +74,6 @@ namespace Game.Runtime
         {
             Debug.LogError("[CombatantActor] " + prefabId + " has no bone '" + bone + "'; effects fall back to the model root");
             return fallback;
-        }
-
-        static Transform? FindBone(Transform parent, string name)
-        {
-            if (parent.name == name)
-                return parent;
-            for (int i = 0; i < parent.childCount; i++)
-            {
-                var found = FindBone(parent.GetChild(i), name);
-                if (found != null)
-                    return found;
-            }
-            return null;
         }
     }
 }

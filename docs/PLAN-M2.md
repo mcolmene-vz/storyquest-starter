@@ -311,7 +311,13 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
   - After step 3: scripted simulator battles on both ratios, with the troll's Attack and Skill firing `OnImpact` and framing within §15.13.
   - After step 4: no `KayKit` path or string left in `Assets/` (grep), regeneration byte-identical, the gate 13/13, and `packs.txt` with exactly five lines.
 - **Not part of it:** the M4 thrower, shaman and boss (M4); environments (M3).
-- **Status:** steps 1–3 done 2026-10-17, verified by the lead. Step 4 (KayKit removal) is next.
+- **Status:** D6b done 2026-10-17 (steps 1–4), verified by the lead.
+  - Step 4 files:
+    - the clip-table reader moved to `Editor/Import/ClipTable.cs`;
+    - 57 files deleted: `Assets/ThirdParty/KayKit/` with D4's four weapons, `KayKitPostprocessor`, `KayKitImportCheck`;
+    - 8 edited: `clips.json` lost its 22 KayKit entries; `CombatantGenerator`, `ImpactFinder` (Humanoid only), `SyntyPostprocessor`, `VariantCapture` and `CombatantActor` lost the name-based bone fallback, which now throws if a combatant isn't Humanoid; `AnimationEventRelay` and `BattlePresenter` changed wording only.
+  - The lead's own checks: `grep -rIil kaykit Assets/ Tools/` and `find Assets -path '*KayKit*'` find nothing; regeneration then the gate left the tree unchanged; gate 13/13 with zero warnings.
+  - The developer's checks: the move alone left every generated asset byte-identical before anything was deleted; `Combatant.controller` differs from M1 only in BigStagger speed; the simulator build's asset report has no KayKit file; battles to Victory on both simulators with clean logs; counters 185–187 / 125–127 / 64k; `packs.txt` has 5 rows.
   - The lead looked at `d6b-troll-colours-sheet.png` and `d6b-troll-iphone-FantasyRivals_01_C.png`.
   - Step 1 files:
     - `packs.txt` gains Fantasy Rivals 1.4.2 (5 rows).

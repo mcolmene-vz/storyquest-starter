@@ -31,8 +31,8 @@ namespace Game.Editor
         const string ParticleShaderName = "Universal Render Pipeline/Particles/Unlit";
         const string IdleState = "Idle";
         const string BigStaggerState = "BigStagger";
-        // §15.16.2: every combatant now has a dedicated stagger clip, so it plays at its authored speed (0.6 stretched
-        // KayKit's plain hit). Set by eye on a weakness hit.
+        // §15.16.2: every combatant has a dedicated stagger clip, so it plays at its authored speed. Set by eye on a
+        // weakness hit.
         const float BigStaggerSpeed = 1.0f;
         const float OneShotExitDuration = 0.1f;
         internal const float MinHeight = 1.2f;
@@ -53,9 +53,9 @@ namespace Game.Editor
         public static void Generate()
         {
             var tables = TableLoader.Load(new FileTableSource(DataFolder));
-            var clipTable = KayKitPostprocessor.LoadClipTable();
+            var clipTable = ClipTable.Load();
             if (clipTable == null)
-                throw new InvalidOperationException(Tag + KayKitPostprocessor.ClipTablePath + " missing or unreadable");
+                throw new InvalidOperationException(Tag + ClipTable.FilePath + " missing or unreadable");
             var clips = LoadClips();
             CheckClips(tables, clipTable, clips);
 
@@ -98,12 +98,12 @@ namespace Game.Editor
             public string ReadText(string tableName) => File.ReadAllText(Path.Combine(folder, tableName + ".json"));
         }
 
-        /// Every AnimationClip under the KayKit and Synty Animations folders by name, first file wins (the import checks
-        /// warn on duplicates).
+        /// Every AnimationClip under the Synty Animations folder by name, first file wins (the import check warns on
+        /// duplicates).
         static Dictionary<string, AnimationClip> LoadClips()
         {
             var clips = new Dictionary<string, AnimationClip>();
-            var folders = new[] { KayKitPostprocessor.AnimationsFolder.TrimEnd('/'), SyntyPostprocessor.AnimationsFolder.TrimEnd('/') };
+            var folders = new[] { SyntyPostprocessor.AnimationsFolder.TrimEnd('/') };
             var paths = AssetDatabase.FindAssets("t:Model", folders)
                 .Select(AssetDatabase.GUIDToAssetPath).Distinct().OrderBy(p => p, StringComparer.Ordinal);
             foreach (string path in paths)
@@ -115,7 +115,7 @@ namespace Game.Editor
 
         /// §14.2: every clip in a clips map exists under Animations/, has a clips.json entry, and Attack/Skill clips have
         /// an impact and, trimmed, run at most 2.5 s (§15.18.8). Hero maps are checked once per body, with {g} resolved (§15.15.5).
-        static void CheckClips(GameTables tables, Dictionary<string, KayKitPostprocessor.ClipEntry> clipTable,
+        static void CheckClips(GameTables tables, Dictionary<string, ClipTable.ClipEntry> clipTable,
             Dictionary<string, AnimationClip> clips)
         {
             var problems = new List<string>();
@@ -126,15 +126,15 @@ namespace Game.Editor
                 {
                     string name = map[state];
                     if (!clips.ContainsKey(name))
-                        problems.Add($"{id}.{state}: clip '{name}' not found in any FBX under {KayKitPostprocessor.AnimationsFolder} or {SyntyPostprocessor.AnimationsFolder}");
+                        problems.Add($"{id}.{state}: clip '{name}' not found in any FBX under {SyntyPostprocessor.AnimationsFolder}");
                     if (!clipTable.TryGetValue(name, out var entry))
-                        problems.Add($"{id}.{state}: clip '{name}' has no entry in {KayKitPostprocessor.ClipTablePath}");
+                        problems.Add($"{id}.{state}: clip '{name}' has no entry in {ClipTable.FilePath}");
                     else if (Array.IndexOf(ImpactStates, state) >= 0 && !entry.Impact.HasValue)
-                        problems.Add($"{id}.{state}: clip '{name}' has no impact in {KayKitPostprocessor.ClipTablePath}");
+                        problems.Add($"{id}.{state}: clip '{name}' has no impact in {ClipTable.FilePath}");
                     if (Array.IndexOf(ImpactStates, state) >= 0 && clips.TryGetValue(name, out var clip) &&
                         clip.length > MaxActionClipSeconds + ClipLengthTolerance)
                         problems.Add($"{id}.{state}: clip '{name}' runs {clip.length:F3} s, over §15.18.8's {MaxActionClipSeconds} s; " +
-                                     $"trim it with \"start\"/\"end\" in {KayKitPostprocessor.ClipTablePath}");
+                                     $"trim it with \"start\"/\"end\" in {ClipTable.FilePath}");
                 }
             if (problems.Count > 0)
                 throw new InvalidOperationException(Tag + problems.Count + " clip problem(s):\n - " + string.Join("\n - ", problems));

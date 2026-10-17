@@ -294,7 +294,7 @@ namespace Game.Runtime
                 yield return null;
             relay.Impact -= onImpact;
             if (!impactFired)
-                Debug.LogError(Tag + actor.Actor.Root.name + ": clip '" + clipName + "' ended without an OnImpact event; check clips.json and the KayKit import");
+                Debug.LogError(Tag + actor.Actor.Root.name + ": clip '" + clipName + "' ended without an OnImpact event; check clips.json and the Synty import");
         }
 
         /// Healed and Revived (§14.4): the actor casts, the target gets the green burst and number; no cut, no freeze, no knockback.

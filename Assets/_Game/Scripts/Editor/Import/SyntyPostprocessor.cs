@@ -9,7 +9,7 @@ namespace Game.Editor.Import
 {
     /// Import rules for the Synty files that Tools/synty/extract.sh copies (ARCHITECTURE §15.7, §15.15.5), keyed on the
     /// folder so no setting lives in a click. Synty's own .meta files are never copied, so every setting comes from here.
-    /// Loop flags and OnImpact events come from Resources/Data/clips.json, read exactly as KayKitPostprocessor reads it.
+    /// Loop flags, OnImpact events and trims come from Resources/Data/clips.json through ClipTable.
     public sealed class SyntyPostprocessor : AssetPostprocessor
     {
         public const string Root = "Assets/ThirdParty/Synty/";
@@ -265,8 +265,8 @@ namespace Game.Editor.Import
                 return;
 
             // Registering the table as a dependency reimports the clips when a number in it changes.
-            context?.DependsOnSourceAsset(KayKitPostprocessor.ClipTablePath);
-            var table = KayKitPostprocessor.LoadClipTable();
+            context?.DependsOnSourceAsset(ClipTable.FilePath);
+            var table = ClipTable.Load();
 
             var importer = (ModelImporter)assetImporter;
             var clips = importer.clipAnimations;
@@ -312,7 +312,7 @@ namespace Game.Editor.Import
                     clip.firstFrame = Mathf.Min(takeStart + Mathf.Round(entry.Start.Value * rate), clip.lastFrame);
                 clip.loopTime = entry.Loop;
                 clip.events = entry.Impact.HasValue
-                    ? new[] { new AnimationEvent { functionName = KayKitPostprocessor.ImpactFunction, time = entry.Impact.Value } }
+                    ? new[] { new AnimationEvent { functionName = ClipTable.ImpactFunction, time = entry.Impact.Value } }
                     : new AnimationEvent[0];
             }
             importer.clipAnimations = clips;
@@ -333,7 +333,7 @@ namespace Game.Editor.Import
                 return;
             }
 
-            // 1024, not KayKit's 512: Synty atlases are colour-swatch grids, and at 512 the first mip bleeds swatches together.
+            // 1024, not 512: Synty atlases are colour-swatch grids, and at 512 the first mip bleeds swatches together.
             var importer = (TextureImporter)assetImporter;
             importer.sRGBTexture = true;
             importer.maxTextureSize = MaxTextureSize;
