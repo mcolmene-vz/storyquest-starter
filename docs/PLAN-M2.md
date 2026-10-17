@@ -2,7 +2,7 @@
 
 Lead's plan for V1-SCOPE §12 M2. The design is ARCHITECTURE §15, as finally amended by **§15.15 (SyntyPass, owner decision 2026-10-16)**. §15.15 brings back the Synty route of §15.1–15.13, with Synty ANIMATION packs in place of Mixamo. §15.14 (KayKit no-spend) is superseded except for what §15.15.3 keeps: the D4 cell tint, the KayKit weapons and the KayKit troll until M4. M1 was signed off 2026-10-16. Producer rulings: §15.11 on 2026-10-16; §15.14.8 on 2026-10-16, reversed by the SyntyPass ruling of 2026-10-17 (STATUS → Producer rulings). Statuses are kept current here. Sign-off evidence goes to `docs/evidence/M2/` and to STATUS.md.
 
-**M2 is done when** (V1-SCOPE §12 M2 as amended 2026-10-17): Synty heroes, 8 hero variants (4 classes × boy and girl), Synty animations, visible weapon and armor swaps, equip screen, shop UI with the 14 items, coins. Buying a weapon in the shop changes the model in the next battle, on device. The producer checks all four weapon upgrades at sign-off. The rulings add:
+**M2 is done when** (V1-SCOPE §12 M2 as amended 2026-10-17, twice): Synty heroes, 8 hero variants (4 classes × boy and girl), Synty animations, a Synty troll grunt, no KayKit left in the project, visible weapon and armor swaps, equip screen, shop UI with the 14 items, coins. Buying a weapon in the shop changes the model in the next battle, on device. The producer checks all four weapon upgrades at sign-off. The rulings add:
 - the soak passes the thresholds in STATUS (devicectl log plus probe lines, both devices);
 - the iPhone gets an explicit yes for Silent mode;
 - one front-facing image per variant shows the skin-tone range;
@@ -13,7 +13,7 @@ Lead's plan for V1-SCOPE §12 M2. The design is ARCHITECTURE §15, as finally am
 ```
 D1 Core camp model ─► D2 Camp screens ─► D3 soak probe ─► D3a probe amendment ─► D4 KayKit weapons + cell tint ─► D6a graphics-API line
    (all done 2026-10-16/17)
-[Needs Martin 11: the four M2 Synty packs] ─► D5 Synty extract + import ─► D6 Synty heroes and data ─► D7 runtime gear swap ─► D8 device build, soak, evidence
+[Needs Martin 11: the four M2 Synty packs] ─► D5 Synty extract + import ─► D6 Synty heroes and data ─► D6b Synty troll, then KayKit removed ─► D7 runtime gear swap ─► D8 device build, soak, evidence
 ```
 
 D5–D8 wait on Martin's download (STATUS Needs Martin 11).
@@ -243,6 +243,21 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
   - The lead's own run: `ProjectSetup.Run`, then the gate (13/13, zero warnings). `git status` showed only `BuildPipeline.cs`, and `m_Automatic` stayed 1.
   - The developer's runs: a second regeneration changed nothing; a simulator build logged `[BuildIOS] graphics APIs [Metal]` and succeeded.
   - Reading accepted: the check runs before the build number is bumped. Its failure path has not been exercised.
+
+### D6b — Synty troll, then remove KayKit (ARCHITECTURE §15.16; producer ruling "All Synty")
+
+- **Goal:** in four steps, with the game runnable after each commit.
+  1. Extract the Fantasy Rivals files on a keep-list: the Big Rig troll model, the troll's weapon and its four colour textures. Nothing from the pack's demon, golem, red-eyed or blood art. Add the pack to `packs.txt`.
+  2. Front and battle-framing captures of the troll on both ratios, plus its height, triangles, renderer count and avatar validity, in `Builds/evidence/M2/`. **Then stop until the producer records the troll decision.**
+  3. `troll_grunt` regenerated from the Synty troll, with Sword Combat and Emotes clips for its nine states, at 2.2–2.4 m. The generator checks enemies at 2.0–2.5 m. BigStagger's speed goes back to 1.0, the only change to `Combatant.controller`. Camera anchors grow only above 2.2 m; framing is re-measured. First commit.
+  4. Move the clip-table reader out of `KayKitPostprocessor` into its own file. Then delete `Assets/ThirdParty/KayKit/` (D4's four weapons included), `KayKitPostprocessor`, `KayKitImportCheck`, the KayKit paths in `ImpactFinder`, `CombatantGenerator` and `CombatantActor`, and the KayKit `clips.json` entries. Second commit. D4's cell tint stays.
+- **Files:** per §15.16. Exact lists go into this entry at steps 1 and 4.
+- **Verification:**
+  - Step 2's captures and numbers meet the producer's pass rule: tone; no demon, golem, red-eyed or blood art; 2.0–2.5 m; a valid avatar; ≤ 15k triangles and ≤ 6 renderers, or a budget ruling first.
+  - After step 3: scripted simulator battles on both ratios, with the troll's Attack and Skill firing `OnImpact` and framing within §15.13.
+  - After step 4: no `KayKit` path or string left in `Assets/` (grep), regeneration byte-identical, the gate 13/13, and `packs.txt` with exactly five lines.
+- **Not part of it:** the M4 thrower, shaman and boss (M4); environments (M3).
+- **Status:** waits on D5 (Synty import pipeline) and D6. Step 3 also waits on the producer's troll decision.
 
 ### D7 — Runtime gear swap
 
