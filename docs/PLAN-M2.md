@@ -226,7 +226,7 @@ Nothing in D4–D8 waits on Martin until D8's install and soak.
   - Framing per §15.14.6: feet ≥ 27 %, head ≤ 86 %, no combatant under a card.
   - Nine captures converted with `sips`: three tones, faces visible, and only skin differs between a class's two looks.
 - **Not part of it:** the runtime gear swap (D7); hair tints; a stage; new enemies; any Synty, Mixamo or Sidekick code.
-- **Status:** not started. Waits on D4.
+- **Status:** paused 2026-10-16. Martin is getting SyntyPass and asked that hero work wait for the Synty files. The developer was stopped before changing any file. The architect is re-planning D6–D8 around Synty (ARCHITECTURE §15.15, pending).
 
 ### D6a — Stop the graphics-API line churning (ARCHITECTURE §13.6 note, 2026-10-16)
 
