@@ -12,7 +12,7 @@ Lead's plan for V1-SCOPE §12 M2. The design is in ARCHITECTURE §15 (15.1–15.
 ```
 D1 Core camp model + items + tests ─► D2 party, flow and Camp screens ─► D3 soak probe + build settings + capture commands ─► D3a probe amendment
    (done 2026-10-16)
-D4 KayKit weapons + shader cell tint ─► D6 Body→Look, data, generator: eight looks ─► D7 runtime gear swap ─► D8 device build, soak, evidence
+D4 KayKit weapons + shader cell tint ─► D6 Body→Look, data, generator: eight looks ─► D6a graphics-API line ─► D7 runtime gear swap ─► D8 device build, soak, evidence
 D5 (Mixamo): dropped by §15.14
 ```
 
@@ -26,7 +26,7 @@ Nothing in D4–D8 waits on Martin until D8's install and soak.
 - **Smoke item 1 until M3.** The "title" is the Camp screen (ruling 9c), and the M2 evidence says so.
 - **Look toggle and SoakProbe.** The Body toggle becomes a Look toggle in D6. It is in M2 builds only and is deleted in M3 with `DebugParty` (ruling 9a). SoakProbe is compiled out of the TestFlight build by the per-build `SQ_PROBE` define (ruling 9b).
 - **Performance counts without the editor GUI.** D3's probe prints draw calls, SetPass calls and triangles from `ProfilerRecorder` render counters in development players. These count every pass. §15.14.5 sets the M2 budget in those terms: draws ≤ 140, SetPass ≤ 100, triangles ≤ 120k, ≤ 42 combatant renderers (from the generator log), read on a simulator development player. On the A16 iPad device build, `cpu` and `rt` must each be under 6 ms in the group shot. Simulator runs never count for fps, CPU, GPU or memory.
-- **`ProjectSettings.asset` churn.** `m_Automatic` flips with whichever command ran last: `ProjectSetup.Run` writes 0, and any editor launch (the gate included) writes 1. The committed value is 1. Correction 2026-10-16: an earlier version of this line said 6a8bcda set 0; it did not. The architect decides the value. Until then, task diffs revert the line to HEAD and never commit it silently.
+- **`ProjectSettings.asset` churn.** `m_Automatic` flips with whichever command ran last: `ProjectSetup.Run` writes 0, and any editor launch (the gate included) writes 1. The committed value is 1. Correction 2026-10-16: an earlier version of this line said 6a8bcda set 0; it did not. The architect ruled on 2026-10-16 (§13.6): commit 1, let the generator use the automatic list, and have `BuildIOS` assert Metal-only (task D6a). Until D6a lands, task diffs revert the line to HEAD.
 - **Version string.** `bundleVersion` stays `0.2.0` through M2 and becomes `0.3.0` in the sign-off commit (§15.9).
 - **Tests.** `ProgressionTests.cs` holds exactly the five §15.6 tests and is closed at five (ruling 3). The total after M2 is 13.
 
@@ -227,6 +227,19 @@ Nothing in D4–D8 waits on Martin until D8's install and soak.
   - Nine captures converted with `sips`: three tones, faces visible, and only skin differs between a class's two looks.
 - **Not part of it:** the runtime gear swap (D7); hair tints; a stage; new enemies; any Synty, Mixamo or Sidekick code.
 - **Status:** not started. Waits on D4.
+
+### D6a — Stop the graphics-API line churning (ARCHITECTURE §13.6 note, 2026-10-16)
+
+- **Goal:**
+  - `BuildPipeline.ApplyPlayerSettings` calls `PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.iOS, true)` and drops the explicit `SetGraphicsAPIs` call.
+  - `BuildIOS` checks that `PlayerSettings.GetGraphicsAPIs(BuildTarget.iOS)` is exactly `[Metal]` before building, and fails with a message naming what it found.
+- **Files:** `Editor/BuildPipeline.cs`.
+- **Verification:**
+  - `ProjectSetup.Run` followed by the gate leaves `m_Automatic: 1` and `git status` clean.
+  - A simulator build passes the Metal check.
+  - The gate passes 13/13.
+- **Not part of it:** any other player setting.
+- **Status:** queued after D6. The developer works one task at a time, and D6 is running.
 
 ### D7 — Runtime gear swap
 
