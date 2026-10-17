@@ -1338,3 +1338,163 @@ Reason: on Synty the field holds exactly a body. 15.14.4 objected to the name on
      - The US$10 monthly store credit goes only towards the hero pack's one-time licence (US$149.99), recorded in `packs.txt` (15.15.6). Any other use of the credit, or a cash top-up, needs a new budget row and the producer's yes.
      - At US$10 a month that takes about 15 months, so the credit does not reduce the lapse risk inside V1.
 4. **Condition (a)** asked for SyntyPass to come through the M4 revisit. The owner has decided earlier; waiving (a) is the producer's call. *Recommend waiving it.* With paid art landing in M2, the framing, troll and environment work does not move into M5.
+
+### 15.16 All Synty (owner, 2026-10-17)
+
+Martin, verbatim: "what about the goblins? I dont want to use any of the kaykits anymore I want to use all synty so which ones do we need".
+
+This section removes KayKit from the game and pulls the troll forward into M2 on one Synty enemy pack. Three points need the producer (15.16.7): ruling 2 still dates the troll decision to M3 sign-off, V1-SCOPE §9 still allows KayKit, and goblins would be a story change.
+
+**What this rests on:**
+- **Store pages and marketing images** (syntystore.com, 2026-10-17) for the two enemy packs.
+- **A names-only listing of both enemy packages,** made after they landed in `~/Downloads/Synty/` on 2026-10-17: `POLYGON_Fantasy_Rivals_Unity_2022_3_v1_4_2.unitypackage` and `POLYGON_Goblin_War_Camp_Unity_2022_v1_1_1.unitypackage`. The script read each `pathname` entry as data, kept its code outside the downloads, and extracted nothing. What it established:
+  - Fantasy Rivals' troll is `SM_Chr_BR_Troll_01`. `BR` means Synty's Big Rig, which the ANIMATION packs name as supported.
+  - The troll lives in `Models/Characters_BR.fbx` alongside the pack's other Big Rig characters. Its weapon is `Models/SM_Wep_Troll_01.fbx`, and there is a helmet prop, `SM_Prop_TrollHelmet_01.fbx`.
+  - The colour variants are texture swaps: `Textures/FantasyRivals_0{1..4}_{A,B,C,D}.png`, four letters per atlas.
+  - Goblin War Camp's troll is `SM_Chr_Troll_01`. Its textures come in A–C alternates, and its models include `Models/CharactersBR.fbx`.
+  - Both packages also carry a demo scene, Synty's `PolygonGeneric` scripts and Shader Graph shaders. None of that is ever extracted (`keep.txt`, §15.1).
+- **D5's `package-contents.txt`** (names only) for the hero pack. Its weapons are `SM_Wep_Sword_01`, `_Sword_Large_01`, `_Sword_Small_01`, `_Sword_Rapier_01`, `SM_Wep_Staff_01/02`, `SM_Wep_Mace_01/02`, `SM_Wep_Axe_01`, daggers, jousts and shields. There is no bow, which confirms §15.1 fact (c).
+- **Unverified until D6b imports Fantasy Rivals:** the troll's height, triangle count and renderer count; whether it makes a valid Humanoid avatar; which of the four atlases (`01`–`04`) it samples; and whether `SM_Wep_Troll_01` is the club in the store images. Each is listed in 15.16.6 as something to check.
+
+#### 15.16.1 Removing KayKit: what goes, what stays, in what order
+
+**Goes, all of it:**
+- `Assets/ThirdParty/KayKit/`: the five characters including `Mannequin_Medium`, the seven weapons including D4's four, the five `Rig_Medium` animation files, the five textures and both licence files, with every `.meta`.
+- `Editor/Import/KayKitPostprocessor.cs` and `Editor/Import/KayKitImportCheck.cs`.
+- KayKit code paths elsewhere:
+  - `ImpactFinder` becomes Humanoid-only, sampling through `GetBoneTransform`.
+  - `CombatantGenerator` loses the KayKit folder constants, the KayKit texture-naming rule and the KayKit clip scan.
+  - `CombatantActor` loses its name-based bone fallback (`chest`, `head`, `handslot.r`); every combatant is Humanoid after this.
+- Data: every KayKit entry in `clips.json`. In `enemies.json`, `troll_grunt`'s `model`, `tint` and `clips` are replaced as described in 15.16.2.
+- Generated assets: the KayKit `troll_grunt` prefab, material and override controller are regenerated from the Synty troll under the same ids, so no runtime code changes. The M1 class prefabs and materials go in D6, as already planned.
+- **One prerequisite:** the `clips.json` reader (`LoadClipTable`, `ClipEntry`) lives in `KayKitPostprocessor` today. It moves to its own file, `Editor/Import/ClipTable.cs`, which `SyntyPostprocessor` and the generator use, before `KayKitPostprocessor` is deleted.
+
+**Stays:**
+- From D4, the palette-cell tint in `Toon.shader`. It is generic: material branch 1 of §15.15.2 can use it for hero skin, and it costs nothing where unused.
+- §14.1 and §15.14 stay in this document as history.
+
+**Order.** The developer works one task at a time, and every commit leaves a runnable game:
+1. **D5 (running):** the Synty files come in; KayKit is untouched.
+2. **D6:** the Synty heroes. The troll is still KayKit, which looks mixed but runs.
+3. **D7:** the gear swap. It touches nothing the troll uses.
+4. **D6b (new): Synty troll, then KayKit removal**, in two commits.
+   - Commit 1: `troll_grunt` is regenerated from the Synty troll, with the KayKit files still present but referenced by nothing; the framing is re-measured.
+   - Commit 2: KayKit is deleted. A fresh regeneration leaves every remaining generated asset byte-identical, the gate passes, and a scripted battle runs on both ratios.
+   - D6b can start as soon as the enemy pack is on disk and D6 is done, so before D7 if the pack lands early.
+5. **D8:** performance and the soak, measured on all-Synty content only.
+
+#### 15.16.2 The troll in M2: Fantasy Rivals' Troll
+
+**Decision (pending the producer, 15.16.7 q1): `troll_grunt` is the Troll from POLYGON - Fantasy Rivals Pack. The three M4 troll types and the boss are the same model, in its four colour variants and at two scales, so V1 needs one enemy pack.**
+
+| Point | Fantasy Rivals: Troll | Goblin War Camp: Troll |
+|---|---|---|
+| Tone (big, grumpy, dim, never scary for more than a line) | Bald, pot-bellied, droopy-nosed, barefoot, in a small cap. It reads as a big, slow lunk. The pack also has demons, a red-eyed blue giant, golems and a blood-splat effect, none of which is used. | A grey brute in an iron collar and chain, the goblins' war beast. The pack's art is spiky and dark: skulls, bone chimes, head spikes, red-eyed goblins. Usable, but further from "warm, a little spooky". |
+| Rig | `SM_Chr_BR_Troll_01`, a Big Rig character; "Characters set up with Mecanim" | `SM_Chr_Troll_01` (whether it is Big Rig is unverified); same Mecanim wording |
+| Animation | Humanoid. The ANIMATION packs list "POLYGON Big Rig characters" as supported; the import check proves it. | Humanoid, by retargeting |
+| Colours | Four texture variants, `_A` to `_D` (green, tan, olive and pale in Screenshot_04). That gives grunt, thrower, shaman and boss from one model. | Three texture alternates, `_A` to `_C`; none shown on the troll |
+| Height against the heroes | About twice a human in the store lineup (unverified). It is set by `scale` in data (below). | About 1.6 times a goblin (unverified) |
+| Triangles | Not listed; the import reports it (15.16.6) | Not listed |
+| What else it brings | Its own weapon, `SM_Wep_Troll_01` (the club, unverified until import), and a helmet prop | A log-walled camp that could be a fort, which would need a third environment pack (15.16.3) |
+
+**Clips for the troll's nine states.** All come from packs already on disk; `{g}` is fixed to `Masc` for enemies.
+
+| State | Clip |
+|---|---|
+| Idle, Walk | `A_Idle_Base_Sword` (club held) |
+| Attack | `A_Attack_HeavyCombo01B_ReturnToIdle_Sword` (club smash; the Fighter uses 01A) |
+| Skill | `A_Attack_HeavyCombo01C_ReturnToIdle_Sword` (the grunt never uses it; reserved for M4's behaviours) |
+| Hit | `A_Hit_F_React_Sword` |
+| BigStagger | `A_Hit_F_Stagger_Sword` |
+| Defend | `A_Block_Loop_Sword` |
+| Defeat | `A_Death_B_01_Sword` |
+| Victory | `A_POLY_EMOT_Celebrate_BeatChest_Masc` (a proud, silly chest-beat) |
+
+- **BigStagger speed.** `BigStagger` now has a dedicated stagger clip for every combatant, so its state speed goes from 0.6 back to 1.0. 0.6 existed only because KayKit had no stagger clip (§14.1). This is the one change to `Combatant.controller`, made in D6b and checked by eye on a weakness hit; if 1.0 reads too fast, the value is set by eye and recorded.
+
+**Data.** `enemies.json` `troll_grunt`:
+- `model`: `Characters_BR`, keeping only the troll's own GameObjects named by `SM_Chr_BR_Troll_01`. This is the same keep-and-strip rule as the hero parts.
+- `texture`: the colour variant's texture (`FantasyRivals_0n_A` for the grunt), replacing `tint`;
+- `weaponMesh` and `weaponSocket`: `SM_Wep_Troll_01` in `Socket_HandR`;
+- `scale`;
+- `clips`.
+
+The generator makes enemy sockets the same way as hero sockets (`GetBoneTransform`). `TableLoader` stops requiring `tint` and checks `texture` instead.
+
+**Height and framing.**
+- **The M2 grunt** stands 2.2–2.4 m after `scale`, chosen by eye on both ratios. M1's troll was 2.2 m; the Troll's bulk makes it read big at that height.
+- **The generator asserts the enemy's scaled height**, 2.0–2.5 m for the three troll types. The hero band, 1.2–2.4 m unscaled, is unchanged.
+- **Anchors above 2.2 m.** `BattleCameras` places a combatant's group anchor at `max(1.0, 0.45·h)` and gives it radius `max(1.2, 0.55·h)`, with `h` taken from renderer bounds at spawn. Heroes and a 2.2 m troll keep M1's 1.0 and 1.2. The §14.4 framing checks are re-measured in D6b.
+- **The boss** (M4) is the fourth colour at about 2.9 m, with its own framing pass then.
+
+**Triangles.** The §15.7 counter budget (300 draws, 200 SetPass, 180k counted triangles, 90 skinned renderers) is unchanged. If the troll is over 15k unique triangles or 6 renderers, D6b reports it before building on it.
+
+**M4 from the same model.** These are proposals for the M4 design, not M2 work:
+- the thrower is the second colour, throwing with `A_POLY_EMOT_Sporty_Baseball_Masc`, a pitch: a rock throw read through the motion and the hit recipe, no projectile (V1-SCOPE §5);
+- the shaman is the third colour, carrying a staff from the pack and using `A_POLY_EMOT_Happy_ArmsRaised_Masc`;
+- the boss is the fourth colour, scaled up.
+
+If two colours do not read as different on device, the fallback inside the same pack is the Big Ork for the thrower. That decision belongs to M4.
+
+#### 15.16.3 Goblins
+
+**Goblins have no role in V1.**
+- V1-SCOPE §4 and §5 and the STORY-BIBLE make Land 1's villains trolls: three troll types and a troll boss. Goblin enemies would change §5 and the land outline, which is the producer's and the story writer's call, not the architect's.
+- Goblin War Camp's only other use would be its log camp as the hill fort. Ruling "SyntyPass" allows at most two M3 environment packs, and a castle pack replaces one of them rather than adding a third. As a fort, Goblin War Camp would either replace Fantasy Village (losing the village and the river) or be a third environment pack.
+- **So Goblin War Camp is not needed.** If it was downloaded for comparison it stays unextracted, with no `packs.txt` line, and Martin may delete the file.
+- If the producer and story writer want goblins, the architect's recommendation is a BACKLOG row for a later land.
+
+#### 15.16.4 The all-Synty list for V1
+
+| # | Pack | When | Status |
+|---|---|---|---|
+| 1 | POLYGON - Modular Fantasy Hero Characters | M2 | on disk, extracting (D5) |
+| 2 | ANIMATION - Sword Combat | M2 | on disk |
+| 3 | ANIMATION - Bow Combat | M2 | on disk |
+| 4 | ANIMATION - Emotes and Taunts | M2 | on disk |
+| 5 | POLYGON - Fantasy Rivals Pack | **now (M2, D6b)** | on disk, 1.4.2 (Unity 2022.3 package), not yet extracted |
+| 6 | POLYGON - Meadow Forest - Nature Biome | M3 start | camp, forest, stream |
+| 7 | POLYGON - Fantasy Village | M3 start | village, river; the hill fort from its towers and walls, or from pack 6's stone walls and ruins. The M3 design confirms this against the approved outline. |
+
+- **Seven packs, inside the producer's cap of eight.** One slot is free; any use of it needs the producer's yes.
+- **Not needed:** POLYGON - Goblin War Camp (15.16.3).
+- **Outside the list:** POLYGON - Nature Biomes - Alpine Mountain was downloaded on 2026-10-17 (`POLYGON_NatureBiomes_AlpineMountain_Unity_2022_3_v1_5_5.unitypackage`). It is not extracted and has no `packs.txt` line. Using it needs the producer's yes, and as an environment pack it would replace one of packs 6 and 7.
+  - **It cannot replace Meadow Forest for Land 1** (from a names-only listing of the package, 2026-10-17). Its contents are pines, cliffs, rocks, snow mounds, ice sheets, stalactites, a lake, river rocks and a mountain range, plus camping props that read as modern (sleeping bag, thermos, folding chair, canoe, ice-fishing hut and auger) beside one tent, one campfire, a cabin, a jetty and a lookout.
+  - It has no village, no fort and no meadow forest. Its camp would put a thermos and a folding chair into a fantasy camp scene.
+  - **Meadow Forest stays the M3 pick** for the camp, the forest and the stream. Alpine Mountain could serve only a snowy mountain location, if the approved outline has one, and then only with the producer's yes, in place of one of the two M3 environment packs.
+- Nothing in V1 then uses KayKit.
+
+#### 15.16.5 PLAN-M2
+
+- **D6b (new): Synty troll and KayKit removal.** It follows D6, before or after D7, and needs pack 5 on disk.
+  1. Through `extract.sh`, extract `Models/Characters_BR.fbx`, `Models/SM_Wep_Troll_01.fbx` and the troll atlas's four texture variants (`FantasyRivals_0n_A` to `_D`), adding a `packs.txt` line and `keep.txt` lines. The atlas number is read from `SM_Chr_BR_Troll_01`'s material in the scratch folder. `SyntyPostprocessor` covers them with the existing character and weapon rules. `Characters_BR.fbx` carries the other Big Rig characters too, and only the troll's GameObjects reach a prefab (§15.16.2); the build-log check in §15.7 confirms the rest never ship.
+  2. Produce a front capture of the troll with `VariantCapture` and a battle-framing capture on each ratio. Report height, triangles, renderers and avatar validity.
+  3. Regenerate `troll_grunt` with the 15.16.2 data. Apply the anchor rule and BigStagger at 1.0. Re-measure framing (§14.4 checks, both ratios). Commit.
+  4. Move the clip-table reader into `ClipTable.cs`; delete everything listed in 15.16.1; regenerate; run the gate and a scripted battle on both ratios. Commit.
+- **D8** adds: no KayKit file or code (see the review below); one enemy pack in `packs.txt`; the troll's weakness hit (BigStagger) reads on device.
+- **Budget:** unchanged (§15.7 counters and the device rule). D6b's troll numbers are checked against it before D8.
+- **Review, in addition to §15.13 and §15.15:**
+  - `Assets/ThirdParty/KayKit/` is gone.
+  - `grep -ri kaykit Assets/_Game` finds nothing outside comments that cite this document's history.
+  - `troll_grunt` is the Fantasy Rivals Troll, its height is 2.0–2.5 m in the generator log, and the front capture is in `Builds/evidence/M2/`.
+  - `Combatant.controller`'s diff since M1 is the BigStagger speed only.
+
+#### 15.16.6 To check once Fantasy Rivals is on disk (names-only listing, then D6b)
+
+- Which atlas (`01`–`04`) the troll samples, and that its `_A` to `_D` variants read as four clearly different trolls.
+- Avatar `isHuman && isValid`. If the arms cut into the belly under human clips, the fix is the arm limits in the avatar's `humanDescription`, as a `SyntyPostprocessor` constant, not a click.
+- Native height, triangles and renderer count, against 15.16.2's thresholds.
+- That `SM_Wep_Troll_01` is the club in the store images. If not, another two-handed weapon from the pack is chosen.
+- Tone, from the front capture: whatever the producer judges scary is not used. The Troll's red-eyed neighbours are already excluded.
+
+#### 15.16.7 Questions for the producer
+
+1. **Pull the troll decision into M2?** Ruling 2 asks for at most three options with front and battle-framing images by M3 sign-off.
+   - Options: (a) the Fantasy Rivals Troll, recommended; (b) the Goblin War Camp Troll; (c) none, keeping the KayKit mannequin, which the owner has ruled out.
+   - The store images exist now. D6b step 2 produces the front and framing captures of (a) before anything is built on it, and (b) is captured only if the producer asks.
+   - *Recommend yes,* deciding on (a) from D6b's captures. One enemy pack then serves M2 and M4, and there is no throwaway KayKit troll work.
+2. **Replace KayKit entirely?** V1-SCOPE §9 still says "KayKit and Kenney CC0 packs stay allowed", and ruling 2 still lists KayKit and tinted mannequins as options.
+   - *Recommend:* strike KayKit from §9 and from ruling 2, as the owner directed.
+   - Kenney stays allowed only for the CC0 sound effects (§7, §14.6), which are audio, not art.
+3. **Pack count.** Seven of eight, with no change to the cap. Goblin War Camp is not used, and Alpine Mountain was downloaded outside the list and stays unused unless the producer says yes.
+4. **Goblins.** No V1 role unless the producer and the story writer change Land 1's villains (V1-SCOPE §4, §5). *Recommend no for V1,* with a BACKLOG row if wanted.
