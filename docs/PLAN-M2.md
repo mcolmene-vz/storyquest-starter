@@ -401,6 +401,11 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
   - **Open for the architect:**
     1. In the group shot the Fighter's mace head is hidden behind the next hero's body and staff, so the upgrade can't read there (19–52 % of the mace visible, always the shaft).
     2. The `hat_mage` brim hides both Mages' eyes at eye level, at every camera height from −6 to +6 cm, so §15.18.9's condition fails and the smaller-brim fallback applies; the architect picks the part.
+- **D8.1b status: stopped 2026-10-17 at Martin's request (pause).**
+  - The architect's rulings are committed (§15.18.9 amendment, c840b78): a raised-weapon Fighter idle stance, and the ranked `hat_mage` covering list with the cape fallback.
+  - The developer had started trying hat candidates. That partial work (items.json, the two mage prefabs, temporary VariantCapture code) is in `git stash` as "M2-D8.1b partial…".
+  - **To resume:** `git stash drop` it and rerun D8.1b from the start with the same brief (the amendment is self-contained). The partial state was mid-measurement and isn't worth keeping.
+  - **Then:** D8.2: the release device build, Martin's soak per `docs/evidence/M2/SOAK-CHECKLIST.md`, the architect's M2 review, the producer's sign-off, and bundleVersion 0.3.0.
 
 - **Goal:**
   - Group-shot counters on a simulator development player against the §15.15.2 budget (draws ≤ 300, SetPass ≤ 200, tris ≤ 180k, ≤ 90 skinned renderers), with the all-armor party.
