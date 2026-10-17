@@ -21,11 +21,11 @@ If a task does not move the project toward that sentence, it is out of scope.
 ## 3. Players and heroes
 
 - 1 to 4 kid profiles on the device. A profile is: a chosen name from a preset list or typed by the parent, an avatar, and one hero.
-- A hero is a **class** × **look**:
+- A hero is a **class** × **body**:
   - Classes (4): Swordsman, Archer, Mage, Fighter.
-  - Look (2 per class): two fixed looks that differ in skin tone. Across the eight: at least three tones (light, medium, dark), each on at least two looks and in at least two classes (producer ruling 7, `docs/STATUS.md`).
-  - 8 hero looks total. Each class has one skill, one weapon type, one visible armor slot and one charm slot.
-  - Boy and girl bodies are not in V1 (`docs/BACKLOG.md`).
+  - Bodies (2): boy, girl.
+  - 8 hero variants total, each with a fixed skin tone. Across the eight: at least three tones (light, medium, dark), each on at least two variants and in at least two classes; the boy and girl of each class differ (producer ruling 7, `docs/STATUS.md`).
+  - Each class has one skill, one weapon type, one visible armor slot and one charm slot.
 - Party = all active profiles (1–4). Each kid controls their own hero on their turn, on the shared screen.
 
 ## 4. Story (Land 1)
@@ -76,9 +76,10 @@ FF8-style turn-based, one screen, scripted presentation.
 
 ## 9. Art and assets (decided)
 
-- Characters: **KayKit Adventurers 2.0 FREE** (CC0, in the repo since M1). One model per class; its two looks differ in skin tone; weapon upgrades and armor pieces are KayKit meshes. Synty POLYGON Modular Fantasy Hero Characters is a recorded upgrade path (ARCHITECTURE §15.14.7), not a dependency. Paid hero art is revisited once, at M4 sign-off (`docs/BACKLOG.md`).
-- Animations: **KayKit Character Animations 1.1** (CC0, same rig, in the repo since M1): idle, walk, class attacks, cast, draw/shoot, hit reaction, big stagger, defeat, victory, defend. No retargeting.
-- Environments and props: KayKit/Kenney CC0 packs. No paid art pack without the producer's yes in the `docs/STATUS.md` budget log and Martin's money.
+- Characters: **Synty POLYGON - Modular Fantasy Hero Characters** through **SyntyPass**, Synty's subscription (owner decision 2026-10-16). Boy and girl bodies with modular class outfits; weapon upgrades and armor pieces are Synty meshes (the Archer's two bows come from ANIMATION - Bow Combat). The subscription stays active from the first Synty download until V1 closes (§15); conditions in `docs/STATUS.md`, ruling "SyntyPass".
+- Animations: **Synty ANIMATION - Sword Combat, Bow Combat, and Emotes and Taunts** (same subscription), imported as Humanoid: idle, class attacks and skills, draw/shoot, hit reaction, big stagger, defend, defeat, victory. No Mixamo. A clip that reads wrong is replaced by another clip from these packs.
+- Environments and props: Synty packs under the same subscription from M3, at most two environment packs, picked against the approved land outline. Troll art follows producer ruling 2 (`docs/STATUS.md`). KayKit and Kenney CC0 packs stay allowed.
+- Packs: no Synty pack beyond the eight in ARCHITECTURE §15.15.1 without the producer's yes; a pack that costs nothing extra under the subscription is still import work. No paid art outside the subscription without the producer's yes in the `docs/STATUS.md` budget log and Martin's money.
 - Look: stylized low-poly with a toon shader and outline, URP.
 
 ## 10. Privacy and store constraints
@@ -89,7 +90,7 @@ FF8-style turn-based, one screen, scripted presentation.
 
 ## 11. Explicitly out of scope for V1
 
-Multiplayer or multi-device play. Additional lands. In-app purchases. Daily rewards, streaks, wheels, timers. Android. Accounts or cloud save. Analytics. Mini-games. Achievements. Localization. Voice input. Character creator beyond class × look. Boy and girl hero bodies. Cosmetics beyond the 12 shop items. Any physics-driven combat.
+Multiplayer or multi-device play. Additional lands. In-app purchases. Daily rewards, streaks, wheels, timers. Android. Accounts or cloud save. Analytics. Mini-games. Achievements. Localization. Voice input. Character creator beyond class × body. Cosmetics beyond the 12 shop items. Any physics-driven combat.
 
 Anything in this list that someone wants becomes a V2 candidate in `docs/BACKLOG.md`, not a V1 task.
 
@@ -101,7 +102,7 @@ Work proceeds in order. A milestone is done only when every criterion is met and
 
 **M1 — Battle slice.** 4 placeholder heroes vs 1 troll grunt. All four commands, turn order, the full hit recipe, camera cuts, damage numbers, victory and defeat screens, both difficulty behaviors. *Done when:* a kid can win and lose a battle on device and the hit looks crisp on both iPad and iPhone framing.
 
-**M2 — Heroes and gear.** KayKit heroes, 8 hero looks (4 classes × 2 skin tones), KayKit animations, visible weapon and armor swaps, equip screen, shop UI with the 14 items, coins. *Done when:* buying a weapon in the shop changes the model in the next battle, on device.
+**M2 — Heroes and gear.** Synty heroes, 8 hero variants (4 classes × boy and girl), Synty animations, visible weapon and armor swaps, equip screen, shop UI with the 14 items, coins. *Done when:* buying a weapon in the shop changes the model in the next battle, on device.
 
 **M3 — Story engine.** Ink integration, narration playback, choice UI, chapter flow, camp scene, save/load, parent settings. Uses a 2-chapter test story from the story writer. *Done when:* a profile can play two chapters, quit mid-chapter, relaunch, and continue where it left off.
 
@@ -122,7 +123,7 @@ Target: roughly 12–20 tests in three files. No PlayMode tests, no UI tests, no
 ## 14. Manual smoke checklist (run on device before each milestone sign-off)
 
 1. Cold start to title in under 5 seconds.
-2. Create a profile, pick each class and look once; the model matches the choice.
+2. Create a profile, pick each class and body once; the model matches the choice.
 3. Start a battle; use each command once; win; coins and XP increase.
 4. Lose a battle on Always Win; return to camp with full HP. Lose on Normal; story branches.
 5. Buy an item; it appears on the hero.
@@ -145,3 +146,6 @@ M0–M5 all signed off, the TestFlight build installed on at least two family de
 - 2026-10-16 — **§9: KayKit Adventurers 2.0 FREE and KayKit Character Animations 1.1 are the V1 hero art and animations; Synty and Mixamo stop being V1 dependencies; environments are CC0 only.** Raised by ARCHITECTURE §15.14.8 q1–q2 after the owner's direction the same day ("I'm not trying to burn a lot of money on just building something out"). Reason: the money is Martin's call and he made it; both KayKit packs are CC0, already in the repo, and shipped M1; nothing in M2–M5 needs Synty. The pending Synty budget row closes unpaid (`docs/STATUS.md`). Synty stays an upgrade path (ARCHITECTURE §15.14.7) with one revisit at M4 sign-off (`docs/BACKLOG.md`). The environments line drops "Synty Fantasy Kingdom" so §9 names no paid pack.
 - 2026-10-16 — **§3, §11, §14 item 2: a hero is class × look, not class × body; boy and girl bodies move to `docs/BACKLOG.md`.** Raised by ARCHITECTURE §15.14.8 q4. Reason: no free pack we own has boy and girl bodies; two skin-tone looks per class keep eight choices and keep ruling 7's rule that no tone belongs to one class; M3 profiles store a look either way. Smoke item 2 follows §3 so the checklist does not test something V1 no longer has. Known cost, logged in the backlog: a kid who wants a hero of their own gender may not find one (the Fighter is a bearded man); the M4 kid session is asked about it.
 - 2026-10-16 — **§12 M2: "Synty bases, 8 hero variants, Mixamo retargeting, weapon and armor sockets" becomes "KayKit heroes, 8 hero looks (4 classes × 2 skin tones), KayKit animations, visible weapon and armor swaps".** Raised by ARCHITECTURE §15.14.8 q3. Reason: follows §9 and §3. *Done when* is unchanged word for word: buying a weapon in the shop changes the model in the next battle, on device.
+- 2026-10-17 — **§9: Synty POLYGON - Modular Fantasy Hero Characters and three Synty ANIMATION packs (Sword Combat, Bow Combat, Emotes and Taunts), through SyntyPass, are the V1 hero art and animations; no Mixamo; environments may be Synty packs from M3 (at most two); no pack beyond the eight in ARCHITECTURE §15.15.1 without the producer's yes.** Raised by ARCHITECTURE §15.15.8 q1 after the owner's decision on 2026-10-16 ("I'm going to get the synty pass so I will download all the synty assets we need"). Reverses the 2026-10-16 §9 entry. Reason: the money is Martin's call, and he made it after the lead gave him the price, the licence terms and a "not now" recommendation. The producer's three SyntyPass conditions are settled in `docs/STATUS.md`, ruling "SyntyPass": (a) waived; (b) met by keeping the subscription active through V1; (c) met, since monthly costs less than one-time licences for 9 months on M2's four packs alone and about 25 months on all eight. The ANIMATION packs need no Adobe session, so Mixamo stays out. Cost: nothing in V1-SCOPE drops. M2 waits for Martin's download plus one import task (PLAN-M2 D5). The pack ceiling and the outline check are there because a pack that is free under the subscription still costs developer time.
+- 2026-10-17 — **§3, §11, §14 item 2: a hero is class × body again (4 classes × boy and girl, each with a fixed tone under ruling 7); boy and girl bodies leave `docs/BACKLOG.md`.** Raised by ARCHITECTURE §15.15.8 q1. Reverses the 2026-10-16 entry. Reason: the Synty hero pack has male and female bodies. The Core code from PLAN-M2 D1–D2 is already class × body (`HeroRecord.Body`), so this path costs less code than the look path. It also settles the backlog's known cost (a kid who wants a hero of their own gender) before the M4 kid session rather than after it. There are eight choices either way. Ruling 7's tone rule applies with "the boy and girl of each class differ".
+- 2026-10-17 — **§12 M2: "KayKit heroes, 8 hero looks (4 classes × 2 skin tones), KayKit animations, visible weapon and armor swaps" becomes "Synty heroes, 8 hero variants (4 classes × boy and girl), Synty animations, visible weapon and armor swaps".** Raised by ARCHITECTURE §15.15.8 q1. Reason: follows §9 and §3. "Visible weapon and armor swaps" is kept in place of the original "weapon and armor sockets" because the criterion is what the kid sees, not how it is built. *Done when* is unchanged word for word: buying a weapon in the shop changes the model in the next battle, on device.
