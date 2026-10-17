@@ -8,7 +8,7 @@ Owner: **Producer** persona keeps this current; the lead maintains "Needs Martin
 
 **M1 — Battle slice: signed off by the producer 2026-10-16** (see Sign-offs). Build 15 (0.1.0) soaked on the iPhone 17 Pro and the iPad (A16); the soak report was accepted once without times or readings (Producer rulings, 2026-10-16). Plan `docs/PLAN-M1.md`, evidence `docs/evidence/M1/M1-EVIDENCE.md`. The sign-off commit sets `bundleVersion` to 0.2.0.
 
-**M2 — Heroes and gear: not started.** First step is the architect's design confirmation (CLAUDE.md order of operations).
+**M2 — Heroes and gear: design confirmed by the architect 2026-10-16** (ARCHITECTURE §15). Next: the producer's rulings on §15.11, then `docs/PLAN-M2.md`. Work that does not need the Synty or Mixamo files (Core camp model, camp screens, soak probe) can start before they arrive.
 
 ## Needs Martin (in order)
 
@@ -27,6 +27,11 @@ Do these top to bottom. Items marked *done* were verified or completed by Claude
 9. **Smoke-checklist items for M0 sign-off.** *Done 2026-10-16:* cold start under 5 s, landscape held on rotation. The timed 10-minute soak was not reported; producer ruling 2026-10-16: deferred to M1, not waived (see Producer rulings). At M1 you will be asked for a timed 10 minutes on each device with the Xcode console open.
 10. **For M1 (next):** *Done 2026-10-16.* KayKit Adventurers 2.0 FREE at `/Users/mcolmene/Downloads/KayKit_Adventurers_2.0_FREE` and KayKit Character Animations 1.1 (free, CC0, same Rig_Medium) at `/Users/mcolmene/Downloads/KayKit_Character_Animations_1.1`; the M1 import task copies what it needs into `Assets/ThirdParty/KayKit/`.
 
+11. **M2: buy the Synty pack. Costs money (US$149.99 listed on 2026-10-16, plus any tax); needs your Synty Store account.** "POLYGON - Modular Fantasy Hero Characters" by Synty Studios, https://syntystore.com/products/polygon-modular-fantasy-hero-characters, quantity 1, One Time Purchase Licence (not SyntyPass). Download only the **Unity** package (1.4.1) and put the file in `~/Downloads/Synty/`. Do not open it in Unity: a script copies only the files we use. Prefer the Unity Asset Store (same price)? Say so and the lead writes the editor steps (ARCHITECTURE §15.1).
+12. **M2: Mixamo download. Free; needs your Adobe ID; about 30 minutes.** At mixamo.com pick the character **Y Bot**, then download each of these 15 animations with Format **FBX for Unity**, Skin **Without Skin**, **30** fps, Keyframe Reduction **none**, sliders at default, **In Place** ticked for Walking only, keeping Mixamo's file names: Breathing Idle, Sword And Shield Idle, Walking, Sword And Shield Slash, Sword And Shield Attack, Standing Draw Arrow, Standing Aim Overdraw, Standing 1H Magic Attack 01, Standing 2H Magic Area Attack 01, Standing Melee Attack Downward, Standing Melee Attack 360 High, Hit Reaction, Sword And Shield Block Idle, Falling Back Death, Victory. Then Y Bot itself once, **With Skin**. Everything into `~/Downloads/Mixamo/`. If a name has no exact match, take the closest and tell the lead which.
+13. **M2 build install (later).** One Xcode Run per device, then Stop. The lead launches the soak from the terminal and saves the console, so you no longer write down times or red lines.
+14. **M2 soak (later), about 25 minutes, both devices.** Play per the checklist the lead sends with the build (buy a weapon at camp and see it in the next battle, flip one hero's Body, every command, Revive, both defeats). You report: warm or hot, the iPhone Silent mode yes or no, and anything that looked wrong.
+
 Not needed yet, flagged early so nothing blocks later:
 - **Final app name and bundle ID** (decision, needed before M5). Builds use the working title "StoryQuest" and bundle ID `com.vendoza.storyquest`. Both can change freely until the App Store Connect record is created in M5; after that the bundle ID is permanent.
 - **App Store Connect app record** (M5, needs your account).
@@ -35,7 +40,7 @@ Not needed yet, flagged early so nothing blocks later:
 
 ## Blockers
 
-- None. M0 and M1 signed off 2026-10-16. M2 waits on the architect's design confirmation, then `docs/PLAN-M2.md`. M2's first spend is the Synty POLYGON Modular Fantasy Hero Characters pack. It is already in the V1 budget (V1-SCOPE §9) but needs Martin's account, and the lead adds it to Needs Martin once the architect names the exact pack.
+- None today. The Synty-dependent M2 tasks (hero prefabs, gear meshes) wait on Needs Martin items 11 and 12; everything else in M2 can proceed without them.
 
 ## Producer rulings
 
