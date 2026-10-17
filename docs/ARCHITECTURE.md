@@ -63,6 +63,8 @@ Amendment 2026-10-16: `Tools/sim-driver/` accepted as the scriptable interactive
 
 Amendment 2026-10-16 (M2, §15.1): `Tools/synty/` is how the Synty pack enters the repo. It is a bash script and two text lists, adds no package and ships nothing; like `Tools/narration/`, it is not covered by rule 8. Its scratch output, `Builds/synty-extract/`, is git-ignored with the rest of `Builds/`.
 
+Amendment 2026-10-16 (owner: no art spend in M2, §15.14): `Tools/synty/`, `ThirdParty/Synty/` and `ThirdParty/Mixamo/` are not created in M2. They come back only if art is bought (§15.14.7).
+
 Amendment 2026-10-15: runtime-loaded content moved under `_Game/Resources/`. Reason: the Boot scene has no serialized references, so by-name loading is the only code-first path, and `Resources` is built in (no Addressables, §12). At V1 size (a few hundred small assets) the startup index costs milliseconds. `Settings/` no longer lists an Input Actions asset: V1 needs none.
 
 ## 4. Runtime structure (Decided)
@@ -98,6 +100,7 @@ Scenes beyond `Boot` are avoided in V1. Camp and Battle are **views** spawned an
 - Enemies follow the same pattern with their own controller.
 - Amended 2026-10-16 (M1): until Synty lands, the same pipeline runs on KayKit FBX imported as Generic (§11.4): one controller `Combatant` shared by heroes and enemies, an override controller per class and per enemy, prefabs generated into `Resources/Prefabs/Combatants/`. Sockets on the KayKit rig are the bones `handslot.r` / `handslot.l`; the Synty socket names above apply from M2 and the data field is `weaponSocket`, so the swap is a data change. Details in §14.1 and §14.4.
 - Amended 2026-10-16 (M2 confirmation, details in §15.1–15.4). Synty bodies are extracted from the `.unitypackage` (never `-importPackage`) and imported as Humanoid. Mixamo clips are downloaded without skin on Y Bot and imported as Humanoid, with each take renamed to its file name. One prefab per hero variant, `{classId}_{body}` (eight), is built at generation time from `classes.json`: the variant's listed parts are kept and every other part is stripped. The sockets `Socket_HandR`, `Socket_HandL`, `Socket_Back` and `Socket_Head` are generator-made children of the avatar's hand, chest and head bones (`GetBoneTransform`), so no bone name reaches the data. **The generator pre-places weapons and armor** (the starter active, the class's shop item inactive), **and the runtime toggles them with `SetActive`**. This supersedes "parented to sockets at runtime" above: each class has exactly one upgrade per slot in V1, so a toggle is the whole runtime. The one `Combatant` controller still serves every combatant: hero overrides carry Humanoid clips, the troll's carries Generic KayKit clips. The troll stays the KayKit mannequin until the M4 enemy art.
+- Amended 2026-10-16 (owner: no art spend in M2, details in §15.14). The "M2 confirmation" amendment above is suspended. Heroes stay KayKit on the Generic `Rig_Medium`, with KayKit clips and weapons under `handslot.r`. One prefab per class × look, `{classId}_{look}` (eight), with armor and both weapons pre-placed by the generator and toggled with `SetActive`. No Synty, no Mixamo, no Humanoid, no generated sockets.
 
 ## 7. Story integration (Decided)
 
@@ -125,7 +128,7 @@ Scenes beyond `Boot` are avoided in V1. Camp and Battle are **views** spawned an
 - Every UI root gets `SafeAreaFitter` (reads `Screen.safeArea`).
 - Battle camera uses Cinemachine **Group Framing** on the party so 4:3 and 19.5:9 both frame all heroes; UI panels anchor to edges, never to absolute pixels.
 - Minimum touch target 64 pt. No hover, no long-press.
-- Amended 2026-10-16 (M2, §15.5): full-screen menus (from M2, the camp's Shop and Equip tabs) are laid out inside a **1600 × 900 reference-px box centred in the safe area**. At 1920×1080, match 0.5, the narrowest canvas is a true 4:3 iPad (iPad 9th generation: 1663 reference px wide), and the shortest safe area is a notched iPhone in landscape (about 925 px tall on the iPhone 11, 15 Pro and 17 Pro). The box fits both, and fits the 1.44:1 iPads (1728 × 1171) and the iPhones (about 1820–1890 px wide) with room to spare. Controls stay at least 170 reference px (64 pt, §14.5). The M2 review re-measures group framing with the Synty party against §14.4's checks.
+- Amended 2026-10-16 (M2, §15.5): full-screen menus (from M2, the camp's Shop and Equip tabs) are laid out inside a **1600 × 900 reference-px box centred in the safe area**. At 1920×1080, match 0.5, the narrowest canvas is a true 4:3 iPad (iPad 9th generation: 1663 reference px wide), and the shortest safe area is a notched iPhone in landscape (about 925 px tall on the iPhone 11, 15 Pro and 17 Pro). The box fits both, and fits the 1.44:1 iPads (1728 × 1171) and the iPhones (about 1820–1890 px wide) with room to spare. Controls stay at least 170 reference px (64 pt, §14.5). The M2 review re-measures group framing with the Synty party against §14.4's checks. (2026-10-16, §15.14: the M2 party is KayKit; the checks are unchanged.)
 
 ## 10. Privacy and store (Decided)
 
@@ -256,6 +259,7 @@ If step 2 refuses a folder that already contains files, create the project in a 
 - Passes 3 and 4: `ShadowCaster` and `DepthOnly`, URP's standard pass bodies copied in.
 - Flash: `BattlePresenter` sets `_FlashAmount = 1` on every renderer of the target through a `MaterialPropertyBlock` for two frames, then back to 0. Never touch `renderer.material` (it instances the material and breaks batching). A lerp to white, not additive emission, because the scope asks for a white flash and it reads the same on dark and light albedo.
 - Synty atlases and the KayKit texture both work as `_BaseMap`; the hero generator assigns this material.
+- Amended 2026-10-16 (§15.14.3): `ToonForward` gains a palette-cell tint. Four `UnityPerMaterial` properties (`_CellA`, `_CellAMul`, `_CellB`, `_CellBMul`) and a `CellTint` helper multiply the albedo inside at most two cells of the texture's grid. No texture sample is added. It gives the KayKit heroes their skin tones and the Archer its gold bow.
 
 ### 13.8 Narration audio in the project (M3; decided now so the layout is right)
 
@@ -484,6 +488,8 @@ Architect's review at M1, in addition to §13.10: `grep -r UnityEngine Assets/_G
 ## 15. M2 design notes (architect, 2026-10-16; Heroes and gear)
 
 Confirms the design for V1-SCOPE §12 M2 ("Synty bases, 8 hero variants, Mixamo retargeting, weapon and armor sockets, equip screen, shop UI with the 14 items, coins. *Done when:* buying a weapon in the shop changes the model in the next battle, on device") before any M2 code. §3, §6 and §9 carry dated amendments; where §15 changes an M1 rule or number in §14, §15 says so and wins. Verified on 2026-10-16: both store pages (name, publisher, price, licence, Unity package 1.4.1 for Unity 2022.3 with URP and Built-in, FBX source files, a weapon list that names no bow), the text of Synty's One Time Purchase Licence (as at 9 July 2026), and `xcrun devicectl` 642.16 on this Mac (`device process launch --console`, `device capture screenshot`, `device install app`; both of Martin's devices listed). **Not verifiable before the purchase:** the file names inside the package, the rig's scale, whether character colour lives in a texture or only in Synty's mask shader, and whether a bow exists. The first M2 task reports those four facts (15.1); the branches below are decided now, so the architect is needed only if a fact falls outside them.
+
+**Amended 2026-10-16 (owner: no art spend in M2): §15.14 supersedes the Synty and Mixamo parts of 15.1–15.13. Read it first.**
 
 ### 15.1 The Synty purchase and the import
 
@@ -868,3 +874,244 @@ In addition to §13.10 and §14.10 (Core purity, Boot the only scene, generated 
   - probe lines showing FPS steady at 60 and memory flat, and the iPad's group-shot GPU under 6 ms (or Martin's Xcode reading);
   - Martin's warm-or-hot answer and his Silent mode yes;
   - devicectl screenshots of the purchase at camp and of the next battle showing the new weapon, on both devices. That is the M2 criterion.
+
+### 15.14 Amendment 2026-10-16 (owner: no art spend in M2)
+
+Martin will not spend money on art while the game is being built out ("I'm not trying to burn a lot of money on just building something out"). The Synty purchase (15.1, Needs Martin 11) and the Mixamo session (15.2, Needs Martin 12) are off. **M2 ships on the KayKit Adventurers 2.0 FREE characters and KayKit Character Animations 1.1 already in the repo (both CC0).** This section supersedes all of 15.1–15.3, the Synty and Mixamo parts of 15.4, 15.7, 15.8, 15.9, 15.12 and 15.13, and the §6 amendment "M2 confirmation". Unchanged: 15.4's stat model and its `SetActive`-only runtime, 15.5 (camp, coins, flow), 15.6 (five tests), 15.8's probe, soak capture and `SQ_PROBE`, 15.10 (no packages), and the producer's rulings except where 15.14.8 asks for a change.
+
+**Facts this rests on.** Read on 2026-10-16 from the KayKit FBX and PNG files with throwaway stdlib parsers kept outside the repo. KayKit is CC0, so 15.1's no-bytes rule, which protects Synty and Mixamo files, does not apply.
+- **Accessory parts.** They are separate skinned meshes on the shared `Rig_Medium`: `Knight_Helmet`, `Knight_HelmetVisor` and `Knight_Cape`; `Ranger_Cape` and `Ranger_Quiver`; `Mage_Hat` and `Mage_Cape`; `Barbarian_BearHat`. Every part, body parts included, is a `SkinnedMeshRenderer`, so `SetActive` hides any of them cleanly.
+- **Hiding headgear is safe.**
+  - `Knight_Head` has modelled hair on top, and KayKit's own sheet says the helmet can be removed.
+  - `Barbarian_Head` has a modelled bald scalp under the bear hat, with no hole.
+  - `Knight.fbx` has no blend shapes. The visor's pivot is a hinge at temple height and its mesh lies above the eyes, so the visor is raised at bind pose and the face shows with the helmet on.
+- **The palette.** Every hero texture is the same 8 × 4 grid of 128 × 256 px vertical-gradient cells. A cell is named `c{col}r{row}`, counted from the image's top-left.
+  - Skin is `c0r0` on all four textures: the identical ramp `#F8CCAB` / `#F6C09C` / `#F2A87E` (top / middle / bottom).
+  - The Mage's hands use `c7r2`, which holds the same ramp.
+  - Hair and beards are `c1r0` on every head.
+  - No weapon samples `c0r0`, `c1r0` or `c7r2`.
+- **Weapons.** Each weapon was authored against its own class's texture: the swords against the knight's, the axes against the barbarian's, the bow against the ranger's, the staff and wand against the mage's. So M1's rule, that a weapon renders with its class's material, holds for every weapon below.
+  - The bow's wood is `c6r1` (`#B27052` / `#9B5A45` / `#7D3D2C`).
+  - `bow_withString`'s one blend shape animates its string. It stays static under `importBlendShapes = false`.
+- **Unique triangles.**
+  - Characters: Knight 5,800 (helmet plus visor 846), Ranger 8,900, Mage 6,668, Barbarian 7,123 (bear hat 1,030), mannequin 6,916.
+  - Weapons: 150 (wand) to 684 (bow).
+  - M1's on-screen content sums to 36.8k, which matches D3's 111k counted triangles ÷ 3.
+
+#### 15.14.1 Sidekick free starter: rejected; KayKit only
+
+**Decision: KayKit only, for M2 and for V1 unless Martin buys art later (15.14.7).** Each of the five points fails on what the store page already says, so nothing needs downloading to decide.
+- **Class readability.** The free parts are sci-fi civilian and fantasy knight, which is one class outfit (the Swordsman). From behind, where the camera is (§14.4), the Archer, Mage and Fighter would all be civilians. KayKit already gives four class silhouettes.
+- **Scripts.**
+  - The Character Creator and the runtime API are third-party C#. Imported, they compile into the project, and the zero-warning gate then judges a Unity 2021.3 package's code under 6000.3.
+  - The runtime API builds characters in the player. 15.3 already chose generated prefabs over runtime assembly.
+  - Extracted without the scripts (15.1's tar route), what is left is parts designed to be assembled and coloured by a tool we would not have.
+- **Blend shapes.** The body sliders are blend shapes, and our importers set `importBlendShapes = false` (§14.1, 15.7). Using them means one of two things, and neither exists:
+  - blend-shape deltas on every body renderer, applied every frame on an iPhone 11; or
+  - a generator step that bakes the weights into new mesh assets committed to git.
+- **Style.** Sidekick is Synty's realistic-proportion POLYGON look. Next to KayKit's chibi weapons (authored for KayKit hand slots) and the KayKit mannequin troll, the clash shows in every group shot, and the M4 troll would then have to match Sidekick.
+- **Bodies only.** A Sidekick body has a different skeleton and different proportions.
+  - It cannot wear KayKit's capes and hats, which are skinned to `Rig_Medium`.
+  - KayKit's Generic clips do not drive it. It would need Humanoid clips, which is the Mixamo session just cancelled (15.2 found `Rig_Medium` maps to Humanoid only with hand work).
+  - So bodies-only means heroes without class outfits, plus a second animation source.
+
+If V2 reconsiders Sidekick, the first step is a `tar -tzf` listing of the free Unity package in `~/Downloads/Synty/`, with no import, to see its scripts, plugins and part files. Not now.
+
+#### 15.14.2 Gear on KayKit
+
+| Class (model) | Starter look | Weapon, starter → upgrade (under `handslot.r`) | Armor (bought; hidden on the starter) | Charm |
+|---|---|---|---|---|
+| Swordsman (`Knight`) | blond hair, plate, red cape | `sword_1handed` → `sword_2handed_color` (`sword_2`): longer blade, gold guard | `helm_swordsman`: `Knight_Helmet` + `Knight_HelmetVisor`, a grey dome over the hair | `charm_tough`, no mesh |
+| Archer (`Ranger`) | hair, quiver, no cape | `bow_withString` → the same mesh with gold wood (`bow_2`, cell tint, 15.14.3) | `cape_archer`: `Ranger_Cape` (blue) | `charm_swift`, no mesh |
+| Mage (`Mage`) | hat, robe, no cape | `wand` → `staff` (`staff_2`), the crystal staff | `cape_mage` (was `hat_mage`): `Mage_Cape` (magenta) | `charm_wise`, no mesh |
+| Fighter (`Barbarian`) | bald, bearded, bare torso | `axe_1handed` → `axe_2handed` (`axe_2`, was `mace_2`) | `hat_fighter` (was `pads_fighter`): `Barbarian_BearHat` | `charm_quick`, no mesh |
+
+- **The starter hides the armor piece, for all four classes.**
+  - A purchase must add something visible, so the piece cannot already be on.
+  - Each class keeps one identity piece from behind: the Swordsman's cape, the Archer's quiver and bow, the Mage's hat, the Fighter's axe and bare back.
+  - Every armor piece is headgear or a cape, which both battle shots see (15.4's rule).
+- **The Mage's armor is the cape, not the hat.** The hat is what makes a KayKit Mage read as a mage from behind; a hatless Mage holding the starter wand reads as a purple robe. Item names stay placeholders until the M5 pass ("Wizard Cloak", "Big Axe", "Bear Hat").
+- **Fighter: an axe, not unarmed.**
+  - An unarmed Fighter has no mesh to show a weapon upgrade (V1-SCOPE §6), and KayKit has no mace or gauntlets. This is 15.4's "one socket rule for all four classes", with the axe in the mace's place.
+  - The damage type stays `blunt`. It is an internal id; the troll weakness is a story concept that the writer maps onto a type (STORY-BIBLE).
+  - Clips change in data: Idle `Melee_2H_Idle`, Attack `Melee_1H_Attack_Chop`, Skill (Ground Pound) `Melee_2H_Attack_Chop`. The other six states keep their M1 clips.
+  - `clips.json` gains `Melee_2H_Idle` (loop) and `Melee_1H_Attack_Chop` (impact from `ImpactFinder`, confirmed by eye). `Melee_2H_Attack_Chop` already has its impact.
+  - At chibi proportions both axes suit both clips. If one looks wrong on device, the fix is a different name in the table. The troll keeps its clips.
+- **Archer: there is no second bow.** `bow` is the same bow unstrung. Crossbows do not suit the bow clips, and clips per weapon would mean more than one controller per class. So the upgrade is the same mesh in gold, which reads as better to a five-year-old. This is 15.4's no-bow fallback, with the cell tint in place of the multiply `tint`, which could only darken the brown wood towards orange.
+- **Files.**
+  - `cp` from `KayKit_Adventurers_2.0_FREE/Assets/fbx(unity)/` into `Assets/ThirdParty/KayKit/Weapons/`: `sword_2handed_color.fbx`, `axe_1handed.fbx`, `axe_2handed.fbx`, `wand.fbx`.
+  - Nothing else: no shields, no Rogue, no textures, since all four weapons use textures already in the repo.
+  - `KayKitPostprocessor` imports them by its existing `Weapons/` rule (no animation, `globalScale = 0.70`, no materials). No rule changes, so `GetVersion` stays 2.
+  - 15.8's trim of the KayKit folder is cancelled: every KayKit file stays.
+- **`items.json`.**
+  - Weapon meshes: `sword_2` → `"sword_2handed_color"`, `bow_2` → `"bow_withString"`, `staff_2` → `"staff"`, `axe_2` → `"axe_2handed"`.
+  - `bow_2` also gets `"cellTint": { "cell": "c6r1", "from": "#9B5A45", "to": "#E8B95C" }`. The target is the middle texel of the knight's gold.
+  - Armor `parts` becomes a flat list, since there is one body per class: `["Knight_Helmet", "Knight_HelmetVisor"]`, `["Ranger_Cape"]`, `["Mage_Cape"]`, `["Barbarian_BearHat"]`.
+  - The optional `tint` field goes, and `cellTint` (weapons only) replaces it.
+  - The ids `ProgressionTests` uses (`sword_2`, `helm_swordsman`, `charm_tough`, `charm_swift` and the consumables) do not change.
+- **Generated weapon children.** Under `handslot.r` the generator places two children:
+  - `starter`, the class's `weaponMesh` on the look's material, active;
+  - the class's weapon item, named by its id (`sword_2`, …), inactive. It uses the item's own material when the item has a `cellTint`, otherwise the look's.
+
+  They are named by role, not by mesh, because the Archer's two share a mesh.
+- **`HeroAppearance.Apply`.**
+  - Weapon: the child named `Equipped.Weapon ?? "starter"` is active, the other inactive.
+  - Armor: the class armor item's parts are active exactly when `Equipped.Armor` is that item.
+  - 15.4's part-group rule (`_NN` suffixes) is not needed on KayKit and is not built.
+  - It still only calls `SetActive`, and still runs before `CombatantActor` caches renderers.
+
+#### 15.14.3 Looks and skin tones
+
+- **A hero is class × look.** Each class has exactly two fixed looks that differ in skin tone, so eight looks replace the eight variants.
+  - The prefab id is `{classId}_{look}`, and the look id is a tone id (`swordsman_light`, `swordsman_dark`).
+  - Reason: no free pack we own has boy and girl bodies. Two looks per class keep eight choices, and they keep ruling 7's intent that no tone belongs to one class. Four fixed looks, one per class, could not meet that.
+- **Mechanism: a palette-cell tint in `Toon.shader`.** It is the cheapest of the three options:
+  - *Tint data* (`_BaseColor` per renderer) fails: the head mesh carries hair and eyes, the Barbarian's body carries skin and belt, and a multiply tints all of them.
+  - *15.3's baker in recolour mode* works, but costs readable import rules for four textures, nine generated textures in git (eight looks plus the bow), and proof that `CompressTexture` output is deterministic.
+  - *The cell tint* costs four material properties and one helper. It adds no texture sample and no texture asset, and stays SRP-Batcher-safe. 15.3 rejected porting Synty's mask shader because it cost three extra samples and a dozen properties per fragment; this costs neither.
+
+  ```hlsl
+  // Properties: _CellA ("Tint cell A (col, row, cols, rows)", Vector) = (0,0,0,0)
+  //             _CellAMul ("Tint cell A multiplier, linear", Vector) = (1,1,1,1)      and the same pair for B.
+  // UnityPerMaterial (the one block in HLSLINCLUDE): float4 _CellA; half4 _CellAMul; float4 _CellB; half4 _CellBMul;
+  half3 CellTint(float2 uv, float4 cell, half4 mul)
+  {
+      float2 grid = max(cell.zw, 1);
+      float2 c = min(floor(float2(uv.x, 1 - uv.y) * grid), grid - 1);   // row 0 is the image's top row
+      return (cell.z > 0 && all(c == cell.xy)) ? mul.rgb : half3(1, 1, 1);
+  }
+  // ToonFragment, right after the albedo line (the textures clamp, so saturate makes the test match what is sampled):
+  //   float2 uv = saturate(input.uv);
+  //   albedo = saturate(albedo * CellTint(uv, _CellA, _CellAMul) * CellTint(uv, _CellB, _CellBMul));
+  ```
+  Only `ToonForward` changes. Materials that set neither cell (the troll, the ground) are unaffected, because `cell.z` is 0.
+- **Data (`classes.json`).**
+  - Top level: `"skinReference": "#F6C09C"`, the middle texel of KayKit's skin ramp (measured above).
+  - Top level: `"skinTones": { "light": "#F6C09C", "medium": "#C68642", "dark": "#8D5524" }`. Each tone is what the ramp's middle texel becomes; `light` is KayKit's own skin, so its multiplier is 1.
+  - Per class: `"looks"`, two tone ids, and `"skinCells"`: `["c0r0"]`, or `["c0r0", "c7r2"]` for the Mage. At most two, because the shader has two slots.
+  - 15.3's `variants`, `parts`, `colours` and generated sockets are not used.
+- **Generator.**
+  - One material per class × look, `Resources/Materials/Toon/{classId}_{look}.mat`. `_BaseMap` is the class texture. `_CellA` is the first skin cell as `(col, row, 8, 4)`, and `_CellB` the second if there is one. The multiplier is `tone.linear / skinReference.linear` per channel, with `w = 1`, set with `SetVector`. Vector properties are not colour-converted, and the project is in linear colour space.
+  - One `{itemId}.mat` per weapon with a `cellTint`, on the class texture, with `_CellA` set to that cell and the multiplier `to.linear / from.linear`.
+  - The 8 × 4 grid is a generator constant, `KayKitPaletteGrid`, commented like `GlobalScale` with the date it was measured.
+- **Starting assignment.** This is §15.3's, with the first look taking the old boy's tone and the second the old girl's:
+  - Swordsman light and dark; Archer medium and dark; Mage medium and light; Fighter dark and light.
+  - Light is on 3 looks, medium on 2, dark on 3, and every tone is in at least two classes.
+  - `DebugParty`'s girl/boy/girl/boy seed becomes Swordsman dark, Archer medium, Mage light and Fighter dark, so the default party shows all three tones.
+- **Ruling 7 in `TableLoader`** (restated in 15.14.8 q5):
+  - each class has exactly two distinct looks, and each is a `skinTones` key;
+  - at least three distinct tones across the eight looks;
+  - each tone on at least two looks;
+  - every tone used in at least two classes.
+- **Hair** keeps each model's own colour (the Knight blond, the Mage black). Per-look hair would be a third cell slot on `c1r0`: data plus four shader lines. It is not in M2; ask the architect if Martin wants it.
+- **Front captures.** `VariantCapture.Run` (15.3) stands. It writes eight `variant-{classId}_{look}.tga` in the starter outfit, plus `armor-swordsman.tga` (first look, helmet on) to confirm that the raised visor leaves the face visible (15.3's rule).
+- **The M2-only Body toggle becomes a Look toggle** ("Look: dark"). It cycles the hero's class's two looks, from the next battle.
+  - Ruling 9a's conditions apply unchanged: it is deleted with `DebugParty` in M3, a grep in the M3 evidence shows it gone, and it never reaches TestFlight.
+  - It stays because it spawns every prefab on device before profiles exist. From behind, the Knight's two looks barely differ, so the look evidence is the front captures, as ruling 7 already says.
+- **M3 profiles.** Profile creation picks a class and then one of its two looks, shown as pictures. Smoke item 2 reads "each class and look once". §11's "creator beyond class × body" reads "beyond class × look" (15.14.8 q4).
+
+#### 15.14.4 Core: `Body` goes, `Look` replaces it
+
+- **The rename.**
+  - `HeroRecord.Body` becomes `HeroRecord.Look`.
+  - `HeroSpec(ClassId, Level, Name, string Look = "", Equipment? Equipment = null)`, so `BattleResolverTests` still compile untouched.
+  - `Bodies` is deleted. `ToBattleSetup` passes `Look`, and `BattleView` spawns `{ClassId}_{Look}`.
+- **Why remove it rather than keep it dormant.**
+  - A field named `Body` holding a skin tone misleads every reader. Leaving `"boy"` in it as dead data puts a meaningless field into the M3 save.
+  - Adding a field later is free: Newtonsoft fills a missing field with its default, and §8's `version` hook exists.
+  - `Look` is also the name that survives an upgrade. With Synty, a class's two looks become `boy` and `girl` entries (15.14.7) and the field stays as it is.
+- **`ItemDefinition`.** `Parts` becomes `List<string>`, and `Tint` is replaced by `CellTint { Cell, From, To }`.
+- **`TableLoader` checks:**
+  - armor `parts` is non-empty;
+  - `cellTint` is optional and allowed on weapons only; its cell matches `c{n}r{n}` and its colours `#RRGGBB` (whether the cell is inside the grid is the generator's check);
+  - per class, `looks` and `skinCells` (one or two); at top level, `skinTones` (at least three) and `skinReference`;
+  - the ruling 7 checks above;
+  - `weaponMesh` non-empty for all four classes;
+  - `weaponSocket` non-empty. It is a KayKit bone name, so 15.4's check against the four socket names is dropped.
+- **`ProgressionTests`.** One fixture line changes, `Body = Bodies.Girl` → `Look = "dark"`. Still five tests, 13 in total.
+
+#### 15.14.5 What changes in PLAN-M2
+
+- **D4 (Synty extract): replaced by *KayKit weapons and the cell tint*.**
+  - Work: the four `cp` copies and `Toon.shader` per 15.14.3 (§13.7 carries the dated note).
+  - Verification: the four new `.meta` files show the weapon rule; the gate passes; a regeneration diff touches nothing but the shader and the new property entries in existing materials.
+- **D5 (Mixamo): dropped.** Nothing replaces it: the KayKit clips are already imported, and the Fighter's two `clips.json` entries go into D6.
+- **D6: the generator and the data, on KayKit.**
+  - The Core rename (15.14.4).
+  - `classes.json`: `looks`, `skinCells`, `skinTones`, `skinReference`, the Mage's `wand`, and the Fighter's `axe_1handed` and clips.
+  - `items.json` per 15.14.2, and the two `clips.json` entries.
+  - `CombatantGenerator` writes eight look materials, `bow_2.mat`, and eight `{classId}_{look}` prefabs with the armor parts inactive and the two weapon children. It deletes the four M1 `{classId}.prefab` files and `knight`, `ranger`, `mage` and `barbarian.mat`.
+  - The Fighter's override controller is remapped.
+  - The height check runs with armor on and off (1.2–2.4 m). The log gives each prefab's active renderer count with the armor and the upgrade on.
+  - `BattleView` spawns `{ClassId}_{Look}`, `CampView`'s toggle becomes Look, and `VariantCapture` writes nine captures.
+  - Whether the hero code stays inside `CombatantGenerator` or moves into its own class is the developer's call. No `HeroTextureBaker`, no generated sockets, no Humanoid lookup in `CombatantActor`.
+- **D7: unchanged in shape,** with 15.14.2's child names and armor rule. Its verification adds: buying `bow_2` shows the gold bow, and each armor piece, bought once, is visible from behind in the group shot on both ratios.
+- **D8:** the budget below; no Synty asset report; the third-party audit per 15.14.6.
+- **15.9:** `CombatantActor`, `LoadClips`, `KayKitPostprocessor` and `ImpactFinder` do not change, apart from the one new impact value.
+
+**§15.7 budget for M2.** This replaces the numbers in the counter budget amended earlier on 2026-10-16; the method and the device rule are unchanged.
+- **Worst case in the group shot** (every armor piece and upgrade on): 42 combatant renderers (skinned parts plus weapons) and about 37.5k unique triangles. The starter party is 34.8k.
+- **Probe group counters,** on a simulator development player: **draws ≤ 140, SetPass ≤ 100, tris ≤ 120k, and ≤ 42 combatant renderers** (from the generator's log). That is M1's measured 131 / 89 / 111k, plus the Fighter's axe, plus about 7 % margin.
+- **Device rule, unchanged.** On the A16 iPad's release soak build, `gpu`, `cpu` and `rt` each stay under 6 ms in the group shot.
+- **Memory.** No new texture (the tint is a material constant) and no Mixamo clips. Under 300 MB on the iPhone and flat, as §14.8.
+- **Levers.** 15.7's levers stand and are not expected to be needed. The `RenderObjects` outline lever still waits on a device miss.
+
+**Carry-forward.** 15.8's reason for keeping the attacker step-in out of M2, that Mixamo swings and Synty bodies would replace what the action shot lacked, no longer holds: the swings and the bodies stay M1's. The M1 review accepted that shot. Ruling 9d's single revisit at M4 sign-off is unchanged. The BACKLOG row's wording ("which M2's Mixamo clips and Synty bodies replace") is now stale; the lead corrects it.
+
+#### 15.14.6 What the architect checks at the M2 review
+
+This replaces 15.13's first five bullets (third-party folders, postprocessors, prefabs, animation, data and Core) and its framing, performance and skin-tone bullets. 15.13's camp-screen, runtime-gear, `SQ_PROBE` and on-device bullets stand, with "Body toggle" read as "Look toggle".
+- **Third-party.**
+  - `Assets/ThirdParty/` holds only `KayKit/`: the M1 files plus exactly the four weapon FBX, each with a Unity-written `.meta`.
+  - There is no `Synty/`, `Mixamo/` or Sidekick folder, no `Tools/synty/`, and no third-party script anywhere.
+  - This is also the M2 evidence for the compliance line on Synty and Mixamo files, which stays in the checklist in case art is bought later.
+- **Import.** `KayKitPostprocessor` is unchanged (`GetVersion` 2), and the four new weapon `.meta` files show the weapon rule.
+- **Shader.** `_CellA`, `_CellAMul`, `_CellB` and `_CellBMul` sit inside the one `UnityPerMaterial` block; `CellTint` appears only in `ToonForward`; no texture sample is added.
+- **Prefabs and materials.**
+  - Eight `{classId}_{look}` prefabs, each the class model with its armor parts inactive, and under `handslot.r` the `starter` child and the weapon item, one of them inactive.
+  - Eight look materials and `bow_2.mat`. The M1 class prefabs and class materials are gone.
+  - A fresh regeneration is byte-identical, and the log has the heights with armor on and off.
+- **Data and Core.**
+  - 14 items, and `TableLoader` passes, including the ruling 7 checks.
+  - A `grep` finds no `Body` or `Bodies` left in Core or Runtime.
+  - `BattleFactory` uses `HeroStats`, and the resolver diff is empty.
+  - 13 tests pass in the CLI log, and the `ProgressionTests` diff is the one fixture line.
+- **Animation.** `Combatant.controller` is unchanged since M1. The Fighter's override maps the 15.14.2 clips. Every Attack and Skill fires `OnImpact` in a scripted battle.
+- **Framing.**
+  - Both ratios, with the starter party and with the all-armor party: feet at or above 27 %, tallest head at or below 86 %, no combatant under a card. The Fighter's action shot reads.
+  - The bodies and the tallest headgear (the Mage's hat) are M1's, so M1's numbers should hold.
+- **Looks.**
+  - The eight front captures plus `armor-swordsman`: three tones visible, faces visible, and nothing but skin changes colour between a class's two looks.
+  - All eight prefabs spawn on device: one battle on each side of the Look toggle, with no missing-prefab error in the log.
+- **Performance.** The counters in 15.14.5 and the device rule.
+
+#### 15.14.7 Upgrade path, if Synty is bought later
+
+- **What comes back.** About three developer tasks, the old D4–D6 plus a framing pass, and Martin's two sessions:
+  - 15.1: the extract script and `SyntyPostprocessor`;
+  - 15.2: the Mixamo session, `MixamoPostprocessor`, Humanoid sampling in `ImpactFinder`, and the Humanoid bone lookup in `CombatantActor`;
+  - 15.3's parts lists and sockets, with armor `parts` keyed by look again;
+  - 15.7's budget numbers as the starting point;
+  - a framing re-measure;
+  - a troll that matches the new style.
+- **What stays.**
+  - All of Core: `Look`, `Equipment`, `Progression` and the five tests.
+  - The camp screens; item ids, prices and bonuses; `HeroAppearance`'s `SetActive` rule; the probe and the soak; `VariantCapture`; the generator's pipeline; the ruling 7 check in the loader.
+  - Each class's looks become two entries keyed `boy` and `girl`, each with a `tone`.
+  - If Synty's colour sits in a swatch atlas, the cell tint carries over. If it is only in its mask shader, 15.3's baker comes back.
+- **Saves.** Before any TestFlight install exists, nothing migrates. After one does, the §8 `version` hook maps each saved `Look` (a tone id) to the class's new look ids in one table; owned items keep their ids.
+- **When.** If at all, decide at M4 sign-off, with the kid session in hand, so that the art lands before M5. Deciding inside M5 puts asset work into the ship milestone.
+
+#### 15.14.8 Questions for the producer
+
+1. **§9, characters.** Should KayKit Adventurers 2.0 FREE (CC0) become the V1 hero art, with Synty an optional upgrade (15.14.7) rather than a dependency, and should the pending Synty budget row close unpaid? *Recommend yes.* The money is Martin's call and he has made it; the pack is in the repo and already animated; nothing in M2–M5 needs Synty.
+2. **§9, animations.** Should KayKit Character Animations 1.1 (CC0, already imported) replace Mixamo? *Recommend yes.* KayKit bodies take KayKit clips with no retargeting, and M1 shipped on them.
+3. **§12 M2.** Should "Synty bases, 8 hero variants, Mixamo retargeting, weapon and armor sockets" become "KayKit heroes, 8 hero looks (4 classes × 2 skin tones), KayKit animations, visible weapon and armor swaps", with *Done when* unchanged word for word? *Recommend yes.*
+4. **§3 and §11.** For V1, should a hero be class × look (two fixed looks per class that differ in skin tone) instead of class × body, with boy and girl bodies moved to BACKLOG as a V2 or art-purchase item? *Recommend yes.* The number of choices stays eight, nothing we own has free boy and girl bodies, and M3 profiles store a look either way.
+5. **Ruling 7.** Should "the boy and girl of each class differ" read "the two looks of each class differ", with the rest unchanged and checked from the same front captures? *Recommend yes.*
+6. **Ruling 9a.** Should the M2-only Body toggle become a Look toggle under the same conditions? *Recommend yes.*
+7. **Paid art.** Should paid hero art be revisited once, at M4 sign-off, in the kid session already being booked, and otherwise left to V2? *Recommend yes,* for the reason in 15.14.7. The M4 troll ruling (ruling 2) is unchanged. Its option (i) now means KayKit only, and the cell tint makes a green-skinned KayKit body a cheap candidate.
+
+#### 15.14.9 Needs Martin
+
+Items 11 (Synty) and 12 (Mixamo) are withdrawn: nothing is bought or downloaded for M2. Items 13 and 14 stand; in item 14, "flip one hero's Body" becomes "flip one hero's Look". The lead updates STATUS and PLAN-M2.
