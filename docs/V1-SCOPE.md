@@ -104,7 +104,7 @@ Work proceeds in order. A milestone is done only when every criterion is met and
 
 **M3 — Story engine.** Ink integration, narration playback, choice UI, chapter flow, camp scene, save/load, parent settings. Uses a 2-chapter test story from the story writer. *Done when:* a profile can play two chapters, quit mid-chapter, relaunch, and continue where it left off.
 
-**M4 — Land 1 content.** All 5 chapters written, narrated and integrated. 3 enemies and boss tuned. Items priced. Both endings reachable. *Done when:* a full playthrough on device reaches each ending and the boss cannot be beaten in under 3 rounds without the weakness.
+**M4 — Land 1 content.** All 5 chapters written, narrated and integrated. 3 enemies and boss tuned. Items priced and pictured, so the shop and equip screens need no reading (§4). Both endings reachable. *Done when:* a full playthrough on device reaches each ending and the boss cannot be beaten in under 3 rounds without the weakness.
 
 **M5 — Ship.** iPhone and iPad layout pass, safe areas, performance targets met, icon and launch screen, Kids checklist passed, TestFlight build uploaded, family installed. *Done when:* a kid tester finishes Land 1 on TestFlight without an adult touching the device except for parent settings.
 
@@ -113,7 +113,7 @@ Work proceeds in order. A milestone is done only when every criterion is met and
 Tests exist only where a bug would be silent and expensive. That means **EditMode tests for pure logic only**:
 
 - `BattleResolver`: damage calculation, weakness multiplier, turn order, victory and defeat detection, Defend behavior.
-- `Progression`: level thresholds, stat table lookup.
+- `Progression`: level thresholds, stat table lookup including equipment bonuses, shop purchase rules (price, class, ownership).
 - `SaveService`: save → load round-trip including Ink state.
 
 Target: roughly 12–20 tests in three files. No PlayMode tests, no UI tests, no mocks of Unity systems, no coverage targets. Anything else is verified by the manual smoke checklist below. The lead rejects pull requests that add tests outside this list.
@@ -139,3 +139,5 @@ M0–M5 all signed off, the TestFlight build installed on at least two family de
 
 - 2026-10-16 — **§5: no misses in V1; §7: "miss" struck from the SFX list.** Raised by the architect's M1 design (ARCHITECTURE §5 amendment and §14.3). Reason: §5 already says the hit recipe plays "on every hit" and §4 sets a no-pressure tone; a 5-year-old who taps Attack and sees MISS learns the button sometimes does nothing, which is pressure with no lesson. Removing it also removes one sound (§7) and keeps the §13 test budget at eight for `BattleResolver`. The `missed` field stays in the `Attacked` event record, always false, so the schema does not churn if V2 ever adds accuracy; that is an architecture detail, not scope.
 - 2026-10-16 — **§5: no projectile mesh required for Archer or Mage in V1.** Raised by ARCHITECTURE §14.1 ("arrows are not spawned for the Archer in M1"). Reason: §5 never asked for one, §12 M1/M2/M5 criteria do not depend on one, and the hit recipe (freeze, stagger, knockback, flash, burst, number) is what makes a hit read. Not required for any V1 sign-off. Logged in `docs/BACKLOG.md`; the producer revisits it once, at M4 sign-off, on the evidence named in STATUS.
+- 2026-10-16 — **§13: `Progression` tests cover equipment bonuses and the shop purchase rule.** Raised by ARCHITECTURE §15.6 and §15.11 q3. Reason: `Buy` is pure Core logic in `Progression`; a bug in it is silent (a young kid does not audit coins) and expensive once M3 saves it. `ProgressionTests` is five tests and closed at five; totals are 13 after M2 and 16–17 after M3, inside 12–20. Still three files; no test for `Equip`, `AwardCoins`, the generator, the baker or the UI.
+- 2026-10-16 — **§12 M4: items are pictured as well as priced.** Raised by ARCHITECTURE §15.11 q6. Reason: §4 already says no reading is required to play, and the M2 shop is words and numbers; the M5 criterion (a kid finishes alone) fails if a 5-year-old needs an adult to read the shop. M4 because items, prices and the weakness are final there and the M4 kid session sees the shop as it will ship; M5 takes no new work. Bound: 14 pictures rendered by an editor script from meshes already in the project (charms and consumables a coloured shape), price as a coin mark and digits, no package, no purchase, no hand-drawn art. This is §4 applied to the shop, not a new feature.
