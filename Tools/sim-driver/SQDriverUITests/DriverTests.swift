@@ -9,7 +9,8 @@ import XCTest
 ///   SQ_SCRIPT     steps separated by ';'
 ///       wait:<seconds>          sleep
 ///       tap:<nx>,<ny>           tap at normalized app coordinates (0..1, origin top-left)
-///       taps:<nx>,<ny>,<count>  the same tap repeated with 0.3 s gaps
+///       taps:<nx>,<ny>,<count>  the same tap repeated with 0.3 s gaps (about 0.65 s apart in practice, so three
+///                               taps span 1.3 s; for the 1 s difficulty corner use three tap: steps instead)
 ///       shot:<name>             attach a screenshot named <name> (exported from the xcresult)
 ///       relaunch                terminate and launch the app again
 final class DriverTests: XCTestCase {

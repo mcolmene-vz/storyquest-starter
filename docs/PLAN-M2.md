@@ -87,7 +87,35 @@ D4 and D5 do not depend on each other. Whichever download arrives first goes fir
   
   Also: every control is at least 170 reference px and inside the safe area and the 1600 × 900 box on both ratios; `GameBootstrap` has no serialized fields; the player log is clean; the gate passes 13/13.
 - **Not part of it:** item pictures (M4, ruling 6), confirmation dialogs, scrolling, a 3D camp, hero previews, save, story, any change to the hero models.
-- **Status:** not started.
+- **Status:** done 2026-10-16, verified by the lead.
+  - The lead's own gate: 13/13, zero warnings. `GameBootstrap` has no serialized fields. ProjectSettings is unchanged: each build bumped only `buildNumber`, which was reverted.
+  - The flow, service and `CampView` diffs were read against §15.5.
+  - The lead looked at `d2-iphone-bought-sword.png` and `d2-ipad-camp-equip.png`: the §15.5 grid, Owned in green, unaffordable items greyed, empty equip slots disabled, and the Body toggle on the Equip tab only.
+  - The developer's runs on both simulators:
+    - Steel Sword takes the Swordsman from 60 to 15 coins, shows Owned, and Equip reads Steel Sword.
+    - The Swordsman's damage goes from 6 to 9, exactly as the tables predict.
+    - Victory shows "+10 coins each", then Camp shows 25/70/70/70.
+    - A Normal defeat returns to Camp with nothing changed; an Always Win defeat replays the battle at full HP.
+    - Player logs have no errors.
+    - A temporary dev-only layout probe, deleted before the final build, found 0 controls under 170 px or outside the safe area or the box on either ratio.
+
+  Developer readings accepted:
+  - `Services.Party` is the `PartyRecord` itself;
+  - the troll encounter is a constant in `BattleService` until M3;
+  - XP is written back by slot index;
+  - the pool is replaced on Victory;
+  - the grid aligns to the hero rows (24 px column gap);
+  - gear sits in the left column and consumables in the right;
+  - the pool count goes on the name line;
+  - Owned is green, distinct from the disabled grey;
+  - empty slots read "starter" or "none";
+  - tap SFX play on actions only;
+  - Camp reopens on the Swordsman and the Shop tab;
+  - no backdrop until M3;
+  - the Body toggle writes `HeroRecord.Body` directly;
+  - there is no difficulty corner in Camp.
+
+  The driver header now notes that `taps:` is too slow for the 1 s difficulty corner (use three `tap:` steps).
 
 ### D3 — Soak probe, build settings, capture commands
 

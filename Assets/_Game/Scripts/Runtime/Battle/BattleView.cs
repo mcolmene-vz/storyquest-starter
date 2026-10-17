@@ -118,7 +118,7 @@ namespace Game.Runtime
                     title = "Victory!";
                     foreach (var gain in battle.LastGains)
                         lines.Add(gain.Name + "  +" + gain.Gained + " xp" + (gain.LeveledUp ? "   Level up!" : ""));
-                    lines.Add("+" + battle.State.CoinsEarned + " coins");
+                    lines.Add("+" + battle.State.CoinsEarned + " coins each");
                     break;
                 case BattleOutcome.DefeatAlwaysWin:
                     title = "Knocked down!";
@@ -134,9 +134,16 @@ namespace Game.Runtime
 
         void OnContinue(BattleOutcome outcome)
         {
-            // §14.5: defeats replay the same setup and seed with full HP; Victory starts a new battle with a new seed.
-            Services.Battle.Restart(keepSetupAndSeed: outcome != BattleOutcome.Victory);
-            flow.Go(FlowState.Battle);
+            // §15.5: an Always Win defeat replays the same battle; Victory and a Normal defeat go back to camp.
+            if (outcome == BattleOutcome.DefeatAlwaysWin)
+            {
+                Services.Battle.Replay();
+                flow.Go(FlowState.Battle);
+            }
+            else
+            {
+                flow.Go(FlowState.Camp);
+            }
         }
     }
 }

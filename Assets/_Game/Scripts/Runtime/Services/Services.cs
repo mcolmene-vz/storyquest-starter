@@ -1,4 +1,5 @@
 using System;
+using Game.Core;
 using Game.Core.Data;
 using UnityEngine;
 
@@ -8,10 +9,13 @@ namespace Game.Runtime
     public static class Services
     {
         static GameTables? tables;
+        static PartyRecord? party;
         static BattleService? battle;
         static AudioService? audio;
 
         public static GameTables Tables => tables ?? throw NotCreated();
+        /// The party between battles (§15.5): heroes, coins, equipment and the consumable pool, in memory until M3.
+        public static PartyRecord Party => party ?? throw NotCreated();
         public static BattleService Battle => battle ?? throw NotCreated();
         public static AudioService Audio => audio ?? throw NotCreated();
 
@@ -21,7 +25,8 @@ namespace Game.Runtime
             if (tables != null)
                 throw new InvalidOperationException("Services.Create was already called");
             tables = TableLoader.Load(new ResourcesTableSource());
-            battle = new BattleService(tables);
+            party = DebugParty.CreateParty();
+            battle = new BattleService(tables, party);
             audio = AudioService.Create(host);
         }
 

@@ -30,6 +30,7 @@ namespace Game.Runtime
 
         IView CreateView(FlowState state) => state switch
         {
+            FlowState.Camp => new CampView(this),
             FlowState.Battle => new BattleView(this),
             _ => throw new NotSupportedException("FlowState." + state + " has no view yet"),
         };

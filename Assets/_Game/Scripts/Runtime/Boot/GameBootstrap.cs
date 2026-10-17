@@ -27,11 +27,10 @@ namespace Game.Runtime
             CreateLight();
             var safeArea = CreateUI();
 
-            // §14.9: services once, the M1 battle, then the flow takes over.
+            // §15.9: services once, then the flow opens the camp; battles start from its Next battle.
             Services.Create(gameObject);
-            Services.Battle.Start(DebugParty.Create());
             flow = new FlowController(this, safeArea);
-            flow.Go(FlowState.Battle);
+            flow.Go(FlowState.Camp);
         }
 
         void CreateCamera()

@@ -1,22 +1,33 @@
-using System;
 using System.Collections.Generic;
-using Game.Core.Battle;
+using Game.Core;
+using Game.Core.Data;
 
 namespace Game.Runtime
 {
-    /// The M1 party (ARCHITECTURE §14.4). Deleted in M3 when StoryService builds the setup from the `# battle:` tag.
+    /// The M2 party (ARCHITECTURE §15.3, §15.5): the four heroes at 0 XP with 60 coins each, and a pool of two potions
+    /// and a revive. Held in memory by Services.Party and lost on quit. Deleted in M3 with the Body toggle, when profiles
+    /// pick the bodies and SaveService loads the record.
     public static class DebugParty
     {
-        public static BattleSetup Create() => new BattleSetup(
-            new[]
+        public static PartyRecord CreateParty() => new PartyRecord
+        {
+            Heroes = new List<HeroRecord>
             {
-                new HeroSpec("swordsman", 1, "Swordsman"),
-                new HeroSpec("archer", 1, "Archer"),
-                new HeroSpec("mage", 1, "Mage"),
-                new HeroSpec("fighter", 1, "Fighter"),
+                Hero("Swordsman", "swordsman", Bodies.Girl),
+                Hero("Archer", "archer", Bodies.Boy),
+                Hero("Mage", "mage", Bodies.Girl),
+                Hero("Fighter", "fighter", Bodies.Boy),
             },
-            new[] { "troll_grunt" },
-            new Dictionary<string, int> { ["potion"] = 2, ["revive"] = 1 },
-            (int)(DateTime.UtcNow.Ticks & 0x7fffffff));
+            Consumables = new Dictionary<string, int> { ["potion"] = 2, ["revive"] = 1 },
+        };
+
+        static HeroRecord Hero(string name, string classId, string body) => new HeroRecord
+        {
+            Name = name,
+            ClassId = classId,
+            Body = body,
+            Xp = 0,
+            Coins = 60,
+        };
     }
 }
