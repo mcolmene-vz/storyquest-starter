@@ -1279,10 +1279,26 @@ Reason: on Synty the field holds exactly a body. 15.14.4 objected to the name on
 
 **What the repo keeps:**
 1. **The extracted files are committed,** as 15.1 says, in the local, private repo.
-2. **`Tools/synty/packs.txt` (new).** One line per downloaded pack: store name, version as shown on the store page, date downloaded, licence (`subscription`), and the SHA-256 of the downloaded file. Together with `keep.txt` and `package-contents.txt`, it is the exact record of which files in the repo are Synty's and under which licence.
-3. **Synty files stay identifiable.** Every Synty file lives under `Assets/ThirdParty/Synty/`, and the generator log names every generated asset derived from one (prefabs, materials, baked textures). So everything Synty can be removed or replaced if the subscription ends.
-4. **A one-time licence bought later** for a pack (for example with the store credit) changes that pack's `packs.txt` licence to `perpetual`, with the date.
-5. **Review audit:** every file under `Synty/` is in `keep.txt`, and every `keep.txt` line belongs to a `packs.txt` pack.
+2. **`Tools/synty/packs.txt` (new).** One tab-separated line per downloaded pack, in this column order:
+   - `store_name`
+   - `version`, as shown on the store page
+   - `downloaded`, the date (YYYY-MM-DD)
+   - `licence`: exactly `subscription` or `perpetual`
+   - `licence_date`: empty for `subscription`; for `perpetual`, the date the one-time licence was bought, which is the key to its budget-log row
+   - `sha256` of the downloaded file
+   - `file`, the downloaded file's name
+
+   Together with `keep.txt` and `package-contents.txt`, it is the exact record of which files in the repo are Synty's and under which licence.
+3. **Synty files stay identifiable.** Every Synty file lives under `Assets/ThirdParty/Synty/`. The generator prints one line per generated asset derived from a Synty file (prefabs, materials, override controllers, baked textures), in the form `[Synty-derived] <generated asset path> <- <Synty source path>`. The sign-off regeneration's log, saved with the evidence, is the record. So everything Synty can be removed or replaced if the subscription ends.
+4. **A one-time licence bought later** for a pack (the hero pack, with the store credit, producer ruling "SyntyPass" item 3) sets that pack's `licence` to `perpetual` and `licence_date` to the purchase date.
+   - Martin downloads the pack again under the one-time licence, and its `sha256` replaces the old one. If the version changed, `extract.sh` re-runs on the new file and the diffs to `package-contents.txt` and the extracted files are committed together.
+   - So the files in the repo are the ones the perpetual licence delivered, whatever Synty answers to Martin's third question (15.15.8 q2).
+5. **Review audit, amended 2026-10-17** to the producer's compliance line (STATUS, ruling "SyntyPass"):
+   - every file under `Synty/` is a `keep.txt` line, and every `keep.txt` line belongs to a `packs.txt` pack;
+   - every derived asset appears in the `[Synty-derived]` lines;
+   - every `perpetual` pack has a budget-log row dated `licence_date`.
+
+   Martin's dated receipt, or his account page from the same billing month as the sign-off, is the producer's evidence, not a file in the repo.
 
 #### 15.15.7 PLAN-M2
 
@@ -1309,9 +1325,16 @@ Reason: on Synty the field holds exactly a body. 15.14.4 objected to the name on
    - *Recommend yes, if q2 and q3 are approved.* The code is already class × body (D1, D2), so this path costs less code than the Look path. It also answers the M4 kid-session question about boy and girl heroes before the session.
 2. **Licence.** Under clauses 12.2 and 12.3, after a lapse the game may not be substantially developed with Synty assets, and the licence is silent on continued sales. That is the producer's SyntyPass condition (b).
    - *Recommend approving with this condition:* the subscription stays active from the first Synty file committed until V1's last substantial update.
-   - Also: the lead writes now to `licencing@syntystudios.com` (the address in the licence) and asks whether a game released while subscribed may keep being sold, and receive minor fixes, after cancellation. The answer is filed in STATUS.
+   - *Amended 2026-10-17 (producer ruling "SyntyPass", item 2 (iv)):* the email to `licencing@syntystudios.com` is Martin's, optional, and sent from his own account; neither the lead nor Claude sends it (Needs Martin 15). It asks three things:
+     - may a game released while subscribed keep being sold after the subscription ends;
+     - may it get minor fixes and rebuilds after that, including re-uploading the same build to TestFlight;
+     - does a one-time licence bought later cover files first downloaded under the subscription.
+
+     The answer is filed in STATUS verbatim. No V1 milestone needs it; anything beyond TestFlight does (ruling item 2 (iii)).
    - Whether that answer is enough for a public release is still the lawyer question the producer named.
 3. **Budget, condition (c).** The packs V1 would use cost US$1,004.92 one-time (15.15.1). SyntyPass costs US$40 a month with a 3-month minimum (US$120), or US$360 a year. So the subscription is cheaper for about 25 months on monthly billing, or about 33 months on yearly.
-   - *Recommend:* monthly now, while M2 proves the art; switch to yearly at M3 start if it holds.
-   - Put the US$10 monthly store credit (the lead's figure; the rules are not verified here) towards the hero pack's one-time licence (US$149.99). That makes the most-used pack perpetual and shrinks the lapse risk in q2.
+   - *Amended 2026-10-17 (producer ruling "SyntyPass", item 3):*
+     - Billing is monthly. The switch to yearly is not tied to M3: Martin switches at a renewal only if he expects 9 or more further months, and the lead adds a budget row.
+     - The US$10 monthly store credit goes only towards the hero pack's one-time licence (US$149.99), recorded in `packs.txt` (15.15.6). Any other use of the credit, or a cash top-up, needs a new budget row and the producer's yes.
+     - At US$10 a month that takes about 15 months, so the credit does not reduce the lapse risk inside V1.
 4. **Condition (a)** asked for SyntyPass to come through the M4 revisit. The owner has decided earlier; waiving (a) is the producer's call. *Recommend waiving it.* With paid art landing in M2, the framing, troll and environment work does not move into M5.
