@@ -1957,3 +1957,42 @@ These rest on `Builds/evidence/M2/d7-weapons-party-crops.png`, `d7-ipad-mace-bef
 - The Swordsman's helm, checked in the same captures, is open-faced with the visor up: the face shows from the front, so it passes.
 
 **3. The `"starter"` constant:** no objection. `HeroGenerator` uses `HeroAppearance.StarterWeapon`, so there is one definition, and `Game.Editor` already references `Game.Runtime` (§13.3).
+
+*Amended 2026-10-17 (D8.1 results; `Builds/evidence/M2/d8-1-mace-group-hidden-head.png`, `d8-1-mace-before-after.png`, `d8-1-mage-sweep.png`):*
+
+**1a. `mace_2`'s head is hidden in the group shot. Fix: a different idle stance for the Fighter (clip data). Not the slots, the spacing or the grip.**
+- **The facts.** `03_A` gives the gold head; it is the only alternative atlas that changes the mace's metal. In the full party, though, the Fighter holds the mace low and pointing forward, behind the next nearer hero, and only 19–52 % of the mace shows, always the shaft. Every hero but the nearest has a neighbour in front of its weapon side, so no colour fixes this.
+- **Rejected options:**
+  - **Changing the slot order.** Slots follow the party (profile) order from M3, and `Slot` drives Core's turn-order tie-break (§14.3). A class-to-slot rule is a design change across Core and M3 for one weapon, and it only moves the hidden weapon to whichever hero is then second.
+  - **Wider spacing.** It widens the group by about a third. On 4:3 the group already uses 69 % of the width beside the card column (§14.4), so the cards and the edges take the risk.
+  - **A head-up grip.** The grip applies in every clip, so the swings would carry the mace pointing the wrong way (same reason as 15.18.9 item 1).
+- **Fix.** The Fighter's Idle clip changes to a Sword Combat stance that holds the weapon raised, so the head sits above and beside the neighbours rather than behind them.
+  - Try `A_Idle_EnergeticStance01_Sword` first, then `A_Idle_Menacing01_Sword` (the loop, not `_Begin` or `_End`).
+  - Change: one `keep.txt` line for the chosen file (Sword Combat, `Animations/Polygon/Idle/…`), `clips.json` `loop: true`, and the Fighter's `Idle` (and `Walk`) in `classes.json`. Boy and girl share it, since sword clips are unisex.
+  - Nothing else changes: same grip, same controller.
+- **If neither stance shows the head,** accept it through the action shot. The Fighter's Attack and Skill action shots must show the gold head unoccluded in the impact frame on both ratios. The producer is told that `mace_2` reads in the action shot, not the group shot.
+- **D8.1b verification.** Crops of the Fighter with `mace_2` in the full-party group shot, on the iPhone 15 Pro and iPad (10th generation) simulators, both bodies.
+  - The developer's visibility measure, run on the mace's head (the top 30 % of its length) against the isolated render, shows at least 70 % at idle frame 0 and at least 50 % at every sampled frame of the idle cycle.
+  - The before-and-after crop shows the grey head become gold.
+  - The other three heroes' upgrades are re-captured, so the stance change hid nothing of theirs.
+
+**2a. `hat_mage` fails the eye check, so the fallback applies: another head covering, chosen by rule.**
+- **No part name is given here.** The import log gives each covering's triangle count and height, not its shape, and the architect will not guess a part from its number.
+- **Candidates:** the tall all-gender coverings that sit over the base hair, so the same name serves both bodies. They are listed in the order to try, cheapest first, by the D5 log's triangle counts:
+  1. `Chr_HeadCoverings_Base_Hair_08` (238 t, top 2.02 m)
+  2. `_10` (238 t, 2.04)
+  3. `_09` (258 t, 2.01)
+  4. `_06` (328 t, 2.05)
+  5. `_03` (516 t, 2.11)
+  6. `_05` (570 t, 2.20)
+  7. `_07` (606 t, 2.05)
+  8. `_11` (606 t, 2.05)
+
+  `_02`, today's, is excluded.
+- **Rule: take the first that passes both checks.**
+  - (a) Both eyes are fully visible in `VariantCapture`'s eye-level front capture on both Mage bodies, across the same −6 to +6 cm camera sweep.
+  - (b) It reads as a hat with a crown above the head from the group camera (a contact sheet from behind).
+- **Recording it:** `items.json` `hat_mage.parts` becomes `{ "boy": ["<chosen>"], "girl": ["<chosen>"] }`, and PLAN-M2 records the name and the two captures.
+- **If none passes:** the Mage's armor becomes a cape. The item is renamed `cape_mage` ("Wizard Cloak"); no test uses `hat_mage`.
+  - Its part is one of `Chr_BackAttachment_03`–`_15` other than the Archer's `_10`, chosen from the same contact sheet as the longest cape with a silhouette distinct from the Archer's.
+  - Faces are then untouched, and the piece reads from behind in every shot.
