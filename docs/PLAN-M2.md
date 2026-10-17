@@ -209,7 +209,17 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
   - Facts (a)–(g) are recorded.
   - The gate passes 13/13.
 - **Not part of it:** prefabs, materials, override controllers (D6).
-- **Status:** waits on Needs Martin 11.
+- **Status:** done 2026-10-17, verified by the lead.
+  - The lead's own checks: a second `extract.sh` run changed nothing (checksums before and after); 30 files against 30 keep lines; no Synty script, scene, prefab, material, shader, controller, asset or dll under `Assets/ThirdParty/Synty/`; four `packs.txt` rows; `git remote -v` empty; gate 13/13 with zero warnings; the postprocessor read against §15.7.
+  - Developer facts (a)–(g), full log at `Builds/synty-check-final2.log`:
+    - (a) `FixedScale/ModularCharacters.fbx`: 720 parts, centimetres, unit bones. The avatar is valid only with an explicit 22-bone body map, because finger names repeat across hands, so the fingers are unmapped and hold the bind pose.
+    - (b) colour is baked into one 1024² atlas, `PolygonFantasyHero_Texture_01_A`, with no regular grid. It is also the weapon atlas.
+    - (c) 54 hero-pack weapons, no bow.
+    - (d) the base bodies are 1.93–1.94 m; about 4.5–5k triangles per hero.
+    - (e) bows: Long 6.7k triangles and 5 renderers; Recurve 22.4k triangles and 12 renderers.
+    - (f) all 16 table clips found, with Masc and Femn for every `{g}`. There is no single draw-and-release bow clip; the candidates are `Stand_Shoot_ToBowDown_Neut` and the 5.3 s `Shoot_Leaping`.
+    - (g) all 18 clip avatars are valid on the same POLYGON rig.
+  - Open for the architect before D6: fingers, skin recolour with the shared atlas, the bow clips, the Recurve bow's cost, and the unused swords.
 
 ### D6 — Synty heroes and data
 

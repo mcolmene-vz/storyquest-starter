@@ -1,0 +1,53 @@
+# Synty files copied into Assets/ThirdParty/Synty/ by Tools/synty/extract.sh (ARCHITECTURE §15.1, §15.15.5).
+# `# pack: <store_name>` names the packs.txt row the lines after it come from.
+# Line format: <package pathname> -> <Characters|Weapons|Textures|Animations>; the basename is kept unchanged.
+# POLYGON files only: no Sidekick (A_MOD_*), RootMotion/_RM, FPV, prop-bone (Cmp/Lng/Rcv) clips, scenes, prefabs,
+# materials, shaders or scripts.
+
+# pack: POLYGON - Modular Fantasy Hero Characters
+# The modular character: every part on one skeleton, the fixed-scale export (§15.1, fact a).
+Assets/Synty/PolygonFantasyHeroCharacters/Models/FixedScale/ModularCharacters.fbx -> Characters
+# The atlas the character and weapon materials sample (fact b); colour is baked into it.
+Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_01_A.png -> Textures
+# Swordsman: one-handed swords, plain to bigger (§15.4); D6 picks the starter and sword_2.
+Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Sword_Small_01.fbx -> Weapons
+Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Sword_01.fbx -> Weapons
+Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Sword_Large_01.fbx -> Weapons
+# Mage: plain and ornate staff.
+Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Staff_01.fbx -> Weapons
+Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Staff_02.fbx -> Weapons
+# Fighter: plain and spiked mace.
+Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Mace_01.fbx -> Weapons
+Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Mace_02.fbx -> Weapons
+
+# pack: ANIMATION - Sword Combat
+# §15.15.5 table: Idle (Swordsman, Mage, Fighter), the six sword-pack Attack/Skill clips, Hit, BigStagger, Defend, Defeat.
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Idle/Base/A_Idle_Base_Sword.fbx -> Animations
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Attack/LightCombo01/A_Attack_LightCombo01A_ReturnToIdle_Sword.fbx -> Animations
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Attack/HeavyFlourish01/A_Attack_HeavyFlourish01_ReturnToIdle_Sword.fbx -> Animations
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Attack/HeavyStab01/A_Attack_HeavyStab01_ReturnToIdle_Sword.fbx -> Animations
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Attack/HeavyCombo01/A_Attack_HeavyCombo01A_ReturnToIdle_Sword.fbx -> Animations
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Attack/LightLeaping01/A_Attack_LightLeaping01_ReturnToIdle_Sword.fbx -> Animations
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Hit/HitReact/A_Hit_F_React_Sword.fbx -> Animations
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Hit/HitStagger/A_Hit_F_Stagger_Sword.fbx -> Animations
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Block/A_Block_Loop_Sword.fbx -> Animations
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Death/A_Death_B_01_Sword.fbx -> Animations
+
+# pack: ANIMATION - Bow Combat
+# The Archer's two bows (the hero pack has none; fact e), static meshes, and their atlas.
+Assets/Synty/AnimationBowCombat/Models/Bows/Unrigged/Wep_LongBow_01_Unrigged.fbx -> Weapons
+Assets/Synty/AnimationBowCombat/Models/Bows/Unrigged/Wep_RecurveBow_01_Unrigged.fbx -> Weapons
+Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_01_A.png -> Textures
+# §15.15.5 table: the Archer's Idle, {g} = Masc | Femn.
+Assets/Synty/AnimationBowCombat/Animations/Polygon/Masculine/Idle/A_POLY_BOW_Stand_Idle_Base_WithBow_Masc.fbx -> Animations
+Assets/Synty/AnimationBowCombat/Animations/Polygon/Feminine/Idle/A_POLY_BOW_Stand_Idle_Base_WithBow_Femn.fbx -> Animations
+# The Archer's Attack and Skill candidates (fact f): the pack has no single draw-and-release clip.
+Assets/Synty/AnimationBowCombat/Animations/Polygon/Neutral/Standing/Shoot/A_POLY_BOW_Stand_Shoot_ToBowDown_Neut.fbx -> Animations
+Assets/Synty/AnimationBowCombat/Animations/Polygon/Neutral/Standing/Shoot/A_POLY_BOW_Stand_Shoot_Leaping_Neut.fbx -> Animations
+
+# pack: ANIMATION - Emotes and Taunts
+# §15.15.5 table: the Mage's Skill (staff raised) and every Victory, {g} = Masc | Femn.
+Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Masculine/Happy/A_POLY_EMOT_Happy_ArmsRaised_Masc.fbx -> Animations
+Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Feminine/Happy/A_POLY_EMOT_Happy_ArmsRaised_Femn.fbx -> Animations
+Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Masculine/Happy/A_POLY_EMOT_Happy_FistPump_Masc.fbx -> Animations
+Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Feminine/Happy/A_POLY_EMOT_Happy_FistPump_Femn.fbx -> Animations
