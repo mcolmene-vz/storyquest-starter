@@ -26,7 +26,7 @@ Nothing in D4–D8 waits on Martin until D8's install and soak.
 - **Smoke item 1 until M3.** The "title" is the Camp screen (ruling 9c), and the M2 evidence says so.
 - **Look toggle and SoakProbe.** The Body toggle becomes a Look toggle in D6. It is in M2 builds only and is deleted in M3 with `DebugParty` (ruling 9a). SoakProbe is compiled out of the TestFlight build by the per-build `SQ_PROBE` define (ruling 9b).
 - **Performance counts without the editor GUI.** D3's probe prints draw calls, SetPass calls and triangles from `ProfilerRecorder` render counters in development players. These count every pass. §15.14.5 sets the M2 budget in those terms: draws ≤ 140, SetPass ≤ 100, triangles ≤ 120k, ≤ 42 combatant renderers (from the generator log), read on a simulator development player. On the A16 iPad device build, `cpu` and `rt` must each be under 6 ms in the group shot. Simulator runs never count for fps, CPU, GPU or memory.
-- **`ProjectSettings.asset` churn.** M1 showed a simulator build flipping `m_Automatic` and `iOSSimulatorArchitecture`. The sign-off commit 6a8bcda set `m_Automatic: 0` from the generator. A task diff that changes either line is reverted or explained, never committed silently.
+- **`ProjectSettings.asset` churn.** `m_Automatic` flips with whichever command ran last: `ProjectSetup.Run` writes 0, and any editor launch (the gate included) writes 1. The committed value is 1. Correction 2026-10-16: an earlier version of this line said 6a8bcda set 0; it did not. The architect decides the value. Until then, task diffs revert the line to HEAD and never commit it silently.
 - **Version string.** `bundleVersion` stays `0.2.0` through M2 and becomes `0.3.0` in the sign-off commit (§15.9).
 - **Tests.** `ProgressionTests.cs` holds exactly the five §15.6 tests and is closed at five (ruling 3). The total after M2 is 13.
 
@@ -180,7 +180,17 @@ Nothing in D4–D8 waits on Martin until D8's install and soak.
   - A simulator battle looks exactly like M1: no cell is set yet, so nothing changes colour.
   - The gate passes 13/13.
 - **Not part of it:** materials that set a cell (D6), data changes, other KayKit files.
-- **Status:** not started.
+- **Status:** done 2026-10-16, verified by the lead.
+  - The lead's own `ProjectSetup.Run`: shader ok (four passes); all 18 generated assets unchanged after the developer's run. The only drift was `m_Automatic`, reverted (see readings).
+  - The shader diff was read against §15.14.3: four properties in `UnityPerMaterial`; `CellTint` only in `ToonForward`; no texture sample added.
+  - The six toon materials gained exactly the four default property lines.
+  - The developer's checks:
+    - the four new `.meta` files are byte-identical to `sword_1handed.fbx.meta` apart from the guid;
+    - `cmp` shows the FBX match the pack;
+    - the gate passes 13/13;
+    - the simulator build compiled all four passes for Metal;
+    - a simulator group shot matches D2's, with counters 131 / 89 / 111,471, exactly M1's.
+  - Reading accepted: `CellTint` sits in ToonForward's own program block, so it appears only there.
 
 ### D5 — Mixamo import
 

@@ -1,7 +1,9 @@
 // StoryQuest toon shader (ARCHITECTURE §13.7). Four passes: banded lighting from the main light only, an inverted-hull
 // outline, and URP's own ShadowCaster and DepthOnly bodies. Every scalar and vector property lives in UnityPerMaterial,
 // declared once for all passes, so the SRP Batcher stays on. The presenter drives _FlashAmount through a
-// MaterialPropertyBlock for two frames per hit and never touches renderer.material.
+// MaterialPropertyBlock for two frames per hit and never touches renderer.material. ToonForward also multiplies the
+// albedo inside up to two cells of the palette texture's grid (§15.14.3: skin tones, the gold bow) without a second
+// texture sample; a material that sets no cell (cell.z == 0) renders as before.
 Shader "StoryQuest/Toon"
 {
     Properties
@@ -15,6 +17,10 @@ Shader "StoryQuest/Toon"
         _OutlineWidth ("Outline Width (object-space m)", Range(0, 0.05)) = 0.015
         _FlashColor ("Flash Color", Color) = (1, 1, 1, 1)
         _FlashAmount ("Flash Amount", Range(0, 1)) = 0
+        _CellA ("Tint cell A (col, row, cols, rows)", Vector) = (0, 0, 0, 0)
+        _CellAMul ("Tint cell A multiplier, linear", Vector) = (1, 1, 1, 1)
+        _CellB ("Tint cell B (col, row, cols, rows)", Vector) = (0, 0, 0, 0)
+        _CellBMul ("Tint cell B multiplier, linear", Vector) = (1, 1, 1, 1)
     }
 
     SubShader
@@ -43,6 +49,10 @@ Shader "StoryQuest/Toon"
             half _OutlineWidth;
             half4 _FlashColor;
             half _FlashAmount;
+            float4 _CellA;
+            half4 _CellAMul;
+            float4 _CellB;
+            half4 _CellBMul;
         CBUFFER_END
         ENDHLSL
 
@@ -85,6 +95,13 @@ Shader "StoryQuest/Toon"
             #endif
             };
 
+            half3 CellTint(float2 uv, float4 cell, half4 mul)
+            {
+                float2 grid = max(cell.zw, 1);
+                float2 c = min(floor(float2(uv.x, 1 - uv.y) * grid), grid - 1);   // row 0 is the image's top row
+                return (cell.z > 0 && all(c == cell.xy)) ? mul.rgb : half3(1, 1, 1);
+            }
+
             Varyings ToonVertex(Attributes input)
             {
                 Varyings output;
@@ -102,6 +119,9 @@ Shader "StoryQuest/Toon"
             half4 ToonFragment(Varyings input) : SV_Target
             {
                 half3 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb;
+                // The textures clamp, so saturate makes the cell test match the texel that was sampled.
+                float2 uv = saturate(input.uv);
+                albedo = saturate(albedo * CellTint(uv, _CellA, _CellAMul) * CellTint(uv, _CellB, _CellBMul));
                 half3 normalWS = normalize(input.normalWS);
 
             #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
