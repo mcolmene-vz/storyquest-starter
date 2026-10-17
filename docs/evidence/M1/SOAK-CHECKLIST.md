@@ -15,7 +15,7 @@ The producer made this a hard requirement for M1 sign-off: a timed 10 minutes of
 - Lose once on **Always Win** (the default): tap Defend until the party is knocked down. You should see "Knocked down! Try again" and the same battle restart at full HP.
 - Switch to **Normal**: tap the invisible top-right corner of the screen three times quickly; a toast says "Difficulty: Normal". Lose once more: you should see "The heroes retreat to camp" with a coins line, then a fresh battle.
 - Aim for 40 or more hits in total (a battle is about 12 hits).
-- **iPhone only:** flip the silent switch on during a battle. The hit sounds must still play.
+- **iPhone only:** turn Silent mode on during a battle (iPhone 15 Pro and later have no switch: use the Action button, or the bell in Control Center). The hit sounds must still play.
 
 ## What to watch in Xcode
 
@@ -34,5 +34,5 @@ Note the wall-clock time when you stop. Then take two screenshots on the device 
 - Red console lines: none, once, or repeating (and the text).
 - FPS steady at 60: yes or no. Memory flat: yes or no. Device warm or hot.
 - Every command used, Revive used, both defeats seen: yes or no.
-- iPhone: sound with the silent switch on: yes or no.
+- iPhone: sound with Silent mode on: yes or no.
 - Anything that looked wrong: a hero clipped by the screen edge, text under the notch, a hit that did not read as a hit, a button that needed two taps.

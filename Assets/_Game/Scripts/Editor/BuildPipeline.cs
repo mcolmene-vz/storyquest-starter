@@ -18,7 +18,7 @@ namespace Game.Editor
     {
         public const string ProductName = "StoryQuest";
         public const string BundleId = "com.vendoza.storyquest";
-        public const string BundleVersion = "0.1.0";
+        public const string BundleVersion = "0.2.0";
 
         const string CompanyName = "Vendoza LLC";
         const int ArchitectureArm64 = 1;
