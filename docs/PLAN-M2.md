@@ -162,7 +162,11 @@ D4 and D5 do not depend on each other. Whichever download arrives first goes fir
   - A simulator probe build prints lines in the new format, with a non-zero `mem` and `unity` and an `rt` value or `-`.
   - `git status` shows only these two files.
 - **Not part of it:** any other probe change; the render budget itself (that is the architect's §15.7 text).
-- **Status:** not started.
+- **Status:** done 2026-10-16, verified by the lead (own gate 13/13, zero warnings; diff read; only the two files changed).
+  - Simulator probe lines in the new format: `cpu 1.6 rt 1.0 ms | mem 218.0 MB unity 225.2 MB`; the counters are unchanged.
+  - Developer readings accepted: `rt -` covers both "no group shot" and "zero timings"; `cpu - rt - ms` when there are no samples; `mem - unity … MB` when the recorder is invalid. The §3b sentence now lists every simulator measurement that does not count.
+  - **Lead's reading for D8:** `cpu` is averaged over the whole 30 s window, not only group-shot frames. §15.13's "cpu under 6 ms in the group shot" is judged on the `flow=Battle` lines, where the group shot is most of the frames. That is stricter than the rule as written, not looser. If a device reading lands within 10 % of 6 ms, the architect decides whether to make `cpu` group-only (one line).
+  - On the simulator `mem` reads below `unity` (184–218 against 219–225 MB). Simulator memory is not evidence, but it makes Martin's Xcode memory reading at Needs Martin 13 a real test.
 
 ### D4 — Synty extraction and import (needs Needs Martin 11)
 

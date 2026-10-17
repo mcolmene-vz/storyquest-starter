@@ -122,16 +122,18 @@ grep -E 'Error|Exception|RenderPass|Attachment' "$LOG" | cut -d' ' -f2- | sort |
 A probe line reads:
 
 ```
-[Probe] t=212s flow=Battle fps avg 59.8 min 52.1 | gpu group avg 3.9 max 5.2 ms | cpu 6.1 ms | mem 187.4 MB
+[Probe] t=212s flow=Battle fps avg 59.8 min 52.1 | gpu group avg 3.9 max 5.2 ms | cpu 4.1 rt 3.2 ms | mem 212.4 MB unity 140.2 MB
 ```
 
 - `t`: seconds since the app started. `flow`: the screen when the line was written; the first `flow=Battle` is where the first battle starts.
 - `fps avg`: frames divided by seconds over the 30 s. `min`: the slowest whole second in them. Pass: avg 58 or more in every line after the first battle starts, with no downward drift over the last 3 minutes.
 - `gpu group`: GPU time per frame, averaged only over frames in the group shot (the wide battle camera). `-` means those 30 s had no group-shot frame (Camp, or only action shots). `avg 0 max 0` means the device returned no GPU time: read it from Xcode instead (Debug navigator ⌘7 → GPU, during a group shot); it is not a pass. Pass: the iPad's avg under 6 ms.
-- `cpu`: main-thread time per frame, averaged. `mem`: the memory Unity itself has reserved (`Profiler.GetTotalReservedMemoryLong`), in MB of 1,048,576 bytes. It is not the whole-app figure in Xcode's memory gauge. Pass: within ±5 MB after the first battle starts, and under 300 MB on the iPhone.
+- `cpu`: main-thread time per frame, averaged over the 30 s. `rt`: render-thread time per frame, averaged only over group-shot frames; `-` means there were none. Pass: the iPad's `rt` under 6 ms in the group shot.
+- `mem`: the whole app's memory as iOS reports it (Unity's `System Used Memory` counter), in MB of 1,048,576 bytes. It is meant to match Xcode's memory gauge, and is checked once against it at the install Run (STATUS, Needs Martin 13). The producer's thresholds apply to it: within ±5 MB after the first battle starts, and under 300 MB on the iPhone. `mem -` means the counter returned nothing; that device's memory then comes from Martin reading Xcode's gauge at the start and end of the session.
+- `unity`: the memory Unity itself has reserved (`Profiler.GetTotalReservedMemoryLong`), in MB. Not a threshold: it tells a Unity leak (`mem` and `unity` grow together) from OS or driver growth (`mem` grows, `unity` stays flat).
 - Development players add `| group draws … setpass … tris …`: the highest draw-call, SetPass and triangle counts of any group-shot frame in those 30 s, against the ARCHITECTURE §15.7 budget. They stand in for the Frame Debugger; a release player has no such counters. Development players are every `SQ_DEV=1` build and every simulator build: Unity 6000.3 ships the simulator player only in its development variant.
 
-The simulator log from §2b carries the same lines. The simulator's GPU numbers say nothing about a device.
+The simulator log from §2b carries the same lines. Its `fps`, `gpu`, `cpu`, `rt` and `mem` say nothing about a device; its render counters do (ARCHITECTURE §15.7).
 
 **The probe is out of the TestFlight build.** Before trusting an empty result, run the grep on a probe build, where it must find the string:
 

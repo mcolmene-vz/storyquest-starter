@@ -32,6 +32,11 @@ namespace Game.Runtime
         double gpuSum;
         double gpuMax;
         int gpuSamples;
+        double rtSum;
+        int rtSamples;
+
+        // OS-reported app memory, what the producer's 300 MB and ±5 MB thresholds apply to (§15.8, 2026-10-16).
+        ProfilerRecorder systemMemory;
 
         // Render counters exist in development players only; they stand in for the Frame Debugger (PLAN-M2 readings).
         bool counters;
@@ -44,6 +49,7 @@ namespace Game.Runtime
 
         void Awake()
         {
+            systemMemory = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
             counters = Debug.isDebugBuild;
             if (counters)
             {
@@ -56,6 +62,7 @@ namespace Game.Runtime
 
         void OnDestroy()
         {
+            systemMemory.Dispose();
             if (!counters)
                 return;
             drawCalls.Dispose();
@@ -98,6 +105,11 @@ namespace Game.Runtime
                         gpuMax = timing.gpuFrameTime;
                     gpuSamples++;
                 }
+                if (group && timing.cpuRenderThreadFrameTime > 0d)
+                {
+                    rtSum += timing.cpuRenderThreadFrameTime;
+                    rtSamples++;
+                }
             }
 
             if (counters && group)
@@ -129,11 +141,23 @@ namespace Game.Runtime
                 line.Append("avg 0 max 0 ms");
             else
                 line.AppendFormat(inv, "avg {0:F1} max {1:F1} ms", gpuSum / gpuSamples, gpuMax);
+            line.Append(" | cpu ");
             if (cpuSamples == 0)
-                line.Append(" | cpu -");
+                line.Append('-');
             else
-                line.AppendFormat(inv, " | cpu {0:F1} ms", cpuSum / cpuSamples);
-            line.AppendFormat(inv, " | mem {0:F1} MB", Profiler.GetTotalReservedMemoryLong() / BytesPerMB);
+                line.AppendFormat(inv, "{0:F1}", cpuSum / cpuSamples);
+            line.Append(" rt ");
+            if (rtSamples == 0)
+                line.Append('-');
+            else
+                line.AppendFormat(inv, "{0:F1}", rtSum / rtSamples);
+            line.Append(" ms | mem ");
+            long system = systemMemory.Valid ? systemMemory.LastValue : 0;
+            if (system <= 0)
+                line.Append('-');
+            else
+                line.AppendFormat(inv, "{0:F1} MB", system / BytesPerMB);
+            line.AppendFormat(inv, " unity {0:F1} MB", Profiler.GetTotalReservedMemoryLong() / BytesPerMB);
             if (counters)
             {
                 if (groupFrames == 0)
@@ -157,6 +181,8 @@ namespace Game.Runtime
             gpuSum = 0d;
             gpuMax = 0d;
             gpuSamples = 0;
+            rtSum = 0d;
+            rtSamples = 0;
             drawMax = 0;
             setPassMax = 0;
             trianglesMax = 0;
