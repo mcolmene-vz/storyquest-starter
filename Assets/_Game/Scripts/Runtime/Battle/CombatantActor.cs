@@ -1,4 +1,7 @@
 using System;
+using Game.Core;
+using Game.Core.Battle;
+using Game.Core.Data;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -46,14 +49,27 @@ namespace Game.Runtime
         /// only mesh renderers on a combatant; every body part is skinned.
         public float BodyHeight { get; }
 
-        public static CombatantActor Spawn(int id, string prefabId, Vector3 position, Quaternion rotation, Transform parent)
+        /// An enemy, or a hero as its prefab stands: base outfit and starter weapon.
+        public static CombatantActor Spawn(int id, string prefabId, Vector3 position, Quaternion rotation, Transform parent) =>
+            new CombatantActor(id, InstantiatePrefab(prefabId, position, rotation, parent), position);
+
+        /// A hero: its {ClassId}_{Body} variant (§15.3), dressed in its equipment (§15.4) before the renderers are cached,
+        /// so the flash covers exactly what is visible.
+        public static CombatantActor Spawn(int id, HeroSpec hero, GameTables tables, Vector3 position, Quaternion rotation, Transform parent)
+        {
+            var instance = InstantiatePrefab(hero.ClassId + "_" + hero.Body, position, rotation, parent);
+            HeroAppearance.Apply(instance.transform, tables.Class(hero.ClassId), hero.Body, hero.Equipment ?? Equipment.None, tables);
+            return new CombatantActor(id, instance, position);
+        }
+
+        static GameObject InstantiatePrefab(string prefabId, Vector3 position, Quaternion rotation, Transform parent)
         {
             var prefab = Resources.Load<GameObject>(PrefabFolder + prefabId);
             if (prefab == null)
                 throw new InvalidOperationException("Resources/" + PrefabFolder + prefabId + ".prefab is missing; run Game.Editor.CombatantGenerator.Generate");
             var instance = Object.Instantiate(prefab, position, rotation, parent);
             instance.name = prefabId;
-            return new CombatantActor(id, instance, position);
+            return instance;
         }
 
         static float MeasureBodyHeight(Renderer[] renderers)

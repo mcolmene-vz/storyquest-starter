@@ -47,9 +47,10 @@ namespace Game.Runtime
                 bool hero = c.Team == Team.Hero;
                 var slot = hero ? BattleStage.HeroSlot(c.Slot, heroes) : BattleStage.EnemySlot(c.Slot, enemies);
                 var facing = hero ? BattleStage.HeroFacing : BattleStage.EnemyFacing;
-                // A hero's slot is its index in the setup (BattleFactory); its prefab is the {ClassId}_{Body} variant (§15.3).
-                string prefab = hero ? c.DefinitionId + "_" + battle.Setup.Heroes[c.Slot].Body : c.DefinitionId;
-                actors.Add(CombatantActor.Spawn(c.Id, prefab, slot, facing, root.transform));
+                // A hero's slot is its index in the setup (BattleFactory), whose spec carries its body and equipment.
+                actors.Add(hero
+                    ? CombatantActor.Spawn(c.Id, battle.Setup.Heroes[c.Slot], Services.Tables, slot, facing, root.transform)
+                    : CombatantActor.Spawn(c.Id, c.DefinitionId, slot, facing, root.transform));
             }
 
             var camera = Camera.main;

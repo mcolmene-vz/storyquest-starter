@@ -361,7 +361,20 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
   - no `Instantiate` in `HeroAppearance`;
   - the gate passes 13/13.
 - **Not part of it:** charm visuals (charms are not visible, V1-SCOPE §6), item pictures (M4).
-- **Status:** waits on D6.
+- **Status:** done 2026-10-17, verified by the lead.
+  - The lead's own checks: regeneration then the gate left the tree unchanged (D7 changes no generated asset); gate 13/13 with zero warnings; no `Instantiate` in `HeroAppearance`; `DebugParty` unchanged (the 200-coin seed was a reverted throwaway).
+  - The lead looked at `d7-weapons-party-crops.png` (before and after on both ratios) and `d7-armor-group-throwaway200.png` (helm, cape, wizard hat and shoulder pads in battle on both ratios).
+  - The developer's checks:
+    - all four bought weapons show in the next battle;
+    - a 32-case editor check found the flash list always equals the visible renderers, and hit-flash frames from recordings show the bought weapon and armor flashing;
+    - Body-toggled heroes carry their bought weapons;
+    - 8 clean player logs;
+    - counters with every piece on: 197–198 draws, 133–134 SetPass, 67.2k triangles.
+  - Reading accepted: `BattleView` passes the hero's `HeroSpec` to a new `CombatantActor.Spawn` overload. Three lines in a file the plan didn't list; the equipment can't reach `Spawn` otherwise.
+  - Open, sent to the architect before D8:
+    - `mace_2` reads only subtly in the group shot, because the Fighter holds it in front of the body, facing away;
+    - the Mage's hat brim shades the eyes from the troll's camera;
+    - `"starter"` is defined in both `HeroGenerator` and `HeroAppearance` (a one-line follow-up).
 
 ### D8 — Performance check, device build, soak, evidence
 
