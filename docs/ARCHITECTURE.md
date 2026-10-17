@@ -1932,3 +1932,28 @@ These rest on the evidence in `Builds/evidence/M2/`: `d6-variants-sheet`, `d6-gr
   - `TableLoader` checks that every class, item and enemy weapon mesh has an entry with a `texture`.
   - The rename costs one data and code change now, and the table no longer holds only grips.
 - **`ClipEntry.End` (and now `Start`)** lives in `KayKitPostprocessor` until D6b moves the clip-table reader to `Editor/Import/ClipTable.cs` (15.16.1). D6.2a adds `Start` there, unchanged in place.
+
+#### 15.18.9 D7 look items (2026-10-17), before D8
+
+These rest on `Builds/evidence/M2/d7-weapons-party-crops.png`, `d7-ipad-mace-before-after-crop.png`, `d7-weapons-front-troll-shot.png`, `d7-armor-front-crops.png` and `d7-armor-heads.png`, which the architect has seen.
+
+**1. `mace_2` must read as an upgrade in the group shot.** Not accepted as it is.
+- **The problem.** The producer checks all four upgrades on device, and the group shot is where a kid sees their hero between turns. There `Mace_01` → `Mace_02` reads as "a different, darker stick". The plain dark shaft looks plainer than the grey flanged starter, not better.
+- **Rejected: a different mesh.** The hero pack has no hammer or bigger mace. `Axe_01` is no bigger and reads as a cutting weapon.
+- **Rejected: an outward grip angle.** The grip applies in every clip, so the swings would point the head the wrong way.
+- **Fix, data only, the `bow_2` pattern:** `mace_2` keeps `SM_Wep_Mace_02` and its `weaponMeshes` grip, and gains an item `texture`. That is one of the pack's alternative hero atlases, `PolygonFantasyHero_Texture_0{1..4}_{A,B,C}`, all on the same UV layout, chosen where the mace's metal reads brightest: gold or bronze against the starter's grey.
+  - **How it is chosen:** D8's first commit renders `Mace_02` on each alternative atlas through `VariantCapture`. The atlases come back for that run as temporary `keep.txt` lines.
+  - **What stays:** the chosen atlas is the one kept, under `Textures/`, with one `keep.txt` line. It adds about 0.6 MB, compressed like `01_A`.
+  - `items.json`: `"mace_2": { …, "mesh": "SM_Wep_Mace_02", "texture": "<chosen atlas>" }`.
+- **Fallback,** if no alternative atlas changes the mace's swatch visibly: a gold cell tint on the mace's swatch in `01_A`.
+  - The `Toon.shader` cell tint (D4) addresses one cell of a regular grid. The import check found that `01_A` is 62 % flat at 32 px, so the swatch is very likely one 32-px cell.
+  - Weapon items regain the optional `cellTint { cell, from, to }` from 15.14.2, as data. It is used only by `mace_2`, with the grid `(col, row, 32, 32)` measured from the mace's UVs.
+- **Verification:** the before-and-after crop of the Fighter in the group shot, on both ratios, shows a clearly different weapon colour as well as the longer head. The producer judges it at sign-off.
+
+**2. The Mage's hat brim: fine.**
+- Ruling 7 and §15.3's art rule ask for faces visible: no closed helmets or masks.
+- A wizard's brim that hides the eyes only from the troll's high action camera, looking down, is neither. The nose, mouth and chin stay visible there, and the group shot sees the back of the head in any case.
+- **Condition:** the eye-level armor front capture (`VariantCapture`, the Mage with `hat_mage` on) shows the eyes. If the brim hides them even at eye level, `hat_mage`'s `parts` change to a head covering with a smaller brim. That is data.
+- The Swordsman's helm, checked in the same captures, is open-faced with the visor up: the face shows from the front, so it passes.
+
+**3. The `"starter"` constant:** no objection. `HeroGenerator` uses `HeroAppearance.StarterWeapon`, so there is one definition, and `Game.Editor` already references `Game.Runtime` (§13.3).

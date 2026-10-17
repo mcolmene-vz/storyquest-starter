@@ -378,6 +378,21 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
 
 ### D8 — Performance check, device build, soak, evidence
 
+**Split (lead, 2026-10-17):**
+- **D8.1 (developer), the look fixes from ARCHITECTURE §15.18.9:**
+  - `mace_2` gets an item `texture` from the alternative hero atlas on which Mace_02's metal reads brightest (a cell-tint fallback if none does); keep.txt holds only that atlas.
+  - `HeroGenerator` uses `HeroAppearance.StarterWeapon`.
+  - An eye-level front capture of the Mage with `hat_mage` shows the eyes.
+  - Then the all-armor simulator counters and the Synty audit (§15.15.6).
+- **D8.2 (lead, with Martin):**
+  - the release device build (`SQ_PROBE on`);
+  - Martin's Xcode Run per device with his memory reading;
+  - the devicectl launch and console capture with timed screenshots;
+  - the soak per `docs/evidence/M2/SOAK-CHECKLIST.md`;
+  - the evidence in `docs/evidence/M2/`;
+  - the architect's §15.13/§15.14.6/§15.16 review, then the producer.
+
+
 - **Goal:**
   - Group-shot counters on a simulator development player against the §15.15.2 budget (draws ≤ 300, SetPass ≤ 200, tris ≤ 180k, ≤ 90 skinned renderers), with the all-armor party.
   - The Synty audit per §15.15.6.
