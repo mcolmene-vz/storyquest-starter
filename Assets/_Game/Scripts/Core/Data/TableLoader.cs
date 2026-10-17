@@ -5,8 +5,9 @@ using Newtonsoft.Json;
 
 namespace Game.Core.Data
 {
-    /// Reads the four tables through an ITableSource, validates them against ARCHITECTURE §14.2 and §15.4 and returns
-    /// GameTables, or throws one TableValidationException listing every problem found.
+    /// Reads the four tables through an ITableSource, validates them against ARCHITECTURE §14.2, §15.3, §15.4 and §15.18
+    /// and returns GameTables, or throws one TableValidationException listing every problem found. Whether a part, mesh
+    /// or clip exists is the generator's check: Core cannot see assets.
     public static class TableLoader
     {
         public const int SupportedVersion = 1;
@@ -19,6 +20,9 @@ namespace Game.Core.Data
 
         public static readonly string[] ClipStates =
             { "Idle", "Walk", "Attack", "Skill", "Hit", "BigStagger", "Defend", "Defeat", "Victory" };
+
+        // §15.18.2: "clearly lighter or darker" is a Rec. 709 luma step of at least 16 on 8-bit sRGB values.
+        public const double MinToneLumaGap = 16.0;
 
         // JSON nulls keep the model's initialisers instead of overwriting them, so validation never meets a null list.
         static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
@@ -43,10 +47,18 @@ namespace Game.Core.Data
                 ValidateLevels(levels, classes != null ? classIds : null, problems);
             if (items != null)
                 ValidateItems(items, classes != null ? classIds : null, problems);
+            if (classes != null)
+                ValidateHeroes(classes, items, problems);
 
             if (problems.Count > 0)
                 throw new TableValidationException(problems);
-            return new GameTables(classes!.Classes, enemies!.Enemies, levels!, items!.Items);
+            var heroes = new HeroPresentation
+            {
+                SkinTones = classes!.SkinTones,
+                SkinReference = classes.SkinReference,
+                WeaponGrips = classes.WeaponGrips,
+            };
+            return new GameTables(classes.Classes, enemies!.Enemies, levels!, items!.Items, heroes);
         }
 
         static T? Read<T>(ITableSource source, string name, List<string> problems) where T : class, IVersionedTable
@@ -119,7 +131,114 @@ namespace Game.Core.Data
                         problems.Add($"{who} skill '{c.Skill.Id}' cooldownTurns {c.Skill.CooldownTurns} must be >= 1");
                 }
                 CheckClips(who, c.Clips, problems);
+
+                if (Array.IndexOf(SocketNames.All, c.WeaponSocket) < 0)
+                    problems.Add($"{who} weaponSocket '{c.WeaponSocket}' is not one of {string.Join("/", SocketNames.All)}");
+                if (string.IsNullOrEmpty(c.WeaponMesh))
+                    problems.Add($"{who} has no weaponMesh");
+                if (c.Variants.Count != Bodies.All.Length || Array.Exists(Bodies.All, b => !c.Variants.ContainsKey(b)))
+                    problems.Add($"{who} variants must be exactly {string.Join(" and ", Bodies.All)}, found [{string.Join(", ", c.Variants.Keys)}]");
+                foreach (var pair in c.Variants)
+                {
+                    var v = pair.Value;
+                    if (v == null || v.Parts.Count == 0 || v.Parts.Exists(string.IsNullOrEmpty))
+                        problems.Add($"{who} variants.{pair.Key}.parts is missing, empty or has an empty name");
+                    if (v != null && !table.SkinTones.ContainsKey(v.Tone))
+                        problems.Add($"{who} variants.{pair.Key}.tone '{v.Tone}' is not a key of skinTones");
+                }
             }
+        }
+
+        /// The whole-table hero rules: skin tones (producer ruling 7, §15.18.2) and weapon grips (§15.18.3).
+        static void ValidateHeroes(ClassesTable table, ItemsTable? items, List<string> problems)
+        {
+            const string file = ClassesTable + ".json";
+
+            var luma = new Dictionary<string, double>();
+            foreach (var tone in SkinToneNames.All)
+            {
+                if (!table.SkinTones.TryGetValue(tone, out var hex))
+                    problems.Add($"{file}: skinTones has no '{tone}'");
+                else if (!TryLuma(hex, out double l))
+                    problems.Add($"{file}: skinTones.{tone} '{hex}' is not a #RRGGBB colour");
+                else
+                    luma[tone] = l;
+            }
+            foreach (var key in table.SkinTones.Keys)
+                if (Array.IndexOf(SkinToneNames.All, key) < 0)
+                    problems.Add($"{file}: skinTones.{key} is not one of {string.Join("/", SkinToneNames.All)}");
+            for (int i = 1; i < SkinToneNames.All.Length; i++)
+            {
+                string lighter = SkinToneNames.All[i - 1], darker = SkinToneNames.All[i];
+                if (luma.TryGetValue(lighter, out double a) && luma.TryGetValue(darker, out double b) && a - b < MinToneLumaGap)
+                    problems.Add($"{file}: skinTones luma {lighter} {a:F1} must exceed {darker} {b:F1} by at least {MinToneLumaGap}");
+            }
+            if (!TryLuma(table.SkinReference, out _))
+                problems.Add($"{file}: skinReference '{table.SkinReference}' is not a #RRGGBB colour");
+
+            // Ruling 7: three tones or more, each on two variants or more and in two classes or more; boy and girl differ.
+            var variantsPerTone = new Dictionary<string, int>();
+            var classesPerTone = new Dictionary<string, HashSet<string>>();
+            foreach (var c in table.Classes)
+            {
+                if (c.Variants.TryGetValue(Bodies.Boy, out var boy) && c.Variants.TryGetValue(Bodies.Girl, out var girl)
+                    && boy != null && girl != null && boy.Tone == girl.Tone)
+                    problems.Add($"{file}: class '{c.Id}' boy and girl share the tone '{boy.Tone}'; ruling 7 wants them to differ");
+                foreach (var v in c.Variants.Values)
+                {
+                    if (v == null || string.IsNullOrEmpty(v.Tone))
+                        continue;
+                    variantsPerTone.TryGetValue(v.Tone, out int n);
+                    variantsPerTone[v.Tone] = n + 1;
+                    if (!classesPerTone.TryGetValue(v.Tone, out var set))
+                        classesPerTone[v.Tone] = set = new HashSet<string>();
+                    set.Add(c.Id);
+                }
+            }
+            if (variantsPerTone.Count < 3)
+                problems.Add($"{file}: the variants use {variantsPerTone.Count} distinct tone(s); ruling 7 wants at least 3");
+            foreach (var pair in variantsPerTone)
+            {
+                if (pair.Value < 2)
+                    problems.Add($"{file}: tone '{pair.Key}' is on {pair.Value} variant; ruling 7 wants at least 2");
+                if (classesPerTone[pair.Key].Count < 2)
+                    problems.Add($"{file}: tone '{pair.Key}' appears only in class '{string.Join("", classesPerTone[pair.Key])}'; ruling 7 wants at least 2 classes");
+            }
+
+            foreach (var pair in table.WeaponGrips)
+            {
+                var g = pair.Value;
+                if (g == null || g.Pos.Count != 3 || g.Euler.Count != 3)
+                    problems.Add($"{file}: weaponGrips.{pair.Key} needs pos and euler with three numbers each");
+                else if (g.Parts.Exists(string.IsNullOrEmpty))
+                    problems.Add($"{file}: weaponGrips.{pair.Key}.parts has an empty name");
+            }
+            var meshes = new List<(string Who, string Mesh)>();
+            foreach (var c in table.Classes)
+                if (!string.IsNullOrEmpty(c.WeaponMesh))
+                    meshes.Add(($"{file}: class '{c.Id}' weaponMesh", c.WeaponMesh));
+            if (items != null)
+                foreach (var item in items.Items)
+                    if (item.Kind == ItemKinds.Weapon && !string.IsNullOrEmpty(item.Mesh))
+                        meshes.Add(($"{ItemsTable}.json: item '{item.Id}' mesh", item.Mesh!));
+            foreach (var (who, mesh) in meshes)
+                if (!table.WeaponGrips.ContainsKey(mesh))
+                    problems.Add($"{who} '{mesh}' has no weaponGrips entry in {file}");
+        }
+
+        /// Rec. 709 luma of an 8-bit sRGB #RRGGBB colour, as §15.18.2 measures tones.
+        static bool TryLuma(string? hex, out double luma)
+        {
+            luma = 0;
+            if (hex == null || hex.Length != 7 || hex[0] != '#')
+                return false;
+            var rgb = new int[3];
+            for (int i = 0; i < 3; i++)
+                if (!int.TryParse(hex.Substring(1 + 2 * i, 2), System.Globalization.NumberStyles.HexNumber,
+                        System.Globalization.CultureInfo.InvariantCulture, out rgb[i]))
+                    return false;
+            luma = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+            return true;
         }
 
         static void ValidateEnemies(EnemiesTable table, List<string> problems)

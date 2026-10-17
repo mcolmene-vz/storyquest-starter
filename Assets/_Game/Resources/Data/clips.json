@@ -22,6 +22,25 @@
     "Hit_B": {},
     "Death_A": {},
     "Death_B": {},
-    "Cheering": {}
+    "Cheering": {},
+
+    "A_Idle_Base_Sword": { "loop": true },
+    "A_POLY_BOW_Stand_Idle_Base_WithBow_Masc": { "loop": true },
+    "A_POLY_BOW_Stand_Idle_Base_WithBow_Femn": { "loop": true },
+    "A_Block_Loop_Sword": { "loop": true },
+    "A_Attack_LightCombo01A_ReturnToIdle_Sword": { "impact": 0.33 },
+    "A_Attack_HeavyFlourish01_ReturnToIdle_Sword": { "impact": 0.58 },
+    "A_Attack_HeavyStab01_ReturnToIdle_Sword": { "impact": 0.16 },
+    "A_Attack_HeavyCombo01A_ReturnToIdle_Sword": { "impact": 0.40 },
+    "A_Attack_LightLeaping01_ReturnToIdle_Sword": { "impact": 0.30 },
+    "A_POLY_EMOT_Happy_ArmsRaised_Masc": { "impact": 0.15 },
+    "A_POLY_EMOT_Happy_ArmsRaised_Femn": { "impact": 0.15 },
+    "A_POLY_BOW_Stand_Shoot_ToBowDown_Neut": { "impact": 0.05 },
+    "A_POLY_BOW_Stand_Shoot_Leaping_Neut": { "impact": 0.75, "end": 2.2 },
+    "A_Hit_F_React_Sword": {},
+    "A_Hit_F_Stagger_Sword": {},
+    "A_Death_B_01_Sword": {},
+    "A_POLY_EMOT_Happy_FistPump_Masc": {},
+    "A_POLY_EMOT_Happy_FistPump_Femn": {}
   }
 }

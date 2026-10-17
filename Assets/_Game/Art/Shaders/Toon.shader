@@ -3,7 +3,8 @@
 // declared once for all passes, so the SRP Batcher stays on. The presenter drives _FlashAmount through a
 // MaterialPropertyBlock for two frames per hit and never touches renderer.material. ToonForward also multiplies the
 // albedo inside up to two cells of the palette texture's grid (§15.14.3: skin tones, the gold bow) without a second
-// texture sample; a material that sets no cell (cell.z == 0) renders as before.
+// texture sample; a material that sets no cell (cell.z == 0) renders as before. Hero materials enable _SKIN_TINT
+// (§15.18.2): ToonForward samples Synty's skin mask once more and multiplies the albedo inside it by the tone.
 Shader "StoryQuest/Toon"
 {
     Properties
@@ -21,6 +22,9 @@ Shader "StoryQuest/Toon"
         _CellAMul ("Tint cell A multiplier, linear", Vector) = (1, 1, 1, 1)
         _CellB ("Tint cell B (col, row, cols, rows)", Vector) = (0, 0, 0, 0)
         _CellBMul ("Tint cell B multiplier, linear", Vector) = (1, 1, 1, 1)
+        // White means "no skin" (the mask is black on white), so a material that sets no mask is unaffected.
+        _SkinMask ("Skin mask (skin where red < 0.5), linear", 2D) = "white" {}
+        _SkinTint ("Skin tint multiplier, linear", Vector) = (1, 1, 1, 1)
     }
 
     SubShader
@@ -53,6 +57,7 @@ Shader "StoryQuest/Toon"
             half4 _CellAMul;
             float4 _CellB;
             half4 _CellBMul;
+            half4 _SkinTint;
         CBUFFER_END
         ENDHLSL
 
@@ -74,8 +79,12 @@ Shader "StoryQuest/Toon"
             // URP sets _MAIN_LIGHT_SHADOWS for one cascade and _MAIN_LIGHT_SHADOWS_CASCADE for more; §13.5 uses one,
             // the cascade variant keeps the shader correct if that setting ever changes. No soft shadows, no screen-space.
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma shader_feature_local_fragment _SKIN_TINT
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+
+            TEXTURE2D(_SkinMask);
+            SAMPLER(sampler_SkinMask);
 
             struct Attributes
             {
@@ -121,6 +130,11 @@ Shader "StoryQuest/Toon"
                 half3 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb;
                 // The textures clamp, so saturate makes the cell test match the texel that was sampled.
                 float2 uv = saturate(input.uv);
+            #if defined(_SKIN_TINT)
+                // The inversion lives here, not in the import: 1 - r is one instruction, an inverted import is pixel work.
+                half skin = 1.0h - SAMPLE_TEXTURE2D(_SkinMask, sampler_SkinMask, uv).r;
+                albedo *= lerp(half3(1, 1, 1), _SkinTint.rgb, skin);
+            #endif
                 albedo = saturate(albedo * CellTint(uv, _CellA, _CellAMul) * CellTint(uv, _CellB, _CellBMul));
                 half3 normalWS = normalize(input.normalWS);
 

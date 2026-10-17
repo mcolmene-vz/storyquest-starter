@@ -13,10 +13,10 @@ using Object = UnityEngine.Object;
 
 namespace Game.Editor
 {
-    /// Builds the toon materials, the shared Combatant controller, one override controller per class and enemy, and
-    /// the combatant prefabs from the data tables and the KayKit import (ARCHITECTURE §14.4). Run by ProjectSetup.Run
-    /// and by -executeMethod. Existing assets are loaded and modified in place, so a run on unchanged inputs writes
-    /// every file byte-identically and `git status` stays clean.
+    /// Builds the toon materials, the shared Combatant controller, one override controller per enemy, and the enemy
+    /// prefabs from the data tables and the KayKit import (ARCHITECTURE §14.4); HeroGenerator builds the eight Synty hero
+    /// variants (§15.3). Run by ProjectSetup.Run and by -executeMethod. Existing assets are loaded and modified in place,
+    /// so a run on unchanged inputs writes every file byte-identically and `git status` stays clean.
     public static class CombatantGenerator
     {
         public const string ShaderName = "StoryQuest/Toon";
@@ -32,8 +32,8 @@ namespace Game.Editor
         const string BigStaggerState = "BigStagger";
         const float BigStaggerSpeed = 0.6f;
         const float OneShotExitDuration = 0.1f;
-        const float MinHeight = 1.2f;
-        const float MaxHeight = 2.4f;
+        internal const float MinHeight = 1.2f;
+        internal const float MaxHeight = 2.4f;
         static readonly string[] OneShotStates = { "Attack", "Skill", "Hit", "BigStagger", "Victory" };
         static readonly string[] ImpactStates = { "Attack", "Skill" };
         // Placeholder grass for the §14.4 ground plane; a flat colour under the toon ramp until the stage gets art.
@@ -56,22 +56,18 @@ namespace Game.Editor
 
             var controller = GenerateController(out var placeholders);
 
-            // Material files: classes by model name in lower case (the material is that body's texture), enemies by
-            // enemy id (a tinted variant of a shared body).
-            foreach (var c in tables.Classes)
-            {
-                var material = GenerateToonMaterial(MaterialsFolder + "/" + c.Model.ToLowerInvariant() + ".mat",
-                    toon, LoadTexture(c.Model), Color.white);
-                var overrides = GenerateOverrideController(c.Id, controller, placeholders, c.Clips, clips);
-                GeneratePrefab(c.Id, c.Model, c.WeaponMesh, c.WeaponSocket, 1f, material, overrides);
-            }
+            var partyRenderers = HeroGenerator.Generate(tables, controller, placeholders, clips, toon);
+
+            // Enemy material files are named by enemy id: a tinted variant of a shared body.
+            int enemyRenderers = 0;
             foreach (var e in tables.Enemies)
             {
                 var material = GenerateToonMaterial(MaterialsFolder + "/" + e.Id + ".mat",
                     toon, LoadTexture(e.Model), ParseTint(e));
                 var overrides = GenerateOverrideController(e.Id, controller, placeholders, e.Clips, clips);
-                GeneratePrefab(e.Id, e.Model, "", "", (float)e.Scale, material, overrides);
+                enemyRenderers = Math.Max(enemyRenderers, GeneratePrefab(e.Id, e.Model, "", "", (float)e.Scale, material, overrides));
             }
+            HeroGenerator.CheckPartyBudget(partyRenderers, enemyRenderers);
             GenerateToonMaterial(MaterialsFolder + "/ground.mat", toon, null, GroundColor);
             GenerateParticleMaterial(MaterialsFolder + "/particle.mat", particle);
 
@@ -88,11 +84,13 @@ namespace Game.Editor
             public string ReadText(string tableName) => File.ReadAllText(Path.Combine(folder, tableName + ".json"));
         }
 
-        /// Every AnimationClip under the KayKit Animations folder by name, first file wins (the import check warns on duplicates).
+        /// Every AnimationClip under the KayKit and Synty Animations folders by name, first file wins (the import checks
+        /// warn on duplicates).
         static Dictionary<string, AnimationClip> LoadClips()
         {
             var clips = new Dictionary<string, AnimationClip>();
-            var paths = AssetDatabase.FindAssets("t:Model", new[] { KayKitPostprocessor.AnimationsFolder.TrimEnd('/') })
+            var folders = new[] { KayKitPostprocessor.AnimationsFolder.TrimEnd('/'), SyntyPostprocessor.AnimationsFolder.TrimEnd('/') };
+            var paths = AssetDatabase.FindAssets("t:Model", folders)
                 .Select(AssetDatabase.GUIDToAssetPath).Distinct().OrderBy(p => p, StringComparer.Ordinal);
             foreach (string path in paths)
                 foreach (var clip in AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>())
@@ -101,18 +99,20 @@ namespace Game.Editor
             return clips;
         }
 
-        /// §14.2: every clip in a clips map exists under Animations/, has a clips.json entry, and Attack/Skill clips have an impact.
+        /// §14.2: every clip in a clips map exists under Animations/, has a clips.json entry, and Attack/Skill clips have
+        /// an impact. Hero maps are checked once per body, with {g} resolved (§15.15.5).
         static void CheckClips(GameTables tables, Dictionary<string, KayKitPostprocessor.ClipEntry> clipTable,
             Dictionary<string, AnimationClip> clips)
         {
             var problems = new List<string>();
-            var maps = tables.Classes.Select(c => (c.Id, c.Clips)).Concat(tables.Enemies.Select(e => (e.Id, e.Clips)));
+            var maps = tables.Classes.SelectMany(c => Bodies.All.Select(b => (HeroGenerator.VariantId(c.Id, b), HeroGenerator.ResolveClips(c.Clips, b))))
+                .Concat(tables.Enemies.Select(e => (e.Id, e.Clips)));
             foreach (var (id, map) in maps)
                 foreach (var state in TableLoader.ClipStates)
                 {
                     string name = map[state];
                     if (!clips.ContainsKey(name))
-                        problems.Add($"{id}.{state}: clip '{name}' not found in any FBX under {KayKitPostprocessor.AnimationsFolder}");
+                        problems.Add($"{id}.{state}: clip '{name}' not found in any FBX under {KayKitPostprocessor.AnimationsFolder} or {SyntyPostprocessor.AnimationsFolder}");
                     if (!clipTable.TryGetValue(name, out var entry))
                         problems.Add($"{id}.{state}: clip '{name}' has no entry in {KayKitPostprocessor.ClipTablePath}");
                     else if (Array.IndexOf(ImpactStates, state) >= 0 && !entry.Impact.HasValue)
@@ -140,7 +140,7 @@ namespace Game.Editor
             return texture;
         }
 
-        static GameObject LoadModel(string path)
+        internal static GameObject LoadModel(string path)
         {
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (model == null)
@@ -157,7 +157,7 @@ namespace Game.Editor
 
         // ----- materials -----
 
-        static Material GenerateToonMaterial(string path, Shader shader, Texture2D? texture, Color baseColor)
+        internal static Material GenerateToonMaterial(string path, Shader shader, Texture2D? texture, Color baseColor)
         {
             var before = ReadBytes(path);
             var material = LoadOrCreate(path, () => new Material(shader));
@@ -272,7 +272,7 @@ namespace Game.Editor
             return controller;
         }
 
-        static AnimatorOverrideController GenerateOverrideController(string id, AnimatorController controller,
+        internal static AnimatorOverrideController GenerateOverrideController(string id, AnimatorController controller,
             Dictionary<string, AnimationClip> placeholders, Dictionary<string, string> clipMap, Dictionary<string, AnimationClip> clips)
         {
             string path = AnimatorsFolder + "/" + id + ".overrideController";
@@ -291,7 +291,8 @@ namespace Game.Editor
 
         // ----- prefabs -----
 
-        static void GeneratePrefab(string id, string modelName, string weaponMesh, string weaponSocket, float scale,
+        /// Returns the prefab's renderer count, for the §15.7 party budget.
+        static int GeneratePrefab(string id, string modelName, string weaponMesh, string weaponSocket, float scale,
             Material material, AnimatorOverrideController overrides)
         {
             string path = PrefabsFolder + "/" + id + ".prefab";
@@ -349,7 +350,9 @@ namespace Game.Editor
                 if (!success)
                     throw new InvalidOperationException(Tag + "could not save " + path);
                 Report(path, before);
-                Debug.Log($"{Tag}{id}: {modelName} {height:F2} m" + (scale == 1f ? "" : $" x{scale:0.##} = {height * scale:F2} m") + weaponText);
+                int renderers = root.GetComponentsInChildren<Renderer>().Length;
+                Debug.Log($"{Tag}{id}: {modelName} {height:F2} m" + (scale == 1f ? "" : $" x{scale:0.##} = {height * scale:F2} m") + weaponText + $", {renderers} renderers");
+                return renderers;
             }
             finally
             {
@@ -368,7 +371,7 @@ namespace Game.Editor
             return bounds.size.y;
         }
 
-        static void ApplyMaterial(Renderer renderer, Material material)
+        internal static void ApplyMaterial(Renderer renderer, Material material)
         {
             var materials = renderer.sharedMaterials;
             if (materials.Length == 0)
@@ -393,7 +396,7 @@ namespace Game.Editor
 
         // ----- asset plumbing -----
 
-        static T LoadOrCreate<T>(string path, Func<T> create) where T : Object
+        internal static T LoadOrCreate<T>(string path, Func<T> create) where T : Object
         {
             var asset = AssetDatabase.LoadAssetAtPath<T>(path);
             if (asset != null)
@@ -403,16 +406,16 @@ namespace Game.Editor
             return asset;
         }
 
-        static void Save(Object asset, string path, byte[]? before)
+        internal static void Save(Object asset, string path, byte[]? before)
         {
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssetIfDirty(asset);
             Report(path, before);
         }
 
-        static byte[]? ReadBytes(string path) => File.Exists(path) ? File.ReadAllBytes(path) : null;
+        internal static byte[]? ReadBytes(string path) => File.Exists(path) ? File.ReadAllBytes(path) : null;
 
-        static void Report(string path, byte[]? before)
+        internal static void Report(string path, byte[]? before)
         {
             string state = before == null ? "created"
                 : before.SequenceEqual(File.ReadAllBytes(path)) ? "unchanged"

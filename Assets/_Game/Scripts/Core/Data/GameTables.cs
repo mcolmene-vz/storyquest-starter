@@ -16,12 +16,13 @@ namespace Game.Core.Data
         readonly Dictionary<string, ItemDefinition> itemsById = new Dictionary<string, ItemDefinition>();
 
         public GameTables(IReadOnlyList<ClassDefinition> classes, IReadOnlyList<EnemyDefinition> enemies,
-            LevelTable levels, IReadOnlyList<ItemDefinition> items)
+            LevelTable levels, IReadOnlyList<ItemDefinition> items, HeroPresentation? heroes = null)
         {
             Classes = classes;
             Enemies = enemies;
             Levels = levels;
             Items = items;
+            Heroes = heroes ?? HeroPresentation.None;
             foreach (var c in classes) classesById[c.Id] = c;
             foreach (var e in enemies) enemiesById[e.Id] = e;
             foreach (var i in items) itemsById[i.Id] = i;
@@ -31,6 +32,7 @@ namespace Game.Core.Data
         public IReadOnlyList<EnemyDefinition> Enemies { get; }
         public LevelTable Levels { get; }
         public IReadOnlyList<ItemDefinition> Items { get; }
+        public HeroPresentation Heroes { get; }
 
         public ClassDefinition Class(string id) => Lookup(classesById, id, "class");
         public EnemyDefinition Enemy(string id) => Lookup(enemiesById, id, "enemy");

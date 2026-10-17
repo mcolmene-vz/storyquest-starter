@@ -244,6 +244,7 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
     - Verified by: an avatar with 52 mapped bones, a Swordsman front capture with curled fingers, the atlas table, extract still repeatable, gate 13/13.
     - The lead then records the skin branch (atlases as data, or the shader skin mask) from the measurement, per §15.18.2's rule.
   - **D6.2, Synty heroes and data:** the goal above, on the branch D6.1 chose. `keep.txt` is trimmed to what's used.
+  - **D6.2a, fixes from the architect's ruling on D6.2's open items:** skin on the male stubble area, the Mage Skill length, the action-shot framing if the ruling says so, and the schema notes.
 - **Status:** D6.1 done 2026-10-17, verified by the lead.
   - The lead's own checks: a second `extract.sh` run changed nothing; 59 files against 59 keep lines; gate 13/13 with zero warnings.
   - The lead looked at `Builds/evidence/M2/d6-1-fingers.png`: flat fingers at bind pose, curled around the grip once mapped, and a closed fist on the hilt in the attack frame.
@@ -255,6 +256,21 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
   - **Skin branch recorded by the lead (§15.18.2's rule): step 2, the skin mask in `Toon.shader`.** Only `01_A` qualifies: the `_B`/`_C` atlases change scar, stubble, hair and unmasked texels by 10–57/255, and 02–04 are other clothing schemes.
   - Developer readings sent to the architect: "clearly lighter or darker" read as a luma change of at least 16/255; tone class by nearest luma.
   - Facts for D6.2: weapon FBX roots carry scene offsets (zero them); a grip offset is needed; editor URP rendering flips two `GraphicsSettings.asset` flags (reverted).
+- **D6.2 done 2026-10-17, verified by the lead.**
+  - The lead's own checks: `ProjectSetup.Run` then the gate left the tree unchanged; gate 13/13, zero warnings; 22 `[Synty-derived]` lines; `BattleResolver`, the tests and `Combatant.controller` untouched.
+  - The lead looked at `d6-variants-sheet.png` (eight heroes, faces visible, three tones, boy and girl differ, classes distinct), `d6-grips-sheet.png` (every hilt and shaft in the fist), `d6-iphone-A-group-start2.png` and `d6-ipad-B-actions-sheet.png` (a full battle to Victory, damage numbers, "+10 coins each").
+  - The developer's numbers:
+    - heights 1.93–2.07 m;
+    - 15–16 renderers per hero, worst-case party 68 (≤ 90);
+    - probe group counters 197–199 draws, 133–135 SetPass, 68.7–70.0k triangles (≤ 300 / 200 / 180k);
+    - framing: hero feet 31 %, heads 80.5–81.7 % on both ratios. The KayKit troll's head touches 86 % as it did in D2; D6b re-measures it;
+    - two scripted battles per device with all eight prefabs, every Attack and Skill firing `OnImpact`, and zero errors in all four player logs.
+  - **Open items, sent to the architect, to be fixed in D6.2a:**
+    1. The boys' chins and mouths stay pale: the male heads use Synty's stubble swatch (`Mask_03` blue), which `1 − mask.r` never tints, and the R8 import drops blue.
+    2. The Mage Skill clip runs 3.5 s.
+    3. In some action shots the larger Synty attacker fills much of the frame (the M1 camera pose).
+    4. Two schema additions to record: weapon-item `texture` (`bow_2` = Bow Combat `04_C` gold) and a `weaponGrips.parts` list (the Long bow file holds three bow bodies; only `Wep_Longbow_01` and the string are kept).
+  - Readings accepted: part choices per class; grips from Synty's own prop-bone offsets; the weapon distance check measured to the nearest bounds point; impacts set by eye at contact; the four per-class override controllers replaced by eight per-variant ones.
 
 ### D6a — Stop the graphics-API line churning (ARCHITECTURE §13.6 note, 2026-10-16)
 

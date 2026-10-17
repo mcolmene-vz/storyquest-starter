@@ -108,6 +108,8 @@ namespace Game.Editor.Import
         {
             [JsonProperty("loop")] public bool Loop { get; set; }
             [JsonProperty("impact")] public float? Impact { get; set; }
+            // Seconds from the clip's start to its last frame (§15.18.3, the Archer's trimmed Skill); Synty clips only.
+            [JsonProperty("end")] public float? End { get; set; }
         }
 
         public sealed class ClipTableFile

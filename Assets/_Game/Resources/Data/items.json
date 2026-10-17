@@ -4,24 +4,24 @@
     { "id": "potion", "name": "Potion", "kind": "consumable", "effect": "heal", "amount": 25, "price": 15 },
     { "id": "revive", "name": "Revive", "kind": "consumable", "effect": "revive", "amount": 0.5, "price": 40 },
 
-    { "id": "sword_2", "name": "Steel Sword", "kind": "weapon", "classId": "swordsman", "stat": "attack", "bonus": 3, "price": 45, "mesh": "TBD_D6_sword_2" },
+    { "id": "sword_2", "name": "Steel Sword", "kind": "weapon", "classId": "swordsman", "stat": "attack", "bonus": 3, "price": 45, "mesh": "SM_Wep_Sword_01" },
     { "id": "helm_swordsman", "name": "Knight Helm", "kind": "armor", "classId": "swordsman", "stat": "defence", "bonus": 2, "price": 40,
-      "parts": { "boy": [ "TBD_D6_helm_swordsman_boy" ], "girl": [ "TBD_D6_helm_swordsman_girl" ] } },
+      "parts": { "boy": [ "Chr_HeadCoverings_No_Hair_11" ], "girl": [ "Chr_HeadCoverings_No_Hair_11" ] } },
     { "id": "charm_tough", "name": "Tough Charm", "kind": "charm", "classId": "swordsman", "stat": "hp", "bonus": 8, "price": 30 },
 
-    { "id": "bow_2", "name": "Hunter Bow", "kind": "weapon", "classId": "archer", "stat": "attack", "bonus": 3, "price": 45, "mesh": "TBD_D6_bow_2" },
+    { "id": "bow_2", "name": "Hunter Bow", "kind": "weapon", "classId": "archer", "stat": "attack", "bonus": 3, "price": 45, "mesh": "Wep_LongBow_01_Unrigged", "texture": "AnimationBowCombat_Texture_04_C" },
     { "id": "cape_archer", "name": "Ranger Cape", "kind": "armor", "classId": "archer", "stat": "defence", "bonus": 2, "price": 40,
-      "parts": { "boy": [ "TBD_D6_cape_archer_boy" ], "girl": [ "TBD_D6_cape_archer_girl" ] } },
+      "parts": { "boy": [ "Chr_BackAttachment_10" ], "girl": [ "Chr_BackAttachment_10" ] } },
     { "id": "charm_swift", "name": "Swift Charm", "kind": "charm", "classId": "archer", "stat": "speed", "bonus": 2, "price": 30 },
 
-    { "id": "staff_2", "name": "Crystal Staff", "kind": "weapon", "classId": "mage", "stat": "attack", "bonus": 3, "price": 45, "mesh": "TBD_D6_staff_2" },
+    { "id": "staff_2", "name": "Crystal Staff", "kind": "weapon", "classId": "mage", "stat": "attack", "bonus": 3, "price": 45, "mesh": "SM_Wep_Staff_02" },
     { "id": "hat_mage", "name": "Wizard Hat", "kind": "armor", "classId": "mage", "stat": "defence", "bonus": 2, "price": 40,
-      "parts": { "boy": [ "TBD_D6_hat_mage_boy" ], "girl": [ "TBD_D6_hat_mage_girl" ] } },
+      "parts": { "boy": [ "Chr_HeadCoverings_Base_Hair_02" ], "girl": [ "Chr_HeadCoverings_Base_Hair_02" ] } },
     { "id": "charm_wise", "name": "Wise Charm", "kind": "charm", "classId": "mage", "stat": "hp", "bonus": 6, "price": 30 },
 
-    { "id": "mace_2", "name": "Spiked Mace", "kind": "weapon", "classId": "fighter", "stat": "attack", "bonus": 3, "price": 45, "mesh": "TBD_D6_mace_2" },
+    { "id": "mace_2", "name": "Spiked Mace", "kind": "weapon", "classId": "fighter", "stat": "attack", "bonus": 3, "price": 45, "mesh": "SM_Wep_Mace_02" },
     { "id": "pads_fighter", "name": "Shoulder Pads", "kind": "armor", "classId": "fighter", "stat": "defence", "bonus": 2, "price": 40,
-      "parts": { "boy": [ "TBD_D6_pads_fighter_boy" ], "girl": [ "TBD_D6_pads_fighter_girl" ] } },
+      "parts": { "boy": [ "Chr_ShoulderAttachRight_07", "Chr_ShoulderAttachLeft_07" ], "girl": [ "Chr_ShoulderAttachRight_07", "Chr_ShoulderAttachLeft_07" ] } },
     { "id": "charm_quick", "name": "Quick Charm", "kind": "charm", "classId": "fighter", "stat": "speed", "bonus": 2, "price": 30 }
   ]
 }

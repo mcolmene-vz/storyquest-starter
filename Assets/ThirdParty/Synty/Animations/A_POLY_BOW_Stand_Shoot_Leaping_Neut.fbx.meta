@@ -40,7 +40,7 @@ ModelImporter:
       takeName: A_POLY_BOW_Stand_Shoot_Leaping_Neut
       internalID: 825415238681053892
       firstFrame: 1
-      lastFrame: 160
+      lastFrame: 67
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -59,7 +59,14 @@ ModelImporter:
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
-      events: []
+      events:
+      - time: 0.75
+        functionName: OnImpact
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
       transformMask: []
       maskType: 3
       maskSource: {instanceID: 0}

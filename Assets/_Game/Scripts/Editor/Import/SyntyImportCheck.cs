@@ -347,6 +347,13 @@ namespace Game.Editor.Import
             foreach (string path in paths)
                 CheckEditorOnlyRules(failures, path, (TextureImporter)AssetImporter.GetAtPath(path));
             CheckNoEditorOnlyReferences(failures);
+            if (paths.Count == 0)
+            {
+                // D6.2 recorded §15.18.2 step 2 (the shader skin mask) and took the measuring set off keep.txt.
+                Log($"(skin) no measuring inputs under {SyntyPostprocessor.EditorOnlyFolder}: the step-2 decision is recorded (PLAN-M2 D6.1); " +
+                    $"the hero materials sample {SyntyPostprocessor.SkinMask}");
+                return;
+            }
 
             var textures = paths.ToDictionary(p => Path.GetFileNameWithoutExtension(p), p => AssetDatabase.LoadAssetAtPath<Texture2D>(p));
             if (!textures.TryGetValue(ReferenceAtlas, out var reference) || !textures.TryGetValue(SkinMask, out var skinMask) ||
@@ -711,6 +718,19 @@ namespace Game.Editor.Import
         {
             var ios = importer.GetPlatformTextureSettings("iPhone");
             var wrong = new List<string>();
+            if (path == SyntyPostprocessor.SkinMask)
+            {
+                // §15.18.2: linear data, R8 uncompressed on iOS, same size, mips and filtering as 01_A.
+                if (importer.sRGBTexture) wrong.Add("sRGB");
+                if (importer.maxTextureSize != SyntyPostprocessor.MaxTextureSize) wrong.Add("maxTextureSize " + importer.maxTextureSize);
+                if (!importer.mipmapEnabled) wrong.Add("no mipmaps");
+                if (importer.isReadable) wrong.Add("isReadable");
+                if (!ios.overridden || ios.format != TextureImporterFormat.R8 || ios.maxTextureSize != SyntyPostprocessor.MaxTextureSize)
+                    wrong.Add($"iOS {(ios.overridden ? "" : "not overridden ")}{ios.format} {ios.maxTextureSize}");
+                if (wrong.Count > 0)
+                    failures.Add($"{path}: {string.Join(", ", wrong)} (postprocessor did not run? try SQ_REIMPORT=1)");
+                return;
+            }
             if (!importer.sRGBTexture) wrong.Add("not sRGB");
             if (importer.maxTextureSize != SyntyPostprocessor.MaxTextureSize) wrong.Add("maxTextureSize " + importer.maxTextureSize);
             if (!importer.mipmapEnabled) wrong.Add("no mipmaps");

@@ -30,6 +30,7 @@ namespace Game.Editor
             ImportTmpEssentials();
             CreateRenderPipeline();
             SetQualityAntiAliasing();
+            SetLightUnits();
             ToonShaderCheck();
             CombatantGenerator.Generate();
             CreateBootScene();
@@ -39,7 +40,7 @@ namespace Game.Editor
             AssetDatabase.SaveAssets();
 
             if (Application.isBatchMode)
-                Debug.Log("[ProjectSetup] done: TMP essentials, URP assets, quality AA, toon shader, combatants, Boot.unity, Input System only, player settings, iOS target");
+                Debug.Log("[ProjectSetup] done: TMP essentials, URP assets, quality AA, light units, toon shader, combatants, Boot.unity, Input System only, player settings, iOS target");
         }
 
         static void ImportTmpEssentials()
@@ -147,6 +148,16 @@ namespace Game.Editor
             QualitySettings.SetQualityLevel(originalLevel, false);
 
             Debug.Log("[ProjectSetup] quality AA 4x: " + (changed ? "set" : "exists"));
+        }
+
+        static void SetLightUnits()
+        {
+            // §15.18.3: URP turns both on when its pipeline starts, and editor rendering writes them to GraphicsSettings.asset;
+            // setting them here keeps regeneration, captures and the gate from flipping the committed file.
+            bool changed = !GraphicsSettings.lightsUseLinearIntensity || !GraphicsSettings.lightsUseColorTemperature;
+            GraphicsSettings.lightsUseLinearIntensity = true;
+            GraphicsSettings.lightsUseColorTemperature = true;
+            Debug.Log("[ProjectSetup] light units (linear intensity, colour temperature): " + (changed ? "set" : "exists"));
         }
 
         static void ToonShaderCheck()

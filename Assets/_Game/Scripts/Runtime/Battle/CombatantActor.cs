@@ -25,10 +25,20 @@ namespace Game.Runtime
             Renderers = instance.GetComponentsInChildren<Renderer>();
 
             var model = Animator.transform;
-            Chest = FindBone(model, ChestBone) ?? Missing(instance.name, ChestBone, model);
-            Head = FindBone(model, HeadBone) ?? Missing(instance.name, HeadBone, model);
-            // The troll's mannequin rig has no hand slots; weapons and hand effects check for null.
-            HandR = FindBone(model, HandRBone);
+            if (Animator.isHuman)
+            {
+                // Synty heroes (ARCHITECTURE §15.7): the avatar names the bones, whatever the rig calls them.
+                Chest = Animator.GetBoneTransform(HumanBodyBones.Chest) ?? Missing(instance.name, nameof(HumanBodyBones.Chest), model);
+                Head = Animator.GetBoneTransform(HumanBodyBones.Head) ?? Missing(instance.name, nameof(HumanBodyBones.Head), model);
+                HandR = Animator.GetBoneTransform(HumanBodyBones.RightHand);
+            }
+            else
+            {
+                Chest = FindBone(model, ChestBone) ?? Missing(instance.name, ChestBone, model);
+                Head = FindBone(model, HeadBone) ?? Missing(instance.name, HeadBone, model);
+                // The troll's mannequin rig has no hand slots; weapons and hand effects check for null.
+                HandR = FindBone(model, HandRBone);
+            }
         }
 
         public int Id { get; }

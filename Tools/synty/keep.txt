@@ -1,7 +1,8 @@
 # Synty files copied into Assets/ThirdParty/Synty/ by Tools/synty/extract.sh (ARCHITECTURE §15.1, §15.15.5).
 # `# pack: <store_name>` names the packs.txt row the lines after it come from.
 # Line format: <package pathname> -> <Characters|Weapons|Textures|Animations|EditorOnly>; the basename is kept unchanged.
-# A pathname may appear twice with different destinations (§15.18.2: 01_A in Textures/ and in EditorOnly/).
+# A pathname may appear twice with different destinations (§15.18.2: EditorOnly/ holds readable copies for the baker,
+# which V1 does not use since D6.2 chose the shader skin mask, so no line uses it now).
 # POLYGON files only: no Sidekick (A_MOD_*), RootMotion/_RM, FPV, prop-bone (Cmp/Lng/Rcv) clips, scenes, prefabs,
 # materials, shaders or scripts.
 
@@ -10,6 +11,8 @@
 Assets/Synty/PolygonFantasyHeroCharacters/Models/FixedScale/ModularCharacters.fbx -> Characters
 # The atlas the character and weapon materials sample (fact b); colour is baked into it.
 Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_01_A.png -> Textures
+# The skin mask the hero materials sample (§15.18.2 step 2): skin where its red channel is below 0.5.
+Assets/Synty/PolygonFantasyHeroCharacters/Textures/Masks/PolygonFantasyHero_Texture_Mask_03.png -> Textures
 # Swordsman: the starter and sword_2, one-handed (§15.18.5).
 Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Sword_Small_01.fbx -> Weapons
 Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Sword_01.fbx -> Weapons
@@ -19,28 +22,6 @@ Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Staff_02.fbx -> 
 # Fighter: plain and spiked mace.
 Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Mace_01.fbx -> Weapons
 Assets/Synty/PolygonFantasyHeroCharacters/Models/Weapons/SM_Wep_Mace_02.fbx -> Weapons
-# §15.18.2 measuring set, readable and never referenced: the 11 alternative atlases and a second 01_A, compared inside
-# and outside the skin mask, and the masks that say which texels are skin. D6.2 keeps only what the decision uses.
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_01_B.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_01_C.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_02_A.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_02_B.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_02_C.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_03_A.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_03_B.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_03_C.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_04_A.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_04_B.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_04_C.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_01_A.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Masks/PolygonFantasyHero_Texture_Mask_01.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Masks/PolygonFantasyHero_Texture_Mask_02.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Masks/PolygonFantasyHero_Texture_Mask_03.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Masks/PolygonFantasyHero_Texture_Mask_04.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Masks/PolygonFantasyHero_Texture_Mask_05.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Masks/PolygonFantasyHero_Texture_Mask_06.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Masks/Old/PolygonFantasyHero_Texture_Mask_Skin_01.png -> EditorOnly
-Assets/Synty/PolygonFantasyHeroCharacters/Textures/Masks/Old/PolygonFantasyHero_Texture_Mask_Skin_02.png -> EditorOnly
 
 # pack: ANIMATION - Sword Combat
 # §15.15.5 table: Idle (Swordsman, Mage, Fighter), the six sword-pack Attack/Skill clips, Hit, BigStagger, Defend, Defeat.
@@ -57,25 +38,16 @@ Assets/Synty/AnimationSwordCombat/Animations/Polygon/Death/A_Death_B_01_Sword.fb
 
 # pack: ANIMATION - Bow Combat
 # The Archer's bow (the hero pack has none; fact e), a static mesh, and its atlas. The Long bow serves the starter and
-# bow_2 (§15.18.4).
+# bow_2 (§15.18.4). The file holds three bow bodies on top of each other; classes.json weaponGrips keeps one and the string.
+# The Archer's Attack and Skill clips below: the pack has no single draw-and-release clip (fact f, §15.18.3).
 Assets/Synty/AnimationBowCombat/Models/Bows/Unrigged/Wep_LongBow_01_Unrigged.fbx -> Weapons
 Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_01_A.png -> Textures
-# bow_2's candidate atlases for the D6 front captures (§15.18.4); D6.2 keeps one.
-Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_01_B.png -> Textures
-Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_01_C.png -> Textures
-Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_02_A.png -> Textures
-Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_02_B.png -> Textures
-Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_02_C.png -> Textures
-Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_03_A.png -> Textures
-Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_03_B.png -> Textures
-Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_03_C.png -> Textures
-Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_04_A.png -> Textures
-Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_04_B.png -> Textures
+# bow_2: the same Long bow on this alternative atlas, gold, the most visible change of the 11 in D6.2's capture (§15.18.4).
 Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_04_C.png -> Textures
 # §15.15.5 table: the Archer's Idle, {g} = Masc | Femn.
 Assets/Synty/AnimationBowCombat/Animations/Polygon/Masculine/Idle/A_POLY_BOW_Stand_Idle_Base_WithBow_Masc.fbx -> Animations
 Assets/Synty/AnimationBowCombat/Animations/Polygon/Feminine/Idle/A_POLY_BOW_Stand_Idle_Base_WithBow_Femn.fbx -> Animations
-# The Archer's Attack and Skill candidates (fact f): the pack has no single draw-and-release clip.
+# The Archer's Attack, and its Skill trimmed to the landing in clips.json (§15.18.3).
 Assets/Synty/AnimationBowCombat/Animations/Polygon/Neutral/Standing/Shoot/A_POLY_BOW_Stand_Shoot_ToBowDown_Neut.fbx -> Animations
 Assets/Synty/AnimationBowCombat/Animations/Polygon/Neutral/Standing/Shoot/A_POLY_BOW_Stand_Shoot_Leaping_Neut.fbx -> Animations
 

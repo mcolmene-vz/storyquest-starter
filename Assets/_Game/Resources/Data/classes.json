@@ -1,44 +1,75 @@
 {
   "version": 1,
+  "skinTones": { "light": "#FFCCAE", "medium": "#D1A275", "dark": "#906850" },
+  "skinReference": "#FFCCAE",
+  "weaponGrips": {
+    "SM_Wep_Sword_Small_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
+    "SM_Wep_Sword_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
+    "SM_Wep_Staff_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
+    "SM_Wep_Staff_02": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
+    "SM_Wep_Mace_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
+    "SM_Wep_Mace_02": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
+    "Wep_LongBow_01_Unrigged": { "pos": [ -0.1186, -0.0454, 0.0212 ], "euler": [ 351.8, 265.2, 294.6 ], "parts": [ "Wep_Longbow_01", "Wep_Longbow_String_01" ] }
+  },
   "classes": [
     {
       "id": "swordsman", "name": "Swordsman", "damageType": "slash", "attackPower": 1.0,
       "skill": { "id": "power_slash", "name": "Power Slash", "damageType": "slash", "power": 1.8, "cooldownTurns": 3 },
-      "weaponSocket": "handslot.r", "weaponMesh": "sword_1handed", "model": "Knight",
+      "weaponSocket": "Socket_HandR", "weaponMesh": "SM_Wep_Sword_Small_01", "model": "ModularCharacters",
       "clips": {
-        "Idle": "Idle_A", "Walk": "Walking_A",
-        "Attack": "Melee_1H_Attack_Slice_Diagonal", "Skill": "Melee_1H_Attack_Jump_Chop",
-        "Hit": "Hit_A", "BigStagger": "Hit_B", "Defend": "Melee_Blocking", "Defeat": "Death_A", "Victory": "Cheering"
+        "Idle": "A_Idle_Base_Sword", "Walk": "A_Idle_Base_Sword",
+        "Attack": "A_Attack_LightCombo01A_ReturnToIdle_Sword", "Skill": "A_Attack_HeavyFlourish01_ReturnToIdle_Sword",
+        "Hit": "A_Hit_F_React_Sword", "BigStagger": "A_Hit_F_Stagger_Sword", "Defend": "A_Block_Loop_Sword",
+        "Defeat": "A_Death_B_01_Sword", "Victory": "A_POLY_EMOT_Happy_FistPump_{g}"
+      },
+      "variants": {
+        "boy": { "tone": "light", "parts": [ "Chr_Head_Male_00", "Chr_Eyebrow_Male_02", "Chr_HeadCoverings_No_Hair_12", "Chr_Torso_Male_20", "Chr_ArmUpperRight_Male_20", "Chr_ArmUpperLeft_Male_20", "Chr_ArmLowerRight_Male_18", "Chr_ArmLowerLeft_Male_18", "Chr_HandRight_Male_17", "Chr_HandLeft_Male_17", "Chr_Hips_Male_20", "Chr_LegRight_Male_19", "Chr_LegLeft_Male_19" ] },
+        "girl": { "tone": "dark", "parts": [ "Chr_Head_Female_00", "Chr_Eyebrow_Female_03", "Chr_HeadCoverings_No_Hair_12", "Chr_Torso_Female_20", "Chr_ArmUpperRight_Female_20", "Chr_ArmUpperLeft_Female_20", "Chr_ArmLowerRight_Female_18", "Chr_ArmLowerLeft_Female_18", "Chr_HandRight_Female_17", "Chr_HandLeft_Female_17", "Chr_Hips_Female_20", "Chr_LegRight_Female_19", "Chr_LegLeft_Female_19" ] }
       }
     },
     {
       "id": "archer", "name": "Archer", "damageType": "pierce", "attackPower": 1.0,
       "skill": { "id": "twin_shot", "name": "Twin Shot", "damageType": "pierce", "power": 1.6, "cooldownTurns": 3 },
-      "weaponSocket": "handslot.r", "weaponMesh": "bow_withString", "model": "Ranger",
+      "weaponSocket": "Socket_HandL", "weaponMesh": "Wep_LongBow_01_Unrigged", "model": "ModularCharacters",
       "clips": {
-        "Idle": "Ranged_Bow_Idle", "Walk": "Walking_A",
-        "Attack": "Ranged_Bow_Release", "Skill": "Ranged_Bow_Release_Up",
-        "Hit": "Hit_A", "BigStagger": "Hit_B", "Defend": "Melee_Blocking", "Defeat": "Death_A", "Victory": "Cheering"
+        "Idle": "A_POLY_BOW_Stand_Idle_Base_WithBow_{g}", "Walk": "A_POLY_BOW_Stand_Idle_Base_WithBow_{g}",
+        "Attack": "A_POLY_BOW_Stand_Shoot_ToBowDown_Neut", "Skill": "A_POLY_BOW_Stand_Shoot_Leaping_Neut",
+        "Hit": "A_Hit_F_React_Sword", "BigStagger": "A_Hit_F_Stagger_Sword", "Defend": "A_Block_Loop_Sword",
+        "Defeat": "A_Death_B_01_Sword", "Victory": "A_POLY_EMOT_Happy_FistPump_{g}"
+      },
+      "variants": {
+        "boy": { "tone": "medium", "parts": [ "Chr_Head_Male_00", "Chr_Eyebrow_Male_02", "Chr_HeadCoverings_No_Hair_06", "Chr_Torso_Male_14", "Chr_ArmUpperRight_Male_14", "Chr_ArmUpperLeft_Male_14", "Chr_ArmLowerRight_Male_14", "Chr_ArmLowerLeft_Male_14", "Chr_HandRight_Male_14", "Chr_HandLeft_Male_14", "Chr_Hips_Male_14", "Chr_LegRight_Male_14", "Chr_LegLeft_Male_14" ] },
+        "girl": { "tone": "dark", "parts": [ "Chr_Head_Female_00", "Chr_Eyebrow_Female_03", "Chr_HeadCoverings_No_Hair_08", "Chr_Torso_Female_14", "Chr_ArmUpperRight_Female_14", "Chr_ArmUpperLeft_Female_14", "Chr_ArmLowerRight_Female_14", "Chr_ArmLowerLeft_Female_14", "Chr_HandRight_Female_14", "Chr_HandLeft_Female_14", "Chr_Hips_Female_14", "Chr_LegRight_Female_14", "Chr_LegLeft_Female_14" ] }
       }
     },
     {
       "id": "mage", "name": "Mage", "damageType": "magic", "attackPower": 1.0,
       "skill": { "id": "fireball", "name": "Fireball", "damageType": "magic", "power": 2.0, "cooldownTurns": 3 },
-      "weaponSocket": "handslot.r", "weaponMesh": "staff", "model": "Mage",
+      "weaponSocket": "Socket_HandR", "weaponMesh": "SM_Wep_Staff_01", "model": "ModularCharacters",
       "clips": {
-        "Idle": "Idle_A", "Walk": "Walking_A",
-        "Attack": "Ranged_Magic_Shoot", "Skill": "Ranged_Magic_Raise",
-        "Hit": "Hit_A", "BigStagger": "Hit_B", "Defend": "Melee_Blocking", "Defeat": "Death_A", "Victory": "Cheering"
+        "Idle": "A_Idle_Base_Sword", "Walk": "A_Idle_Base_Sword",
+        "Attack": "A_Attack_HeavyStab01_ReturnToIdle_Sword", "Skill": "A_POLY_EMOT_Happy_ArmsRaised_{g}",
+        "Hit": "A_Hit_F_React_Sword", "BigStagger": "A_Hit_F_Stagger_Sword", "Defend": "A_Block_Loop_Sword",
+        "Defeat": "A_Death_B_01_Sword", "Victory": "A_POLY_EMOT_Happy_FistPump_{g}"
+      },
+      "variants": {
+        "boy": { "tone": "medium", "parts": [ "Chr_Head_Male_00", "Chr_Eyebrow_Male_02", "Chr_Hair_03", "Chr_Torso_Male_09", "Chr_ArmUpperRight_Male_09", "Chr_ArmUpperLeft_Male_09", "Chr_ArmLowerRight_Male_09", "Chr_ArmLowerLeft_Male_09", "Chr_HandRight_Male_09", "Chr_HandLeft_Male_09", "Chr_Hips_Male_09", "Chr_LegRight_Male_09", "Chr_LegLeft_Male_09" ] },
+        "girl": { "tone": "light", "parts": [ "Chr_Head_Female_00", "Chr_Eyebrow_Female_03", "Chr_Hair_29", "Chr_Torso_Female_09", "Chr_ArmUpperRight_Female_09", "Chr_ArmUpperLeft_Female_09", "Chr_ArmLowerRight_Female_09", "Chr_ArmLowerLeft_Female_09", "Chr_HandRight_Female_09", "Chr_HandLeft_Female_09", "Chr_Hips_Female_09", "Chr_LegRight_Female_09", "Chr_LegLeft_Female_09" ] }
       }
     },
     {
       "id": "fighter", "name": "Fighter", "damageType": "blunt", "attackPower": 1.0,
       "skill": { "id": "ground_pound", "name": "Ground Pound", "damageType": "blunt", "power": 1.5, "cooldownTurns": 3 },
-      "weaponSocket": "handslot.r", "weaponMesh": "", "model": "Barbarian",
+      "weaponSocket": "Socket_HandR", "weaponMesh": "SM_Wep_Mace_01", "model": "ModularCharacters",
       "clips": {
-        "Idle": "Melee_Unarmed_Idle", "Walk": "Walking_A",
-        "Attack": "Melee_Unarmed_Attack_Punch_A", "Skill": "Melee_Unarmed_Attack_Kick",
-        "Hit": "Hit_A", "BigStagger": "Hit_B", "Defend": "Melee_Blocking", "Defeat": "Death_B", "Victory": "Cheering"
+        "Idle": "A_Idle_Base_Sword", "Walk": "A_Idle_Base_Sword",
+        "Attack": "A_Attack_HeavyCombo01A_ReturnToIdle_Sword", "Skill": "A_Attack_LightLeaping01_ReturnToIdle_Sword",
+        "Hit": "A_Hit_F_React_Sword", "BigStagger": "A_Hit_F_Stagger_Sword", "Defend": "A_Block_Loop_Sword",
+        "Defeat": "A_Death_B_01_Sword", "Victory": "A_POLY_EMOT_Happy_FistPump_{g}"
+      },
+      "variants": {
+        "boy": { "tone": "dark", "parts": [ "Chr_Head_Male_00", "Chr_Eyebrow_Male_02", "Chr_Hair_12", "Chr_Torso_Male_26", "Chr_ArmUpperRight_Male_20", "Chr_ArmUpperLeft_Male_20", "Chr_ArmLowerRight_Male_18", "Chr_ArmLowerLeft_Male_18", "Chr_HandRight_Male_17", "Chr_HandLeft_Male_17", "Chr_Hips_Male_26", "Chr_LegRight_Male_19", "Chr_LegLeft_Male_19" ] },
+        "girl": { "tone": "light", "parts": [ "Chr_Head_Female_00", "Chr_Eyebrow_Female_03", "Chr_Hair_25", "Chr_Torso_Female_26", "Chr_ArmUpperRight_Female_20", "Chr_ArmUpperLeft_Female_20", "Chr_ArmLowerRight_Female_18", "Chr_ArmLowerLeft_Female_18", "Chr_HandRight_Female_17", "Chr_HandLeft_Female_17", "Chr_Hips_Female_26", "Chr_LegRight_Female_19", "Chr_LegLeft_Female_19" ] }
       }
     }
   ]
