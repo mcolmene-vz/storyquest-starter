@@ -1456,20 +1456,32 @@ If two colours do not read as different on device, the fallback inside the same 
 | 6 | POLYGON - Meadow Forest - Nature Biome | M3 start | camp, forest, stream |
 | 7 | POLYGON - Fantasy Village | M3 start | village, river; the hill fort from its towers and walls, or from pack 6's stone walls and ruins. The M3 design confirms this against the approved outline. |
 
-- **Seven packs, inside the producer's cap of eight.** One slot is free; any use of it needs the producer's yes.
+- *Amended 2026-10-17 (producer ruling "All Synty"):* **the pack list is exactly these seven.**
+  - There is no free slot, and Goblin War Camp's former slot is not reused.
+  - Any other pack needs the producer's yes and **replaces** one of the seven; it never adds.
+  - At M2 sign-off `packs.txt` has exactly five lines (packs 1–5).
 - **Not needed:** POLYGON - Goblin War Camp (15.16.3).
 - **Outside the list:** POLYGON - Nature Biomes - Alpine Mountain was downloaded on 2026-10-17 (`POLYGON_NatureBiomes_AlpineMountain_Unity_2022_3_v1_5_5.unitypackage`). It is not extracted and has no `packs.txt` line. Using it needs the producer's yes, and as an environment pack it would replace one of packs 6 and 7.
   - **It cannot replace Meadow Forest for Land 1** (from a names-only listing of the package, 2026-10-17). Its contents are pines, cliffs, rocks, snow mounds, ice sheets, stalactites, a lake, river rocks and a mountain range, plus camping props that read as modern (sleeping bag, thermos, folding chair, canoe, ice-fishing hut and auger) beside one tent, one campfire, a cabin, a jetty and a lookout.
   - It has no village, no fort and no meadow forest. Its camp would put a thermos and a folding chair into a fantasy camp scene.
-  - **Meadow Forest stays the M3 pick** for the camp, the forest and the stream. Alpine Mountain could serve only a snowy mountain location, if the approved outline has one, and then only with the producer's yes, in place of one of the two M3 environment packs.
+  - **Meadow Forest stays the M3 pick** for the camp, the forest and the stream.
+  - *Amended 2026-10-17:* the producer ruled no. A location the two M3 packs cannot give is cut from the outline rather than answered with a pack, and Alpine Mountain is a BACKLOG row. It is never extracted.
 - Nothing in V1 then uses KayKit.
+
+**The troll pass rule** (amended 2026-10-17, producer ruling "All Synty"). The Fantasy Rivals Troll passes D6b step 2 only if all of these hold:
+- **Tone:** big, grumpy and dim, never scary for more than a line, judged by the producer from the front and framing captures.
+- **What is extracted:** the troll's own GameObjects, `SM_Wep_Troll_01` and its atlas's four variants. None of the pack's demon, golem, red-eyed or blood art is extracted.
+- **Size and import:** 2.0–2.5 m after `scale`, and the avatar is `isHuman && isValid`.
+- **Cost:** at most 15k unique triangles and at most 6 renderers, or the producer's budget ruling first.
+
+If it fails, the producer may ask for the Goblin War Camp Troll's captures (ruling 2, amended).
 
 #### 15.16.5 PLAN-M2
 
 - **D6b (new): Synty troll and KayKit removal.** It follows D6, before or after D7, and needs pack 5 on disk.
   1. Through `extract.sh`, extract `Models/Characters_BR.fbx`, `Models/SM_Wep_Troll_01.fbx` and the troll atlas's four texture variants (`FantasyRivals_0n_A` to `_D`), adding a `packs.txt` line and `keep.txt` lines. The atlas number is read from `SM_Chr_BR_Troll_01`'s material in the scratch folder. `SyntyPostprocessor` covers them with the existing character and weapon rules. `Characters_BR.fbx` carries the other Big Rig characters too, and only the troll's GameObjects reach a prefab (§15.16.2); the build-log check in §15.7 confirms the rest never ship.
   2. Produce a front capture of the troll with `VariantCapture` and a battle-framing capture on each ratio. Report height, triangles, renderers and avatar validity.
-  3. Regenerate `troll_grunt` with the 15.16.2 data. Apply the anchor rule and BigStagger at 1.0. Re-measure framing (§14.4 checks, both ratios). Commit.
+  3. **Waits on the producer's troll decision** from step 2's captures and numbers (amended 2026-10-17). Then: regenerate `troll_grunt` with the 15.16.2 data, apply the anchor rule and BigStagger at 1.0, re-measure framing (§14.4 checks, both ratios), and commit.
   4. Move the clip-table reader into `ClipTable.cs`; delete everything listed in 15.16.1; regenerate; run the gate and a scripted battle on both ratios. Commit.
 - **D8** adds: no KayKit file or code (see the review below); one enemy pack in `packs.txt`; the troll's weakness hit (BigStagger) reads on device.
 - **Budget:** unchanged (§15.7 counters and the device rule). D6b's troll numbers are checked against it before D8.
@@ -1496,5 +1508,112 @@ If two colours do not read as different on device, the fallback inside the same 
 2. **Replace KayKit entirely?** V1-SCOPE §9 still says "KayKit and Kenney CC0 packs stay allowed", and ruling 2 still lists KayKit and tinted mannequins as options.
    - *Recommend:* strike KayKit from §9 and from ruling 2, as the owner directed.
    - Kenney stays allowed only for the CC0 sound effects (§7, §14.6), which are audio, not art.
-3. **Pack count.** Seven of eight, with no change to the cap. Goblin War Camp is not used, and Alpine Mountain was downloaded outside the list and stays unused unless the producer says yes.
+3. **Pack count.** Seven of eight, with no change to the cap. Goblin War Camp is not used, and Alpine Mountain was downloaded outside the list and stays unused unless the producer says yes. *Ruled 2026-10-17:* the list is the named seven, with replace-not-add (15.16.4).
 4. **Goblins.** No V1 role unless the producer and the story writer change Land 1's villains (V1-SCOPE §4, §5). *Recommend no for V1,* with a BACKLOG row if wanted.
+
+### 15.17 Interface and effects (owner question, 2026-10-17)
+
+Martin, verbatim: "what about interface or make the battle more clean with effect?" Both are art for features V1 already has: the battle HUD, the camp screens, the M3 screens, and the hit recipe's burst (§5). Neither adds a feature, and neither changes M2's criterion.
+
+Verified on syntystore.com on 2026-10-17: the store names, prices, pack contents, the fonts' origin, and that both INTERFACE packs offer a "Sprite zip File". From store images: both share one blue-and-gold style. Not verifiable until download: sprite sizes and 9-slice borders, which effect suits which use, and the effects' performance.
+
+#### 15.17.1 One INTERFACE pack: INTERFACE - Fantasy Warrior HUD
+
+**Pick: INTERFACE - Fantasy Warrior HUD (US$99.99 list).** It holds 1,100+ sprites. The names that match our screens:
+- `HealthBar`, `HealthContainer` and `HeartsBar` for HP;
+- `CharacterPortrait` frames for the party cards;
+- `Event_DialogueBox` and `Event_DialogueChoices` for M3's story line and choice UI;
+- buttons, frames, sliders and toggles.
+
+**Why this one and not INTERFACE - Fantasy Menus (US$79.99):** Fantasy Menus has panels, popups and settings screens, but no HP bars, portraits or dialogue boxes. The HUD pack covers the battle HUD, the camp and M3's story screens in one pack. Fantasy Menus comes back only if M3's parent settings need its toggle and slider panels, which would have to replace a named pack (15.17.4). The Fantasy Screens Add-On requires both and is not considered.
+
+**What we use from it:**
+- button, panel and frame sprites, used as 9-slice;
+- HP bar art;
+- portrait frames for the party cards;
+- slot frames for the shop's item buttons;
+- a few generic icons (coin, heart).
+
+**Not used:**
+- **Its rendered weapon icons, for the M4 shop pictures (ruling 6).** They are rendered from POLYGON Fantasy Kingdom items, not our hero-pack meshes, so a kid would buy one sword and see another. The editor-rendered pictures of our own meshes stay, inside the pack's slot frames.
+- **Its prefabs, animations, scripts and demo scenes.**
+- **Its fonts, for body text.** Synty says they are Google Fonts, Grenze and Texturina. Both are blackletter-flavoured display faces, hard for early readers. Body text and numbers keep TMP's default sans; Grenze for titles only, if the producer likes it on device.
+
+**Font licence caveat.** Google Fonts are normally under the SIL Open Font License 1.1, which allows bundling in an app. If a pack font is used, its licence file is confirmed when it is extracted, the font's OFL text is committed beside it, and the M5 credits name it. A modified font must not keep its reserved name. Nothing is shipped until that check is done.
+
+**How it enters, code-first.** Same tar route and the same rules as §15.1:
+1. Download the Unity package, not the Sprite zip, so the one extract route serves every pack.
+2. `keep.txt` lists only the PNGs used, under `Assets/ThirdParty/Synty/UI/`.
+3. Synty's `.meta` files are discarded as always. The 9-slice borders that lived in them are read once from the scratch copy (text) into a border table that the postprocessor applies.
+4. A postprocessor rule for `UI/`: Sprite type, single sprite, no mips, sRGB, alpha is transparency, bilinear, iOS ASTC 4×4 (sharper than the 3D textures' 6×6), and `spriteBorder` from that table.
+5. Sprites are not under `Resources/`. So the generator writes `Resources/UI/Skin.asset`, a `UiSkin` ScriptableObject (`Runtime/UI/`) holding the sprite references. `UiFactory` loads that one asset and gives every `Panel`, `Button` and `Bar` its sliced sprite.
+6. Sizes are unchanged: 1920×1080 reference, match 0.5, at least 170 reference px per control, the 1600 × 900 camp box (§14.5, §9).
+7. No sprite atlas unless the counters say so: one texture per sprite, and UI draws are already few.
+
+#### 15.17.2 One effects pack: POLYGON - Particle FX Pack
+
+**Pick: POLYGON - Particle FX Pack (US$49.99 list).** It has 120+ effects, including Impact (8), Magic (26), Stunned (2), Swirl (4), Spark (6), Light (4), Pickup and Loot, and Cartoony (5).
+
+The free SIMPLE FX - Cartoon Particles has no stars, heals or impacts that fit (blood, dirt, dust, explosion, fire, fireworks), so it is not used. The Particle FX pack's Gore effects are never extracted.
+
+**What replaces what.** `HitFx`'s calls and §14.4's recipe order and timing are unchanged:
+
+| Moment | Today | With the pack |
+|---|---|---|
+| Hit burst | 12 flat particles, coloured by damage type | An Impact effect's textures, keeping the per-type colours (slash pale yellow, pierce light grey, magic violet, blunt orange) |
+| Weakness hit | The same, bigger | A larger Impact, plus Stunned stars circling the troll's head for the BigStagger clip's length (a kid-readable "dizzy") |
+| Heal | Green burst | A green Magic sparkle swirl |
+| Revive | Green burst | A rising Light effect |
+| Defend | Small white ring | A Swirl ring |
+
+Victory confetti or anything else new is not added: that would be new presentation, a producer call.
+
+**How it enters, code-first.** Synty's effects are prefabs with their own materials and Shader Graph shaders, so none of that is taken.
+- **Textures and particle meshes only,** through `keep.txt` into `Assets/ThirdParty/Synty/FX/`.
+- **Settings as data.** Each effect's numbers (count, lifetime, speed, size, shape, gravity, colour over life, texture) are transcribed once from Synty's prefab YAML, which is text, into `Resources/Data/fx.json`.
+- **Built in code.** `HitFx` builds each `ParticleSystem` from that data.
+- **Materials.** The generator writes one particle material per texture, on the URP `Particles/Unlit` shader `particle.mat` already uses, additive or alpha-blended per effect. No new shader enters the build.
+
+**Performance against §15.7.**
+- **Cost.** Each particle material adds a SetPass when it is on screen; the effects play in the action shot, not the group shot. Bursts are short.
+- **The risk is mobile overdraw.** Large, overlapping, alpha-blended quads close to the action camera eat fill rate on an A13.
+- **Rules:**
+  - at most 40 particles per effect;
+  - at most three effects alive at once;
+  - textures at most 256²;
+  - no soft particles (the depth texture is off, §13.5), no lights, no trails;
+  - no single effect covers more than about 15 % of the action shot.
+- **Check:** on the A16 iPad's release build, the probe's `fps min` stays at or above 55 in `flow=Battle` lines during a run of weakness hits. The group-shot GPU rule is unchanged.
+
+#### 15.17.3 When
+
+- **The INTERFACE pack: M3 start.** M3 builds the choice UI, the camp scene, profiles and parent settings, so every screen is skinned once, as the first M3 UI task. That task also restyles the M2 camp and battle HUD.
+- **The effects pack: M4,** with combat tuning. That is when the weakness, the three troll types and the boss are tuned, and the weakness hit matters most for the chapter 5 boss.
+- **Nothing is pulled into M2.**
+  - M2's criterion is the visible gear swap, which neither pack touches.
+  - Skinning now would restyle screens M3 is about to add to, and redo the work.
+  - Effects now would be tuned against one troll before the M4 enemies exist.
+  - Both would delay M2 sign-off for no M2 criterion.
+
+#### 15.17.4 Producer question (amended 2026-10-17 for the replace-not-add rule)
+
+Under ruling "All Synty", a pack is added only by replacing one of the seven named packs (15.16.4).
+
+**What each would replace: nothing on the list can go without losing a V1 need.**
+- **The hero pack:** the heroes.
+- **Sword Combat and Bow Combat:** every hero attack and reaction, and the troll's.
+- **Emotes and Taunts:** the victories, the Mage's spell, and M4's thrower and shaman moves.
+- **Fantasy Rivals:** every troll.
+- **Meadow Forest and Fantasy Village:** the camp and Land 1's places. Replacing one would force the outline into one pack's locations.
+
+So within the rule as written, the answer is "neither pack". The UI keeps `UiFactory`'s flat panels, and the effects improve only in code.
+
+**The question:** amend the rule so that the named list is the seven world-art packs plus **one INTERFACE pack** (INTERFACE - Fantasy Warrior HUD, from M3 start) and **one effects pack** (POLYGON - Particle FX Pack, from M4).
+- Replace-not-add then applies to all nine.
+- Each enters only at its milestone, under 15.17.1–15.17.2's rules.
+
+*Recommend yes.*
+- They serve features world-art packs cannot supply (UI chrome, particle textures). Both are small to integrate: sprites and textures only, with no prefabs, shaders or rigs.
+- Fantasy Warrior HUD alone covers the battle HUD, the camp and M3's story and choice screens.
+
+If the producer amends for one only, take the INTERFACE pack. Every screen and both camp tabs benefit, while effects can be improved in code. If M3's parent settings later want INTERFACE - Fantasy Menus, it has to replace something, which today means no.
