@@ -27,14 +27,17 @@ namespace Game.Core.Data
         public string Tone { get; set; } = "";
     }
 
-    /// How a weapon mesh sits in its socket (§15.18.3), in metres and degrees in the socket's local space.
-    public sealed class WeaponGrip
+    /// One weapon mesh (§15.18.3, §15.18.8): how it sits in its socket, in metres and degrees in the socket's local
+    /// space, which of its file's renderers make the weapon, and its default atlas.
+    public sealed class WeaponMeshDefinition
     {
         public List<double> Pos { get; set; } = new List<double>();
         public List<double> Euler { get; set; } = new List<double>();
         // The renderers of the mesh's file that make the weapon, when the file holds alternatives on top of each other
         // (the Long bow file carries three bow bodies and one string); empty means every renderer.
         public List<string> Parts { get; set; } = new List<string>();
+        // The texture file name, without extension, under the Synty Textures folder. A weapon item's own texture wins.
+        public string Texture { get; set; } = "";
     }
 
     /// The classes.json fields that are not per class. Core carries them for the generator and never reads them.
@@ -44,7 +47,8 @@ namespace Game.Core.Data
 
         public Dictionary<string, string> SkinTones { get; set; } = new Dictionary<string, string>();
         public string SkinReference { get; set; } = "";
-        public Dictionary<string, WeaponGrip> WeaponGrips { get; set; } = new Dictionary<string, WeaponGrip>();
+        public string StubbleReference { get; set; } = "";
+        public Dictionary<string, WeaponMeshDefinition> WeaponMeshes { get; set; } = new Dictionary<string, WeaponMeshDefinition>();
     }
 
     public static class SocketNames
@@ -80,6 +84,7 @@ namespace Game.Core.Data
         public List<ClassDefinition> Classes { get; set; } = new List<ClassDefinition>();
         public Dictionary<string, string> SkinTones { get; set; } = new Dictionary<string, string>();
         public string SkinReference { get; set; } = "";
-        public Dictionary<string, WeaponGrip> WeaponGrips { get; set; } = new Dictionary<string, WeaponGrip>();
+        public string StubbleReference { get; set; } = "";
+        public Dictionary<string, WeaponMeshDefinition> WeaponMeshes { get; set; } = new Dictionary<string, WeaponMeshDefinition>();
     }
 }

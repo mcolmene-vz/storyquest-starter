@@ -36,6 +36,10 @@ namespace Game.Editor
         internal const float MaxHeight = 2.4f;
         static readonly string[] OneShotStates = { "Attack", "Skill", "Hit", "BigStagger", "Victory" };
         static readonly string[] ImpactStates = { "Attack", "Skill" };
+        // §15.18.8: no action shot holds longer than this plus §14.4's 0.7 s rule. The tolerance absorbs float rounding of
+        // a clip trimmed to exactly 2.5 s.
+        const float MaxActionClipSeconds = 2.5f;
+        const float ClipLengthTolerance = 0.001f;
         // Placeholder grass for the §14.4 ground plane; a flat colour under the toon ramp until the stage gets art.
         static readonly Color GroundColor = new Color(0.36f, 0.62f, 0.27f, 1f);
 
@@ -100,7 +104,7 @@ namespace Game.Editor
         }
 
         /// §14.2: every clip in a clips map exists under Animations/, has a clips.json entry, and Attack/Skill clips have
-        /// an impact. Hero maps are checked once per body, with {g} resolved (§15.15.5).
+        /// an impact and, trimmed, run at most 2.5 s (§15.18.8). Hero maps are checked once per body, with {g} resolved (§15.15.5).
         static void CheckClips(GameTables tables, Dictionary<string, KayKitPostprocessor.ClipEntry> clipTable,
             Dictionary<string, AnimationClip> clips)
         {
@@ -117,6 +121,10 @@ namespace Game.Editor
                         problems.Add($"{id}.{state}: clip '{name}' has no entry in {KayKitPostprocessor.ClipTablePath}");
                     else if (Array.IndexOf(ImpactStates, state) >= 0 && !entry.Impact.HasValue)
                         problems.Add($"{id}.{state}: clip '{name}' has no impact in {KayKitPostprocessor.ClipTablePath}");
+                    if (Array.IndexOf(ImpactStates, state) >= 0 && clips.TryGetValue(name, out var clip) &&
+                        clip.length > MaxActionClipSeconds + ClipLengthTolerance)
+                        problems.Add($"{id}.{state}: clip '{name}' runs {clip.length:F3} s, over §15.18.8's {MaxActionClipSeconds} s; " +
+                                     $"trim it with \"start\"/\"end\" in {KayKitPostprocessor.ClipTablePath}");
                 }
             if (problems.Count > 0)
                 throw new InvalidOperationException(Tag + problems.Count + " clip problem(s):\n - " + string.Join("\n - ", problems));

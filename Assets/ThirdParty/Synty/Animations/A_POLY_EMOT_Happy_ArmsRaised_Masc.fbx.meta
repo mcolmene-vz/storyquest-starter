@@ -38,8 +38,8 @@ ModelImporter:
       name: A_POLY_EMOT_Happy_ArmsRaised_Masc
       takeName: A_POLY_EMOT_Happy_ArmsRaised_Masc
       internalID: 97424154986896505
-      firstFrame: 1
-      lastFrame: 107
+      firstFrame: 4
+      lastFrame: 79
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -59,7 +59,7 @@ ModelImporter:
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
       events:
-      - time: 0.15
+      - time: 0.172
         functionName: OnImpact
         data: 
         objectReferenceParameter: {instanceID: 0}

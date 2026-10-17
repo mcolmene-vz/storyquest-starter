@@ -108,7 +108,9 @@ namespace Game.Editor.Import
         {
             [JsonProperty("loop")] public bool Loop { get; set; }
             [JsonProperty("impact")] public float? Impact { get; set; }
-            // Seconds from the clip's start to its last frame (§15.18.3, the Archer's trimmed Skill); Synty clips only.
+            // Seconds from the take's start to the clip's first and last frame (§15.18.3, §15.18.8: the trimmed Archer and
+            // Mage Skills); Synty clips only.
+            [JsonProperty("start")] public float? Start { get; set; }
             [JsonProperty("end")] public float? End { get; set; }
         }
 

@@ -38,7 +38,7 @@ Assets/Synty/AnimationSwordCombat/Animations/Polygon/Death/A_Death_B_01_Sword.fb
 
 # pack: ANIMATION - Bow Combat
 # The Archer's bow (the hero pack has none; fact e), a static mesh, and its atlas. The Long bow serves the starter and
-# bow_2 (§15.18.4). The file holds three bow bodies on top of each other; classes.json weaponGrips keeps one and the string.
+# bow_2 (§15.18.4). The file holds three bow bodies on top of each other; classes.json weaponMeshes keeps one and the string.
 # The Archer's Attack and Skill clips below: the pack has no single draw-and-release clip (fact f, §15.18.3).
 Assets/Synty/AnimationBowCombat/Models/Bows/Unrigged/Wep_LongBow_01_Unrigged.fbx -> Weapons
 Assets/Synty/AnimationBowCombat/Textures/AnimationBowCombat_Texture_01_A.png -> Textures

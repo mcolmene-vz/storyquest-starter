@@ -23,7 +23,7 @@ namespace Game.Core.Data
         public string? Mesh { get; set; }
         public Dictionary<string, List<string>> Parts { get; set; } = new Dictionary<string, List<string>>();
         public string? Tint { get; set; }
-        // A weapon drawn with another atlas than its mesh's own (bow_2, §15.18.4) gets its own material on this texture.
+        // A weapon drawn with another atlas than its mesh's default (bow_2, §15.18.8) uses this texture instead.
         public string? Texture { get; set; }
     }
 

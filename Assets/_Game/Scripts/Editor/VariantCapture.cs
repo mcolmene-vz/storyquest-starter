@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 namespace Game.Editor
 {
     /// Front captures of the eight hero variants for the producer's skin-tone check (ruling 7, ARCHITECTURE §15.3), and
-    /// one hand close-up per weapon mesh for tuning classes.json weaponGrips (§15.18.3). Renders, so it runs in batch
+    /// one hand close-up per weapon mesh for tuning classes.json weaponMeshes (§15.18.3). Renders, so it runs in batch
     /// mode without -nographics:
     ///   "$UNITY" -batchmode -projectPath . -executeMethod Game.Editor.VariantCapture.Run -logFile - -quit
     /// Writes TGA (an 18-byte header and raw pixels; EncodeToPNG lives in the imageconversion module §13.2 dropped) to

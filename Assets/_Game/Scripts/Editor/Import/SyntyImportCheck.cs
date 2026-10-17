@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEditor;
@@ -103,6 +104,7 @@ namespace Game.Editor.Import
             ReportCharacters(failures);
             ReportColour(failures, packs);
             ReportSkin(failures);
+            ReportStubble(failures);
             ReportWeapons(failures, packs);
             ReportAnimations(failures);
 
@@ -566,6 +568,303 @@ namespace Game.Editor.Import
 
         static string Hex(Color32 c) => $"#{c.r:X2}{c.g:X2}{c.b:X2}";
 
+        // ---- §15.18.8 stubble ------------------------------------------------------------------------------------
+
+        const int StubbleChannel = 2; // Mask_03.b gates _Color_Stubble in Synty's shader graph (MaskRegions above)
+
+        /// Mask_03.b's polarity: the share of texels above and below 0.5 and 01_A's mean colour in each, read from the
+        /// source PNGs in Textures/ (the shipped imports are not readable, and the imageconversion module is out, §13.2).
+        /// Then every 4-connected region of the small set, the stubble set, with the hero parts whose triangles sample it,
+        /// so a region outside the male lower face shows up before the shader relies on the channel.
+        static void ReportStubble(List<string> failures)
+        {
+            string atlasPath = SyntyPostprocessor.TexturesFolder + ReferenceAtlas + ".png";
+            if (!TryReadPng(atlasPath, out var atlas, out int w, out int h, out string error) ||
+                !TryReadPng(SyntyPostprocessor.SkinMask, out var mask, out int mw, out int mh, out error))
+            {
+                failures.Add("§15.18.8: " + error);
+                return;
+            }
+            if (mw != w || mh != h)
+            {
+                failures.Add($"§15.18.8: {SyntyPostprocessor.SkinMask} is {mw}×{mh}, {atlasPath} {w}×{h}; the stubble report needs them texel for texel");
+                return;
+            }
+
+            var below = Inside(mask, StubbleChannel);
+            var above = below.Select(x => !x).ToArray();
+            int nBelow = below.Count(x => x), nAbove = above.Length - nBelow;
+            Log($"(stubble) {SkinMask}.B below 0.5: {100f * nBelow / below.Length:F2}% of texels, 01_A mean {Hex(Mean(atlas, below))}; " +
+                $"above 0.5: {100f * nAbove / above.Length:F2}%, 01_A mean {Hex(Mean(atlas, above))}");
+            bool blackOnWhite = nBelow <= nAbove;
+            var stubble = blackOnWhite ? below : above;
+            Log("(stubble) the stubble set is the small one, B " + (blackOnWhite ? "< 0.5: black on white, stubble = 1 − b" : ">= 0.5: white on black, stubble = b"));
+
+            CheckImportedStubble(failures, below, w, h);
+
+            var regions = Regions(stubble, w, h, out int[] label);
+            var parts = PartsPerRegion(label, regions.Count, w, h);
+            for (int i = 0; i < regions.Count; i++)
+            {
+                var (count, x0, y0, x1, y1, mean) = Region(regions[i], atlas, w);
+                var users = parts[i].OrderBy(p => p.Key, StringComparer.Ordinal)
+                    .Select(p => $"{p.Key} ({p.Value.Triangles} tri at {100f * p.Value.Height:F0}%)").ToList();
+                Log($"(stubble) region {i + 1}: {count} texels, x {x0}..{x1} y {y0}..{y1} (uv {F((float)x0 / w)}..{F((x1 + 1f) / w)}, " +
+                    $"{F((float)y0 / h)}..{F((y1 + 1f) / h)}), 01_A mean {Hex(mean)}, sampled by {users.Count} part(s), each with the mean " +
+                    "height of those triangles in the part's bounds (0% bottom, 100% top)" +
+                    (users.Count == 0 ? "" : ": " + string.Join(", ", users)));
+            }
+        }
+
+        /// The shader reads stubble from the imported mask's green (§15.18.8), so the import must carry the source's blue
+        /// there texel for texel: a blit of mip 0 at full size, its green below 0.5 compared with the source's blue below 0.5.
+        static void CheckImportedStubble(List<string> failures, bool[] sourceBelow, int w, int h)
+        {
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(SyntyPostprocessor.SkinMask);
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null || tex == null)
+            {
+                Log("(stubble) imported mask not compared: " + (tex == null ? "not imported" : "no graphics device (run without -nographics)"));
+                return;
+            }
+            if (tex.width != w || tex.height != h)
+            {
+                failures.Add($"§15.18.8: {SyntyPostprocessor.SkinMask} imported {tex.width}×{tex.height}, source {w}×{h}");
+                return;
+            }
+            var rt = RenderTexture.GetTemporary(w, h, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+            var previous = RenderTexture.active;
+            Graphics.Blit(tex, rt);
+            RenderTexture.active = rt;
+            var copy = new Texture2D(w, h, TextureFormat.RGBA32, false, true);
+            copy.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            copy.Apply(false);
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(rt);
+            var px = copy.GetPixels32();
+            Object.DestroyImmediate(copy);
+
+            var imported = Inside(px, 1);
+            int mismatches = 0;
+            for (int i = 0; i < imported.Length; i++)
+                if (imported[i] != sourceBelow[i])
+                    mismatches++;
+            Log($"(stubble) imported {tex.format}: green < 0.5 on {100f * imported.Count(x => x) / imported.Length:F2}% of texels, " +
+                $"{mismatches} texel(s) differ from the source's blue below 0.5");
+            if (mismatches > 0)
+                failures.Add($"§15.18.8: {SyntyPostprocessor.SkinMask} imported green differs from the source's blue on {mismatches} texel(s)");
+        }
+
+        /// 4-connected regions of a set, each as its texel indices; label holds region index + 1 per texel, 0 outside.
+        static List<List<int>> Regions(bool[] set, int w, int h, out int[] label)
+        {
+            label = new int[set.Length];
+            var regions = new List<List<int>>();
+            var stack = new Stack<int>();
+            for (int start = 0; start < set.Length; start++)
+            {
+                if (!set[start] || label[start] != 0)
+                    continue;
+                var region = new List<int>();
+                regions.Add(region);
+                label[start] = regions.Count;
+                stack.Push(start);
+                while (stack.Count > 0)
+                {
+                    int i = stack.Pop();
+                    region.Add(i);
+                    int x = i % w, y = i / w;
+                    foreach (int n in new[] { x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1 })
+                    {
+                        if (n < 0 || !set[n] || label[n] != 0)
+                            continue;
+                        label[n] = regions.Count;
+                        stack.Push(n);
+                    }
+                }
+            }
+            return regions;
+        }
+
+        static (int Count, int X0, int Y0, int X1, int Y1, Color32 Mean) Region(List<int> texels, Color32[] atlas, int w)
+        {
+            int x0 = int.MaxValue, y0 = int.MaxValue, x1 = -1, y1 = -1;
+            var inside = new bool[atlas.Length];
+            foreach (int i in texels)
+            {
+                inside[i] = true;
+                x0 = Math.Min(x0, i % w);
+                x1 = Math.Max(x1, i % w);
+                y0 = Math.Min(y0, i / w);
+                y1 = Math.Max(y1, i / w);
+            }
+            return (texels.Count, x0, y0, x1, y1, Mean(atlas, inside));
+        }
+
+        /// Per region, every hero part with the number of its triangles that sample it and where they sit in the part's
+        /// height, so a head's lower face reads as a low share. Each triangle is sampled at its centroid and at its corners
+        /// pulled a tenth of the way in, so a corner on a swatch edge does not count the neighbour.
+        static List<Dictionary<string, (int Triangles, float Height)>> PartsPerRegion(int[] label, int regionCount, int w, int h)
+        {
+            var result = Enumerable.Range(0, regionCount).Select(_ => new Dictionary<string, (int Triangles, float Height)>()).ToList();
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(SyntyPostprocessor.HeroModel);
+            if (model == null)
+                return result;
+            foreach (var renderer in model.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                var mesh = renderer.sharedMesh;
+                if (mesh == null)
+                    continue;
+                var uv = mesh.uv;
+                var vertices = mesh.vertices;
+                var triangles = mesh.triangles;
+                var bounds = mesh.bounds;
+                var hit = new HashSet<int>();
+                for (int t = 0; t + 2 < triangles.Length; t += 3)
+                {
+                    var a = uv[triangles[t]];
+                    var b = uv[triangles[t + 1]];
+                    var c = uv[triangles[t + 2]];
+                    var centre = (a + b + c) / 3f;
+                    hit.Clear();
+                    foreach (var p in new[] { centre, Vector2.Lerp(a, centre, 0.1f), Vector2.Lerp(b, centre, 0.1f), Vector2.Lerp(c, centre, 0.1f) })
+                    {
+                        int x = Mathf.Clamp((int)(Mathf.Clamp01(p.x) * w), 0, w - 1);
+                        int y = Mathf.Clamp((int)(Mathf.Clamp01(p.y) * h), 0, h - 1);
+                        int region = label[y * w + x];
+                        if (region > 0)
+                            hit.Add(region - 1);
+                    }
+                    float centreY = (vertices[triangles[t]].y + vertices[triangles[t + 1]].y + vertices[triangles[t + 2]].y) / 3f;
+                    float height = bounds.size.y > 0f ? (centreY - bounds.min.y) / bounds.size.y : 0f;
+                    foreach (int region in hit)
+                    {
+                        result[region].TryGetValue(renderer.name, out var sum);
+                        result[region][renderer.name] = (sum.Triangles + 1, sum.Height + height);
+                    }
+                }
+            }
+            foreach (var parts in result)
+                foreach (var name in parts.Keys.ToList())
+                    parts[name] = (parts[name].Triangles, parts[name].Height / parts[name].Triangles);
+            return result;
+        }
+
+        /// An 8-bit, non-interlaced RGB or RGBA PNG as Color32, bottom row first like Texture2D.GetPixels32. Enough for
+        /// Synty's atlases and masks; anything else is reported, not guessed.
+        static bool TryReadPng(string path, out Color32[] pixels, out int width, out int height, out string error)
+        {
+            pixels = Array.Empty<Color32>();
+            width = height = 0;
+            error = "";
+            if (!File.Exists(path))
+            {
+                error = path + " not found (is it on Tools/synty/keep.txt?)";
+                return false;
+            }
+            var bytes = File.ReadAllBytes(path);
+            var signature = new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 };
+            if (bytes.Length < 8 || !bytes.Take(8).SequenceEqual(signature))
+            {
+                error = path + " is not a PNG";
+                return false;
+            }
+            int channels = 0;
+            var idat = new MemoryStream();
+            for (int pos = 8; pos + 8 <= bytes.Length;)
+            {
+                int length = bytes[pos] << 24 | bytes[pos + 1] << 16 | bytes[pos + 2] << 8 | bytes[pos + 3];
+                string type = System.Text.Encoding.ASCII.GetString(bytes, pos + 4, 4);
+                int data = pos + 8;
+                if (type == "IHDR")
+                {
+                    width = bytes[data] << 24 | bytes[data + 1] << 16 | bytes[data + 2] << 8 | bytes[data + 3];
+                    height = bytes[data + 4] << 24 | bytes[data + 5] << 16 | bytes[data + 6] << 8 | bytes[data + 7];
+                    int depth = bytes[data + 8], colourType = bytes[data + 9], interlace = bytes[data + 12];
+                    channels = colourType == 2 ? 3 : colourType == 6 ? 4 : 0;
+                    if (depth != 8 || channels == 0 || interlace != 0)
+                    {
+                        error = $"{path}: bit depth {depth}, colour type {colourType}, interlace {interlace}; only 8-bit non-interlaced RGB or RGBA is read";
+                        return false;
+                    }
+                }
+                else if (type == "IDAT")
+                    idat.Write(bytes, data, length);
+                else if (type == "IEND")
+                    break;
+                pos = data + length + 4;
+            }
+            if (channels == 0 || idat.Length < 2)
+            {
+                error = path + ": no IHDR or IDAT";
+                return false;
+            }
+
+            int stride = width * channels;
+            var raw = new byte[(stride + 1) * height];
+            idat.Position = 2; // the zlib header; DeflateStream reads the raw deflate data after it
+            using (var inflate = new DeflateStream(idat, CompressionMode.Decompress))
+            {
+                int read = 0;
+                while (read < raw.Length)
+                {
+                    int n = inflate.Read(raw, read, raw.Length - read);
+                    if (n == 0)
+                        break;
+                    read += n;
+                }
+                if (read != raw.Length)
+                {
+                    error = $"{path}: {read} bytes inflated, expected {raw.Length}";
+                    return false;
+                }
+            }
+
+            var previous = new byte[stride];
+            var row = new byte[stride];
+            pixels = new Color32[width * height];
+            for (int y = 0; y < height; y++)
+            {
+                int filter = raw[y * (stride + 1)];
+                Array.Copy(raw, y * (stride + 1) + 1, row, 0, stride);
+                for (int i = 0; i < stride; i++)
+                {
+                    int left = i >= channels ? row[i - channels] : 0;
+                    int up = previous[i];
+                    int upLeft = i >= channels ? previous[i - channels] : 0;
+                    int predictor = filter switch
+                    {
+                        0 => 0,
+                        1 => left,
+                        2 => up,
+                        3 => (left + up) / 2,
+                        4 => Paeth(left, up, upLeft),
+                        _ => -1,
+                    };
+                    if (predictor < 0)
+                    {
+                        error = $"{path}: row {y} has filter type {filter}";
+                        return false;
+                    }
+                    row[i] = (byte)(row[i] + predictor);
+                }
+                int dst = (height - 1 - y) * width;
+                for (int x = 0; x < width; x++)
+                {
+                    int s = x * channels;
+                    pixels[dst + x] = new Color32(row[s], row[s + 1], row[s + 2], channels == 4 ? row[s + 3] : (byte)255);
+                }
+                (previous, row) = (row, previous);
+            }
+            return true;
+        }
+
+        static int Paeth(int a, int b, int c)
+        {
+            int p = a + b - c;
+            int pa = Math.Abs(p - a), pb = Math.Abs(p - b), pc = Math.Abs(p - c);
+            return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+        }
+
         // ---- (c), (e) --------------------------------------------------------------------------------------------
 
         static void ReportWeapons(List<string> failures, Dictionary<string, string> packs)
@@ -720,12 +1019,15 @@ namespace Game.Editor.Import
             var wrong = new List<string>();
             if (path == SyntyPostprocessor.SkinMask)
             {
-                // §15.18.2: linear data, R8 uncompressed on iOS, same size, mips and filtering as 01_A.
+                // §15.18.8: linear data, RG16 uncompressed on iOS with the source's blue in green, same size, mips and
+                // filtering as 01_A.
                 if (importer.sRGBTexture) wrong.Add("sRGB");
+                if (importer.swizzleR != TextureImporterSwizzle.R || importer.swizzleG != SyntyPostprocessor.StubbleSourceChannel)
+                    wrong.Add($"swizzle R={importer.swizzleR} G={importer.swizzleG}");
                 if (importer.maxTextureSize != SyntyPostprocessor.MaxTextureSize) wrong.Add("maxTextureSize " + importer.maxTextureSize);
                 if (!importer.mipmapEnabled) wrong.Add("no mipmaps");
                 if (importer.isReadable) wrong.Add("isReadable");
-                if (!ios.overridden || ios.format != TextureImporterFormat.R8 || ios.maxTextureSize != SyntyPostprocessor.MaxTextureSize)
+                if (!ios.overridden || ios.format != SyntyPostprocessor.SkinMaskFormat || ios.maxTextureSize != SyntyPostprocessor.MaxTextureSize)
                     wrong.Add($"iOS {(ios.overridden ? "" : "not overridden ")}{ios.format} {ios.maxTextureSize}");
                 if (wrong.Count > 0)
                     failures.Add($"{path}: {string.Join(", ", wrong)} (postprocessor did not run? try SQ_REIMPORT=1)");

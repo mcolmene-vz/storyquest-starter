@@ -245,6 +245,16 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
     - The lead then records the skin branch (atlases as data, or the shader skin mask) from the measurement, per §15.18.2's rule.
   - **D6.2, Synty heroes and data:** the goal above, on the branch D6.1 chose. `keep.txt` is trimmed to what's used.
   - **D6.2a, fixes from the architect's ruling on D6.2's open items:** skin on the male stubble area, the Mage Skill length, the action-shot framing if the ruling says so, and the schema notes.
+- **D6.2a done 2026-10-17, verified by the lead.**
+  - The lead's own checks: regeneration then the gate left the tree unchanged; gate 13/13, zero warnings; the shader diff read against §15.18.8.
+  - The lead looked at `d62a-boys-faces-before-after.png` (even skin from forehead to chin on all four boys) and `d62a-iphone-mage-skill-action.png` ("21" readable on the troll).
+  - Developer facts:
+    - `Mask_03.b` is black-on-white too (stubble = 1 − b, the opposite of the ruling's expectation, applied as measured). The stubble set is one swatch, also sampled by two unused female heads.
+    - The mask is RG16 with blue swizzled to green.
+    - Both ArmsRaised clips are trimmed to 2.5 s with no snap. The 2.5 s guard covers heroes and the troll.
+    - `weaponGrips` → `weaponMeshes` with a required texture; weapon materials are one per texture (`weapon_{texture}.mat`).
+  - Accepted reading: the stop rule meant "covers other swatches", and it covers one.
+  - **Open look item for the M2 review (producer, tone):** with the stubble swatch in skin tone the boys have no visible mouth; the girls have lips from another swatch. The candidate fix is data plus one shader constant: tint the stubble region slightly darker than the skin, so the old mouth gap reads again. The decision rests on the front captures and the M3 hero picker.
 - **Status:** D6.1 done 2026-10-17, verified by the lead.
   - The lead's own checks: a second `extract.sh` run changed nothing; 59 files against 59 keep lines; gate 13/13 with zero warnings.
   - The lead looked at `Builds/evidence/M2/d6-1-fingers.png`: flat fingers at bind pose, curled around the grip once mapped, and a closed fist on the hilt in the attack frame.

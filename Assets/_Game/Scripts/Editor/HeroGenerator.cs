@@ -32,12 +32,6 @@ namespace Game.Editor
         const int MaxPartyRenderers = 90;
 
         const string HeroAtlas = SyntyPostprocessor.TexturesFolder + "PolygonFantasyHero_Texture_01_A.png";
-        // A weapon's own atlas, by its pack's file prefix: hero-pack weapons are SM_Wep_*, Bow Combat's bows Wep_*.
-        static readonly (string Prefix, string Material, string Texture)[] WeaponAtlases =
-        {
-            ("SM_Wep_", "synty_weapons", HeroAtlas),
-            ("Wep_", "synty_bow", SyntyPostprocessor.TexturesFolder + "AnimationBowCombat_Texture_01_A.png"),
-        };
 
         static readonly (string Name, HumanBodyBones Bone, HumanBodyBones Fallback)[] Sockets =
         {
@@ -64,6 +58,7 @@ namespace Game.Editor
             CheckAvatar(SyntyPostprocessor.HeroModel);
 
             var toneMaterials = GenerateHeroMaterials(tables, toon);
+            var weaponMeshes = tables.Heroes.WeaponMeshes;
             var weaponMaterials = new Dictionary<string, Material>();
 
             var renderers = new Dictionary<string, int>();
@@ -71,8 +66,8 @@ namespace Game.Editor
             {
                 var weaponItem = tables.Items.Single(i => i.Kind == ItemKinds.Weapon && i.ClassId == cls.Id);
                 var armorItem = tables.Items.Single(i => i.Kind == ItemKinds.Armor && i.ClassId == cls.Id);
-                var starterMaterial = WeaponMaterial(cls.WeaponMesh, null, toon, weaponMaterials);
-                var shopMaterial = WeaponMaterial(weaponItem.Mesh!, weaponItem, toon, weaponMaterials);
+                var starterMaterial = WeaponMaterial(cls.WeaponMesh, null, weaponMeshes, toon, weaponMaterials);
+                var shopMaterial = WeaponMaterial(weaponItem.Mesh!, weaponItem, weaponMeshes, toon, weaponMaterials);
 
                 foreach (var body in Bodies.All)
                 {
@@ -86,7 +81,7 @@ namespace Game.Editor
 
                     var variant = cls.Variants[body];
                     int count = GeneratePrefab(id, heroModel, variant, armorItem.Parts[body], toneMaterials[variant.Tone],
-                        cls, weaponItem, starterMaterial, shopMaterial, tables.Heroes.WeaponGrips, overrides);
+                        cls, weaponItem, starterMaterial, shopMaterial, weaponMeshes, overrides);
                     renderers[cls.Id] = Math.Max(renderers.TryGetValue(cls.Id, out int n) ? n : 0, count);
                 }
             }
@@ -106,13 +101,15 @@ namespace Game.Editor
 
         // ----- materials -----
 
-        /// §15.18.2: one material per tone in use, sharing 01_A and the skin mask; the tone is the only difference.
+        /// §15.18.2, §15.18.8: one material per tone in use, sharing 01_A and the skin mask; the tone is the only difference.
+        /// It multiplies the skin and the stubble swatch, so the male chin takes the tone too.
         static Dictionary<string, Material> GenerateHeroMaterials(GameTables tables, Shader toon)
         {
             var heroes = tables.Heroes;
             var atlas = LoadTexture(HeroAtlas);
             var mask = LoadTexture(SyntyPostprocessor.SkinMask);
             var reference = ParseColour(heroes.SkinReference, "skinReference").linear;
+            var stubbleReference = ParseColour(heroes.StubbleReference, "stubbleReference").linear;
             var used = new HashSet<string>(tables.Classes.SelectMany(c => c.Variants.Values.Select(v => v.Tone)));
 
             var materials = new Dictionary<string, Material>();
@@ -129,6 +126,7 @@ namespace Game.Editor
                 material.SetTexture("_SkinMask", mask);
                 // The same per-channel multiplier as §15.14.3: light (the reference) multiplies by exactly 1.
                 material.SetVector("_SkinTint", new Vector4(colour.r / reference.r, colour.g / reference.g, colour.b / reference.b, 1f));
+                material.SetVector("_StubbleTint", new Vector4(colour.r / stubbleReference.r, colour.g / stubbleReference.g, colour.b / stubbleReference.b, 1f));
                 material.EnableKeyword("_SKIN_TINT");
                 CombatantGenerator.Save(material, path, before);
                 LogDerived(path, new[] { HeroAtlas, SyntyPostprocessor.SkinMask });
@@ -137,31 +135,22 @@ namespace Game.Editor
             return materials;
         }
 
-        /// A weapon's material: its pack's atlas, shared by every weapon on it, or the item's own texture (bow_2).
-        static Material WeaponMaterial(string mesh, ItemDefinition? item, Shader toon, Dictionary<string, Material> cache)
+        /// A weapon's material, one per texture (§15.18.8): the mesh's default atlas from classes.json weaponMeshes, or the
+        /// item's own texture (bow_2). Every weapon on one texture shares its material.
+        static Material WeaponMaterial(string mesh, ItemDefinition? item, Dictionary<string, WeaponMeshDefinition> meshes, Shader toon,
+            Dictionary<string, Material> cache)
         {
-            string name;
-            string texturePath;
-            if (item != null && !string.IsNullOrEmpty(item.Texture))
-            {
-                name = item.Id;
-                texturePath = SyntyPostprocessor.TexturesFolder + item.Texture + ".png";
-            }
-            else
-            {
-                var atlas = WeaponAtlases.FirstOrDefault(a => mesh.StartsWith(a.Prefix, StringComparison.Ordinal));
-                if (atlas.Prefix == null)
-                    throw new InvalidOperationException($"{Tag}weapon mesh '{mesh}' matches no atlas prefix ({string.Join(", ", WeaponAtlases.Select(a => a.Prefix))})");
-                name = atlas.Material;
-                texturePath = atlas.Texture;
-            }
-            if (cache.TryGetValue(name, out var cached))
+            if (!meshes.TryGetValue(mesh, out var entry))
+                throw new InvalidOperationException($"{Tag}no weaponMeshes entry for '{mesh}' in classes.json");
+            string texture = item != null && !string.IsNullOrEmpty(item.Texture) ? item.Texture! : entry.Texture;
+            if (cache.TryGetValue(texture, out var cached))
                 return cached;
 
-            var material = CombatantGenerator.GenerateToonMaterial(CombatantGenerator.MaterialsFolder + "/" + name + ".mat",
-                toon, LoadTexture(texturePath), Color.white);
-            LogDerived(CombatantGenerator.MaterialsFolder + "/" + name + ".mat", new[] { texturePath });
-            cache[name] = material;
+            string texturePath = SyntyPostprocessor.TexturesFolder + texture + ".png";
+            string path = CombatantGenerator.MaterialsFolder + "/weapon_" + texture + ".mat";
+            var material = CombatantGenerator.GenerateToonMaterial(path, toon, LoadTexture(texturePath), Color.white);
+            LogDerived(path, new[] { texturePath });
+            cache[texture] = material;
             return material;
         }
 
@@ -169,7 +158,7 @@ namespace Game.Editor
 
         static int GeneratePrefab(string id, GameObject heroModel, VariantDefinition variant, List<string> armorParts,
             Material bodyMaterial, ClassDefinition cls, ItemDefinition weaponItem, Material starterMaterial, Material shopMaterial,
-            Dictionary<string, WeaponGrip> grips, AnimatorOverrideController overrides)
+            Dictionary<string, WeaponMeshDefinition> meshes, AnimatorOverrideController overrides)
         {
             string path = CombatantGenerator.PrefabsFolder + "/" + id + ".prefab";
             var before = CombatantGenerator.ReadBytes(path);
@@ -206,8 +195,8 @@ namespace Game.Editor
                 var sockets = AddSockets(id, animator);
                 if (!sockets.TryGetValue(cls.WeaponSocket, out var socket))
                     throw new InvalidOperationException($"{Tag}{id}: weaponSocket '{cls.WeaponSocket}' is not one of {string.Join(", ", sockets.Keys)}");
-                var starter = AddWeapon(id, socket, cls.WeaponMesh, StarterWeapon, starterMaterial, grips);
-                var shop = AddWeapon(id, socket, weaponItem.Mesh!, weaponItem.Id, shopMaterial, grips);
+                var starter = AddWeapon(id, socket, cls.WeaponMesh, StarterWeapon, starterMaterial, meshes);
+                var shop = AddWeapon(id, socket, weaponItem.Mesh!, weaponItem.Id, shopMaterial, meshes);
                 shop.SetActive(false);
 
                 animator.runtimeAnimatorController = overrides;
@@ -324,16 +313,17 @@ namespace Game.Editor
 
         /// The weapon under the socket, named by role (§15.15.2: "starter" or the item id), posed by the mesh's grip from
         /// data. It is rebuilt from the FBX's meshes rather than instantiated, so the FBX root's scene offset (§15.18.3) and
-        /// its empty nodes stay behind. Only the grip's parts are kept.
-        static GameObject AddWeapon(string id, Transform socket, string mesh, string role, Material material, Dictionary<string, WeaponGrip> grips)
+        /// its empty nodes stay behind. Only the mesh entry's parts are kept.
+        static GameObject AddWeapon(string id, Transform socket, string mesh, string role, Material material,
+            Dictionary<string, WeaponMeshDefinition> meshes)
         {
-            if (!grips.TryGetValue(mesh, out var grip))
-                throw new InvalidOperationException($"{Tag}{id}: no weaponGrips entry for '{mesh}' in classes.json");
+            if (!meshes.TryGetValue(mesh, out var grip))
+                throw new InvalidOperationException($"{Tag}{id}: no weaponMeshes entry for '{mesh}' in classes.json");
             var source = CombatantGenerator.LoadModel(WeaponPath(mesh));
             var pieces = source.GetComponentsInChildren<MeshRenderer>(true).ToList();
             foreach (var part in grip.Parts)
                 if (!pieces.Any(r => r.name == part))
-                    throw new InvalidOperationException($"{Tag}{id}: weaponGrips.{mesh}.parts names '{part}', which is not a renderer in {WeaponPath(mesh)}");
+                    throw new InvalidOperationException($"{Tag}{id}: weaponMeshes.{mesh}.parts names '{part}', which is not a renderer in {WeaponPath(mesh)}");
             if (grip.Parts.Count > 0)
                 pieces = pieces.Where(r => grip.Parts.Contains(r.name)).ToList();
 

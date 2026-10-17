@@ -19,8 +19,10 @@ namespace Game.Editor.Import
         public const string TexturesFolder = Root + "Textures/";
         public const string EditorOnlyFolder = Root + "EditorOnly/";
         public const string HeroModel = CharactersFolder + "ModularCharacters.fbx";
-        // §15.18.2: the skin mask the hero materials sample. Linear data, so it gets its own rule below.
+        // §15.18.2, §15.18.8: the skin and stubble mask the hero materials sample. Linear data, so it gets its own rule below.
         public const string SkinMask = TexturesFolder + "PolygonFantasyHero_Texture_Mask_03.png";
+        public const TextureImporterFormat SkinMaskFormat = TextureImporterFormat.RG16;
+        public const TextureImporterSwizzle StubbleSourceChannel = TextureImporterSwizzle.B;
         public const int MaxTextureSize = 1024;
         // EditorOnly/ holds measuring and baking inputs (§15.18.2); none may be downscaled.
         public const int EditorOnlyMaxTextureSize = 8192;
@@ -96,7 +98,7 @@ namespace Game.Editor.Import
         static readonly Regex CopySuffix = new Regex(@"^(.+_\d{2})_\d+$");
 
         // Part of the import hash: bump it when a rule below changes so already-imported files pick the change up.
-        public override uint GetVersion() => 3;
+        public override uint GetVersion() => 4;
 
         void OnPreprocessModel()
         {
@@ -275,7 +277,7 @@ namespace Game.Editor.Import
             {
                 var clip = clips[i];
                 clip.name = i == 0 ? fileName : fileName + "_" + clip.takeName;
-                // The whole take unless clips.json trims it, so removing an "end" restores the clip.
+                // The whole take unless clips.json trims it, so removing a "start" or "end" restores the clip.
                 if (i < defaults.Length)
                 {
                     clip.firstFrame = defaults[i].firstFrame;
@@ -293,13 +295,14 @@ namespace Game.Editor.Import
 
                 if (table == null || !table.TryGetValue(clip.name, out var entry))
                     continue;
+                // §15.18.3, §15.18.8: "start" and "end" are seconds from the take's start; the importer counts frames.
+                // Impacts stay normalized, so they are read on the trimmed clip.
+                float rate = i < takes.Length && takes[i].sampleRate > 0f ? takes[i].sampleRate : 30f;
+                float takeStart = clip.firstFrame;
                 if (entry.End.HasValue)
-                {
-                    // §15.18.3: "end" is seconds from the take's start; the importer counts frames. Impacts stay
-                    // normalized, so they are read on the trimmed clip.
-                    float rate = i < takes.Length && takes[i].sampleRate > 0f ? takes[i].sampleRate : 30f;
-                    clip.lastFrame = Mathf.Min(clip.firstFrame + Mathf.Round(entry.End.Value * rate), clip.lastFrame);
-                }
+                    clip.lastFrame = Mathf.Min(takeStart + Mathf.Round(entry.End.Value * rate), clip.lastFrame);
+                if (entry.Start.HasValue)
+                    clip.firstFrame = Mathf.Min(takeStart + Mathf.Round(entry.Start.Value * rate), clip.lastFrame);
                 clip.loopTime = entry.Loop;
                 clip.events = entry.Impact.HasValue
                     ? new[] { new AnimationEvent { functionName = KayKitPostprocessor.ImpactFunction, time = entry.Impact.Value } }
@@ -341,13 +344,18 @@ namespace Game.Editor.Import
             importer.SetPlatformTextureSettings(ios);
         }
 
-        /// §15.18.2: linear, R8 uncompressed (ASTC would soften swatch edges into their neighbours), and the same size,
-        /// mips and filtering as 01_A so mask and albedo minify alike.
+        /// §15.18.8: linear, RG16 uncompressed (ASTC would soften swatch edges into their neighbours), and the same size,
+        /// mips and filtering as 01_A so mask and albedo minify alike. Red is skin; the swizzle puts the source's blue,
+        /// the stubble, into green, which RG16 keeps.
         void PreprocessSkinMask()
         {
             var importer = (TextureImporter)assetImporter;
             importer.textureType = TextureImporterType.Default;
             importer.sRGBTexture = false;
+            importer.swizzleR = TextureImporterSwizzle.R;
+            importer.swizzleG = StubbleSourceChannel;
+            importer.swizzleB = TextureImporterSwizzle.B;
+            importer.swizzleA = TextureImporterSwizzle.A;
             importer.maxTextureSize = MaxTextureSize;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.mipmapEnabled = true;
@@ -358,7 +366,7 @@ namespace Game.Editor.Import
             var ios = importer.GetPlatformTextureSettings("iPhone");
             ios.overridden = true;
             ios.maxTextureSize = MaxTextureSize;
-            ios.format = TextureImporterFormat.R8;
+            ios.format = SkinMaskFormat;
             ios.textureCompression = TextureImporterCompression.Uncompressed;
             importer.SetPlatformTextureSettings(ios);
         }

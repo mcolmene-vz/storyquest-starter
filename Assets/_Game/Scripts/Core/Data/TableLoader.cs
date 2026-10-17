@@ -56,7 +56,8 @@ namespace Game.Core.Data
             {
                 SkinTones = classes!.SkinTones,
                 SkinReference = classes.SkinReference,
-                WeaponGrips = classes.WeaponGrips,
+                StubbleReference = classes.StubbleReference,
+                WeaponMeshes = classes.WeaponMeshes,
             };
             return new GameTables(classes.Classes, enemies!.Enemies, levels!, items!.Items, heroes);
         }
@@ -149,7 +150,7 @@ namespace Game.Core.Data
             }
         }
 
-        /// The whole-table hero rules: skin tones (producer ruling 7, §15.18.2) and weapon grips (§15.18.3).
+        /// The whole-table hero rules: skin tones (producer ruling 7, §15.18.2, §15.18.8) and weapon meshes (§15.18.3, §15.18.8).
         static void ValidateHeroes(ClassesTable table, ItemsTable? items, List<string> problems)
         {
             const string file = ClassesTable + ".json";
@@ -175,6 +176,8 @@ namespace Game.Core.Data
             }
             if (!TryLuma(table.SkinReference, out _))
                 problems.Add($"{file}: skinReference '{table.SkinReference}' is not a #RRGGBB colour");
+            if (!TryLuma(table.StubbleReference, out _))
+                problems.Add($"{file}: stubbleReference '{table.StubbleReference}' is not a #RRGGBB colour");
 
             // Ruling 7: three tones or more, each on two variants or more and in two classes or more; boy and girl differ.
             var variantsPerTone = new Dictionary<string, int>();
@@ -205,13 +208,15 @@ namespace Game.Core.Data
                     problems.Add($"{file}: tone '{pair.Key}' appears only in class '{string.Join("", classesPerTone[pair.Key])}'; ruling 7 wants at least 2 classes");
             }
 
-            foreach (var pair in table.WeaponGrips)
+            foreach (var pair in table.WeaponMeshes)
             {
-                var g = pair.Value;
-                if (g == null || g.Pos.Count != 3 || g.Euler.Count != 3)
-                    problems.Add($"{file}: weaponGrips.{pair.Key} needs pos and euler with three numbers each");
-                else if (g.Parts.Exists(string.IsNullOrEmpty))
-                    problems.Add($"{file}: weaponGrips.{pair.Key}.parts has an empty name");
+                var m = pair.Value;
+                if (m == null || m.Pos.Count != 3 || m.Euler.Count != 3)
+                    problems.Add($"{file}: weaponMeshes.{pair.Key} needs pos and euler with three numbers each");
+                if (m != null && m.Parts.Exists(string.IsNullOrEmpty))
+                    problems.Add($"{file}: weaponMeshes.{pair.Key}.parts has an empty name");
+                if (m != null && string.IsNullOrEmpty(m.Texture))
+                    problems.Add($"{file}: weaponMeshes.{pair.Key} has no texture");
             }
             var meshes = new List<(string Who, string Mesh)>();
             foreach (var c in table.Classes)
@@ -222,8 +227,8 @@ namespace Game.Core.Data
                     if (item.Kind == ItemKinds.Weapon && !string.IsNullOrEmpty(item.Mesh))
                         meshes.Add(($"{ItemsTable}.json: item '{item.Id}' mesh", item.Mesh!));
             foreach (var (who, mesh) in meshes)
-                if (!table.WeaponGrips.ContainsKey(mesh))
-                    problems.Add($"{who} '{mesh}' has no weaponGrips entry in {file}");
+                if (!table.WeaponMeshes.ContainsKey(mesh))
+                    problems.Add($"{who} '{mesh}' has no weaponMeshes entry in {file}");
         }
 
         /// Rec. 709 luma of an 8-bit sRGB #RRGGBB colour, as §15.18.2 measures tones.

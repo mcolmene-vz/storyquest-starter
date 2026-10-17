@@ -2,14 +2,15 @@
   "version": 1,
   "skinTones": { "light": "#FFCCAE", "medium": "#D1A275", "dark": "#906850" },
   "skinReference": "#FFCCAE",
-  "weaponGrips": {
-    "SM_Wep_Sword_Small_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
-    "SM_Wep_Sword_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
-    "SM_Wep_Staff_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
-    "SM_Wep_Staff_02": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
-    "SM_Wep_Mace_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
-    "SM_Wep_Mace_02": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ] },
-    "Wep_LongBow_01_Unrigged": { "pos": [ -0.1186, -0.0454, 0.0212 ], "euler": [ 351.8, 265.2, 294.6 ], "parts": [ "Wep_Longbow_01", "Wep_Longbow_String_01" ] }
+  "stubbleReference": "#CDB3A1",
+  "weaponMeshes": {
+    "SM_Wep_Sword_Small_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ], "texture": "PolygonFantasyHero_Texture_01_A" },
+    "SM_Wep_Sword_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ], "texture": "PolygonFantasyHero_Texture_01_A" },
+    "SM_Wep_Staff_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ], "texture": "PolygonFantasyHero_Texture_01_A" },
+    "SM_Wep_Staff_02": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ], "texture": "PolygonFantasyHero_Texture_01_A" },
+    "SM_Wep_Mace_01": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ], "texture": "PolygonFantasyHero_Texture_01_A" },
+    "SM_Wep_Mace_02": { "pos": [ 0.0917, 0.0330, 0.0050 ], "euler": [ 335.0, 80.0, 267.8 ], "texture": "PolygonFantasyHero_Texture_01_A" },
+    "Wep_LongBow_01_Unrigged": { "pos": [ -0.1186, -0.0454, 0.0212 ], "euler": [ 351.8, 265.2, 294.6 ], "parts": [ "Wep_Longbow_01", "Wep_Longbow_String_01" ], "texture": "AnimationBowCombat_Texture_01_A" }
   },
   "classes": [
     {

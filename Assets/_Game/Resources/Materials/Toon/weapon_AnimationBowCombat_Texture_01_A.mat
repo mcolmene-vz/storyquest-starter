@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: synty_bow
+  m_Name: weapon_AnimationBowCombat_Texture_01_A
   m_Shader: {fileID: 4800000, guid: 4ef49cd5b1b974bf6872ffa2dfcb7f1e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -47,5 +47,6 @@ Material:
     - _OutlineColor: {r: 0.049999982, g: 0.049999982, b: 0.049999982, a: 1}
     - _ShadeColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
     - _SkinTint: {r: 1, g: 1, b: 1, a: 1}
+    - _StubbleTint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

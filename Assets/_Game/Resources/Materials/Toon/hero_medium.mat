@@ -48,5 +48,6 @@ Material:
     - _OutlineColor: {r: 0.049999982, g: 0.049999982, b: 0.049999982, a: 1}
     - _ShadeColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
     - _SkinTint: {r: 0.63759696, g: 0.59836113, b: 0.42027396, a: 1}
+    - _StubbleTint: {r: 1.0443923, g: 0.8015045, b: 0.49912536, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
