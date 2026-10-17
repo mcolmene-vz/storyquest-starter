@@ -20,7 +20,6 @@ namespace Game.Editor
     public static class HeroGenerator
     {
         public const string GenderToken = "{g}";
-        public const string StarterWeapon = "starter";
 
         const string Tag = "[HeroGenerator] ";
         const string Derived = "[Synty-derived] ";
@@ -195,7 +194,7 @@ namespace Game.Editor
                 var sockets = AddSockets(id, animator);
                 if (!sockets.TryGetValue(cls.WeaponSocket, out var socket))
                     throw new InvalidOperationException($"{Tag}{id}: weaponSocket '{cls.WeaponSocket}' is not one of {string.Join(", ", sockets.Keys)}");
-                var starter = AddWeapon(id, socket, cls.WeaponMesh, StarterWeapon, starterMaterial, meshes);
+                var starter = AddWeapon(id, socket, cls.WeaponMesh, HeroAppearance.StarterWeapon, starterMaterial, meshes);
                 var shop = AddWeapon(id, socket, weaponItem.Mesh!, weaponItem.Id, shopMaterial, meshes);
                 shop.SetActive(false);
 

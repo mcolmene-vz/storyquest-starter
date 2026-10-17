@@ -127,7 +127,7 @@ namespace Game.Editor
             foreach (var cls in tables.Classes)
             {
                 var item = tables.Items.Single(i => i.Kind == ItemKinds.Weapon && i.ClassId == cls.Id);
-                foreach (var (mesh, role) in new[] { (cls.WeaponMesh, HeroGenerator.StarterWeapon), (item.Mesh!, item.Id) })
+                foreach (var (mesh, role) in new[] { (cls.WeaponMesh, HeroAppearance.StarterWeapon), (item.Mesh!, item.Id) })
                 {
                     if (!done.Add(mesh))
                         continue;

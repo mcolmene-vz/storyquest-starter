@@ -19,7 +19,7 @@
       "parts": { "boy": [ "Chr_HeadCoverings_Base_Hair_02" ], "girl": [ "Chr_HeadCoverings_Base_Hair_02" ] } },
     { "id": "charm_wise", "name": "Wise Charm", "kind": "charm", "classId": "mage", "stat": "hp", "bonus": 6, "price": 30 },
 
-    { "id": "mace_2", "name": "Spiked Mace", "kind": "weapon", "classId": "fighter", "stat": "attack", "bonus": 3, "price": 45, "mesh": "SM_Wep_Mace_02" },
+    { "id": "mace_2", "name": "Spiked Mace", "kind": "weapon", "classId": "fighter", "stat": "attack", "bonus": 3, "price": 45, "mesh": "SM_Wep_Mace_02", "texture": "PolygonFantasyHero_Texture_03_A" },
     { "id": "pads_fighter", "name": "Shoulder Pads", "kind": "armor", "classId": "fighter", "stat": "defence", "bonus": 2, "price": 40,
       "parts": { "boy": [ "Chr_ShoulderAttachRight_07", "Chr_ShoulderAttachLeft_07" ], "girl": [ "Chr_ShoulderAttachRight_07", "Chr_ShoulderAttachLeft_07" ] } },
     { "id": "charm_quick", "name": "Quick Charm", "kind": "charm", "classId": "fighter", "stat": "speed", "bonus": 2, "price": 30 }

@@ -11,6 +11,9 @@
 Assets/Synty/PolygonFantasyHeroCharacters/Models/FixedScale/ModularCharacters.fbx -> Characters
 # The atlas the character and weapon materials sample (fact b); colour is baked into it.
 Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_01_A.png -> Textures
+# mace_2: Mace_02 on this alternative atlas, the only one of the 11 that changes its metal (gold spikes); A, B and C
+# are identical at the mace's UVs (D8.1 capture, ARCHITECTURE §15.18.9).
+Assets/Synty/PolygonFantasyHeroCharacters/Textures/Textures/PolygonFantasyHero_Texture_03_A.png -> Textures
 # The skin mask the hero materials sample (§15.18.2 step 2): skin where its red channel is below 0.5.
 Assets/Synty/PolygonFantasyHeroCharacters/Textures/Masks/PolygonFantasyHero_Texture_Mask_03.png -> Textures
 # Swordsman: the starter and sword_2, one-handed (§15.18.5).

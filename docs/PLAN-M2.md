@@ -391,7 +391,16 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
   - the soak per `docs/evidence/M2/SOAK-CHECKLIST.md`;
   - the evidence in `docs/evidence/M2/`;
   - the architect's §15.13/§15.14.6/§15.16 review, then the producer.
-
+- **D8.1 status: done 2026-10-17 except two look items, verified by the lead.**
+  - `mace_2` uses `PolygonFantasyHero_Texture_03_A`: gold spikes and a black block, the only alternative atlas that changes the mace's metal.
+  - `StarterWeapon` has one definition.
+  - Counters with every piece on: 197 draws, 133 SetPass, 67,164 triangles; 64 skinned renderers at worst.
+  - The Synty audit passed: 40 files against 40 keep lines, 5 packs, no Synty GUID in any `.meta`, 27 `[Synty-derived]` lines.
+  - extract.sh is repeatable; regeneration is byte-identical; gate 13/13.
+  - The lead looked at `d8-1-mace-group-hidden-head.png` and `d8-1-mage-sweep.png`.
+  - **Open for the architect:**
+    1. In the group shot the Fighter's mace head is hidden behind the next hero's body and staff, so the upgrade can't read there (19–52 % of the mace visible, always the shaft).
+    2. The `hat_mage` brim hides both Mages' eyes at eye level, at every camera height from −6 to +6 cm, so §15.18.9's condition fails and the smaller-brim fallback applies; the architect picks the part.
 
 - **Goal:**
   - Group-shot counters on a simulator development player against the §15.15.2 budget (draws ≤ 300, SetPass ≤ 200, tris ≤ 180k, ≤ 90 skinned renderers), with the all-armor party.

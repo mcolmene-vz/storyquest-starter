@@ -11,8 +11,8 @@ namespace Game.Runtime
     /// switches them with SetActive, once at spawn, before CombatantActor caches the renderers the flash touches.
     public static class HeroAppearance
     {
-        /// The starter weapon child's name; the other child is named after its item id. It must match
-        /// HeroGenerator.StarterWeapon, which Runtime cannot reference; a mismatch fails Apply by name.
+        /// The starter weapon child's name; the other child is named after its item id. HeroGenerator names the child
+        /// with this constant, so there is one definition (ARCHITECTURE §15.18.9 item 3).
         public const string StarterWeapon = "starter";
 
         public static void Apply(Transform model, ClassDefinition cls, string body, Equipment equipment, GameTables tables)
