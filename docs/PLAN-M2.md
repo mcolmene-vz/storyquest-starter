@@ -26,7 +26,7 @@ Nothing in D4–D8 waits on Martin until D8's install and soak.
 - **Smoke item 1 until M3.** The "title" is the Camp screen (ruling 9c), and the M2 evidence says so.
 - **Look toggle and SoakProbe.** The Body toggle becomes a Look toggle in D6. It is in M2 builds only and is deleted in M3 with `DebugParty` (ruling 9a). SoakProbe is compiled out of the TestFlight build by the per-build `SQ_PROBE` define (ruling 9b).
 - **Performance counts without the editor GUI.** D3's probe prints draw calls, SetPass calls and triangles from `ProfilerRecorder` render counters in development players. These count every pass. §15.14.5 sets the M2 budget in those terms: draws ≤ 140, SetPass ≤ 100, triangles ≤ 120k, ≤ 42 combatant renderers (from the generator log), read on a simulator development player. On the A16 iPad device build, `cpu` and `rt` must each be under 6 ms in the group shot. Simulator runs never count for fps, CPU, GPU or memory.
-- **`ProjectSettings.asset` churn.** `m_Automatic` flips with whichever command ran last: `ProjectSetup.Run` writes 0, and any editor launch (the gate included) writes 1. The committed value is 1. Correction 2026-10-16: an earlier version of this line said 6a8bcda set 0; it did not. The architect ruled on 2026-10-16 (§13.6): commit 1, let the generator use the automatic list, and have `BuildIOS` assert Metal-only (task D6a). Until D6a lands, task diffs revert the line to HEAD.
+- **`ProjectSettings.asset` churn.** `m_Automatic` flips with whichever command ran last: `ProjectSetup.Run` writes 0, and any editor launch (the gate included) writes 1. The committed value is 1. Correction 2026-10-16: an earlier version of this line said 6a8bcda set 0; it did not. The architect ruled on 2026-10-16 (§13.6): commit 1, let the generator use the automatic list, and have `BuildIOS` assert Metal-only. D6a landed on 2026-10-17, and the line no longer moves (only `buildNumber` changes per build, and test builds revert it).
 - **Version string.** `bundleVersion` stays `0.2.0` through M2 and becomes `0.3.0` in the sign-off commit (§15.9).
 - **Tests.** `ProgressionTests.cs` holds exactly the five §15.6 tests and is closed at five (ruling 3). The total after M2 is 13.
 
@@ -239,7 +239,10 @@ Nothing in D4–D8 waits on Martin until D8's install and soak.
   - A simulator build passes the Metal check.
   - The gate passes 13/13.
 - **Not part of it:** any other player setting.
-- **Status:** queued after D6. The developer works one task at a time, and D6 is running.
+- **Status:** done 2026-10-17, verified by the lead.
+  - The lead's own run: `ProjectSetup.Run`, then the gate (13/13, zero warnings). `git status` showed only `BuildPipeline.cs`, and `m_Automatic` stayed 1.
+  - The developer's runs: a second regeneration changed nothing; a simulator build logged `[BuildIOS] graphics APIs [Metal]` and succeeded.
+  - Reading accepted: the check runs before the build number is bumped. Its failure path has not been exercised.
 
 ### D7 — Runtime gear swap
 

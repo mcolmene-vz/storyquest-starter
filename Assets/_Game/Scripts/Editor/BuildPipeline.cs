@@ -63,9 +63,9 @@ namespace Game.Editor
             PlayerSettings.SetStackTraceLogType(LogType.Error, StackTraceLogType.ScriptOnly);
             PlayerSettings.SetStackTraceLogType(LogType.Assert, StackTraceLogType.ScriptOnly);
             PlayerSettings.SetStackTraceLogType(LogType.Exception, StackTraceLogType.ScriptOnly);
-            // Explicit list first: SetUseDefaultGraphicsAPIs(false) after it keeps m_Automatic at 0 in ProjectSettings.
-            PlayerSettings.SetGraphicsAPIs(BuildTarget.iOS, new[] { GraphicsDeviceType.Metal });
-            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.iOS, false);
+            // Automatic list (§13.6, 2026-10-16): in 6000.3 it is Metal alone on iOS, and every editor launch rewrites
+            // m_Automatic to 1 anyway, so an explicit list only churned ProjectSettings. BuildIOS asserts Metal-only.
+            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.iOS, true);
 
             PlayerSettings.insecureHttpOption = InsecureHttpOption.NotAllowed;
             // Legacy hardware statistics, off so nothing phones home (ARCHITECTURE §13.6, 2026-10-16).
@@ -113,6 +113,7 @@ namespace Game.Editor
             bool probe = Environment.GetEnvironmentVariable("SQ_TESTFLIGHT") != "1";
             Debug.Log("[BuildIOS] " + ProbeDefine + (probe ? " on" : " off"));
             ApplyPlayerSettings();
+            AssertMetalOnly();
 
             int previous = int.TryParse(PlayerSettings.iOS.buildNumber, out var parsed) ? parsed : 0;
             PlayerSettings.iOS.buildNumber = (previous + 1).ToString();
@@ -165,6 +166,16 @@ namespace Game.Editor
                 EditorApplication.Exit(1);
             else
                 throw new BuildFailedException("[BuildIOS] build failed: " + summary.result);
+        }
+
+        // Checked before the build number is bumped, so a refused build does not use one up.
+        static void AssertMetalOnly()
+        {
+            var apis = PlayerSettings.GetGraphicsAPIs(BuildTarget.iOS);
+            string found = "[" + string.Join(", ", apis) + "]";
+            if (apis.Length != 1 || apis[0] != GraphicsDeviceType.Metal)
+                throw new BuildFailedException("[BuildIOS] iOS graphics APIs must be exactly [Metal]; found " + found);
+            Debug.Log("[BuildIOS] graphics APIs " + found);
         }
 
         /// Fallback compile gate (§13.3): reaching this method means every assembly compiled.
