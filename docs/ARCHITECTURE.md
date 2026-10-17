@@ -1511,6 +1511,95 @@ If it fails, the producer may ask for the Goblin War Camp Troll's captures (ruli
 3. **Pack count.** Seven of eight, with no change to the cap. Goblin War Camp is not used, and Alpine Mountain was downloaded outside the list and stays unused unless the producer says yes. *Ruled 2026-10-17:* the list is the named seven, with replace-not-add (15.16.4).
 4. **Goblins.** No V1 role unless the producer and the story writer change Land 1's villains (V1-SCOPE §4, §5). *Recommend no for V1,* with a BACKLOG row if wanted.
 
+#### 15.16.8 D6b step 3 and step 4, specified (2026-10-17, after the producer's ruling "Troll")
+
+This specifies steps 3 and 4 after ruling "Troll": the Fantasy Rivals Troll passes as `troll_grunt` in `FantasyRivals_01_C`, provided its belt skull is removed. It rests on the step 2 facts in `Builds/d6b-capture.log`:
+- the body is `Character_Troll_01` in `Characters_BR.fbx`;
+- 2.30 m at ×1.173 in bind pose (2.137 m in idle);
+- 40 bones; 2 renderers; 3,978 + 1,186 triangles.
+
+The skull is the small bone-white piece hanging from the belt at the troll's left hip, visible in all four `d6b-troll-front-*` captures.
+
+**1. Skull removal: delete the triangles, in a derived mesh the generator writes.**
+
+- **The derived mesh.**
+  - The generator copies the body mesh (`Object.Instantiate` of `Character_Troll_01`'s mesh, which copies vertices, bone weights, bindposes and sub-meshes) and rewrites only the index buffers, without the skull's triangles.
+  - The vertex arrays are left exactly as they are, so skin weights and bindposes are untouched byte for byte. The few unused vertices cost nothing visible.
+  - It is saved as `Assets/_Game/Art/Generated/Meshes/Character_Troll_01_NoSkull.asset`. That is `Art/`, because the prefab references the mesh and nothing loads it by name (§3).
+  - It is marked non-readable before saving, so it is not kept in CPU memory at runtime. The mesh bounds are copied, not recalculated.
+  - `troll_grunt`'s `SkinnedMeshRenderer.sharedMesh` points at it. The FBX's own body mesh is then referenced by nothing and never ships.
+  - One change covers all four colours, because the colours are textures.
+- **Finding the skull's triangles robustly.**
+  - Group the body's triangles into connected pieces. Vertices are joined by shared index and by equal position (quantised to 0.1 mm), so UV seams do not split a piece.
+  - The skull is the one piece whose bind-pose bounds centre lies inside `SkullBox` and whose bounds are under 0.25 m on every axis, so the belt and body can never qualify. `SkullBox` is a centre and half-extents in mesh-local metres, measured once from the front capture and the piece list, and commented with the date like `GlobalScale`.
+  - The generator fails, printing every candidate's bounds and triangle count, if zero or more than one piece matches. A changed asset therefore stops the build loudly instead of deleting the wrong thing.
+  - **Fallback, only if the skull is not its own piece** (fused to the belt): delete triangles whose centroid lies in `SkullBox` and whose three UVs fall in the bone-white swatch rectangle, also measured once. The belt is brown, so it is untouched.
+  - If neither rule gives a clean result in the front captures, the troll fails and goes back to the producer (ruling "Troll" item 3).
+- **The generator logs and asserts:**
+  - triangles before (3,978) and after, with the difference equal to the matched piece's count;
+  - no remaining triangle has its centroid inside `SkullBox`;
+  - the derived mesh's vertex count, bone-weight count and bindposes equal the source's.
+- **Determinism:** a second regeneration leaves the `.asset` byte-identical, as for every generated asset.
+- **Evidence (ruling condition b):** `VariantCapture.RunTroll` re-renders the four front captures (no skull), plus the troll in the re-measured action shot.
+- **Build check (ruling item 4).**
+  - Expected in the build log's asset report: `Characters_BR.fbx` contributes only its avatar, well under 1 MB, because no prefab references any of its meshes.
+  - The troll's body appears once, as the derived `.asset`: one body's worth, a few hundred KB.
+  - If any other Big Rig mesh shows up, M2 is not signed.
+
+**2. Framing.**
+- **Use the §15.16.2 anchor rule; keep the scale at ×1.173 (2.30 m).**
+  - In `BattleCameras`, a combatant taller than 2.2 m gets its group anchor at `max(1.0, 0.45·h)` and radius `max(1.2, 0.55·h)`. `h` is the body renderers' bounds height at spawn, weapons excluded; for the troll, 2.30 m gives 1.035 and 1.265.
+  - Heroes (1.93 m) keep 1.0 and 1.2.
+  - Modelled, the group box's top rises 0.1 m, which brings the troll's head from 86.5 % to about 84 % on both ratios. The heroes shrink about 5 %.
+  - The rule is the one M4's 2.9 m boss needs anyway. Shrinking the troll would only spend its "big" read.
+- **Fallback,** only if the head is still over 86 %: `scale` down to 2.25 m (inside 2.2–2.4).
+- **Checks** (§14.4's group checks, both ratios, idle pose): feet at or above 27 %, every head at or below 86 % (the troll's included), no combatant under a card.
+- **The same pass runs §15.18.8 item 3's action-shot re-measure:** offsets ×1.6 with FOV 24 first, falling back to ×1.4 with FOV 26, with the checks listed there. The troll's own attack shot is included.
+- Every resulting number goes into §14.4 as a dated note.
+
+**3. The troll's clips, club and data.**
+- **The nine-state map is confirmed as in §15.16.2.** It uses clips from packs already on disk, all imported with the explicit 40-bone map. Retargeting onto the Big Rig avatar is Humanoid.
+
+  | State | Clip |
+  |---|---|
+  | Idle, Walk | `A_Idle_Base_Sword` |
+  | Attack | `A_Attack_HeavyCombo01B_ReturnToIdle_Sword` |
+  | Skill | `A_Attack_HeavyCombo01C_ReturnToIdle_Sword` |
+  | Hit | `A_Hit_F_React_Sword` |
+  | BigStagger | `A_Hit_F_Stagger_Sword` |
+  | Defend | `A_Block_Loop_Sword` |
+  | Defeat | `A_Death_B_01_Sword` |
+  | Victory | `A_POLY_EMOT_Celebrate_BeatChest_Masc` |
+
+  - Step 3 adds the three files not yet on `keep.txt`: `HeavyCombo01B`, `HeavyCombo01C` and `Celebrate_BeatChest_Masc`.
+  - The 2.5 s guard applies to Attack and Skill.
+  - BigStagger's state speed goes to 1.0 (§15.16.2). That is the one `Combatant.controller` change, checked by eye on a weakness hit.
+  - If the arms cut into the belly in a capture, the fix is the arm limits in the Big Rig's `humanDescription` (§15.16.6).
+- **The club.**
+  - `weaponMeshes` gains `"SM_Wep_Troll_01": { "pos": […], "euler": […], "texture": "FantasyRivals_01_C" }`, with the grip taken from `VariantCapture`'s step 2 constants. Those constants then leave `VariantCapture`: data is the one source.
+  - `weaponSocket` is `Socket_HandR`, made the hero way (`GetBoneTransform`).
+- **`EnemyDefinition` gains:**
+  - `parts`: the GameObjects kept from `model`, here `["Character_Troll_01"]` (the hero keep-and-strip rule);
+  - `texture`: the atlas, here `"FantasyRivals_01_C"`. It applies to every renderer of the enemy prefab, the club included, overriding the weapon mesh's default texture. So M4's thrower, shaman and boss pick `01_A`, or `01_B`/`01_D`, in data alone;
+  - `weaponMesh` and `weaponSocket`.
+
+  `tint` leaves the model and the data. `model` is `"Characters_BR"`.
+- **`TableLoader` checks per enemy:**
+  - non-empty `parts`;
+  - a non-empty `texture`;
+  - `weaponMesh` present in `weaponMeshes`;
+  - `weaponSocket` one of the four socket names.
+- **Materials:** one toon material per enemy texture (`Resources/Materials/Toon/enemy_FantasyRivals_01_C.mat`), with no `_SKIN_TINT`.
+
+**4. Step 4: KayKit removal. Order and checks unchanged (15.16.1, 15.16.5).**
+1. Move the clip-table reader, now with `End` and `Start`, from `KayKitPostprocessor` into `Editor/Import/ClipTable.cs`. Regenerate; every asset stays byte-identical.
+2. Delete `Assets/ThirdParty/KayKit/`, `KayKitPostprocessor`, `KayKitImportCheck`, the KayKit paths in `ImpactFinder`, `CombatantGenerator` and `CombatantActor`, and the KayKit `clips.json` entries.
+3. Regenerate (every remaining generated asset byte-identical), run the gate (13/13), and run a scripted battle on both ratios.
+
+Review: `Assets/ThirdParty/KayKit/` gone; `grep -ri kaykit Assets/_Game` clean outside history comments; `Combatant.controller`'s diff since M1 is the BigStagger speed only.
+- **Added for step 3's work:** the derived mesh's assertions appear in the sign-off regeneration log.
+- **Added for ruling item 4:** the build asset report check in item 1 above.
+
 ### 15.17 Interface and effects (owner question, 2026-10-17)
 
 Martin, verbatim: "what about interface or make the battle more clean with effect?" Both are art for features V1 already has: the battle HUD, the camp screens, the M3 screens, and the hit recipe's burst (§5). Neither adds a feature, and neither changes M2's criterion.
