@@ -82,16 +82,18 @@ D4 and D5 do not depend on each other. Whichever download arrives first goes fir
 - **Goal:**
   - `SoakProbe` per §15.8: no per-frame allocation; one `[Probe]` line every 30 s with FPS avg and min, group-shot GPU avg and max, CPU and memory. In development builds the line also carries draw calls, SetPass calls and triangles.
   - `BattleCameras.GroupShotLive`.
-  - `BuildPipeline`: `enableFrameTimingStats`; stack traces `None` for Log and Warning, `ScriptOnly` for errors; the §15.8 mechanism that compiles the probe out of the TestFlight build.
+  - `BuildPipeline`: `enableFrameTimingStats`; stack traces `None` for Log and Warning, `ScriptOnly` for errors; the per-build `SQ_PROBE` define through `BuildPlayerOptions.extraScriptingDefines`. It is on unless `SQ_TESTFLIGHT=1`, never written to Player Settings, and `BuildIOS` logs `SQ_PROBE on` or `off` as its first line (§15.8).
   - `docs/DEVICE-TESTING.md`: a soak section with the `devicectl` install, launch-and-capture and screenshot commands.
+- **Probe line format:** exactly the §15.8 one, `[Probe] t=…s flow=Camp|Battle fps avg … min … | gpu group avg … max … ms | cpu … ms | mem … MB`, with `gpu group -` when the window had no group-shot frame. `SoakProbe.cs` is under `#if SQ_PROBE || UNITY_EDITOR`; `Services.Create` adds it only under `#if SQ_PROBE`.
 - **Files:** `Runtime/Services/{SoakProbe.cs, Services.cs}`, `Runtime/Battle/BattleCameras.cs`, `Editor/BuildPipeline.cs`, `docs/DEVICE-TESTING.md`.
 - **Verification:**
   - A simulator build logs `[Probe]` lines every 30 s with plausible FPS and memory; GPU may read 0 on the simulator, which is noted, not a failure.
-  - A build with the TestFlight switch contains no `[Probe]` string. The lead greps the built binary or the IL2CPP output.
+  - The positive control: `grep -rla '\[Probe\]' Builds/iOS*/Data` finds `global-metadata.dat` on a probe build. On an `SQ_TESTFLIGHT=1` build the same grep finds nothing.
+  - `ProjectSettings.asset` holds no `SQ_PROBE`.
   - `git status` after both builds shows no settings drift.
   - The gate passes 13/13.
 - **Not part of it:** sending anything anywhere, an on-screen FPS counter, any change to gameplay.
-- **Status:** not started. Waits on the architect's §15.8 note on the compile-out mechanism.
+- **Status:** not started (the architect's §15.8 notes are in, 2026-10-16).
 
 ### D4 — Synty extraction and import (needs Needs Martin 11)
 
@@ -127,15 +129,15 @@ D4 and D5 do not depend on each other. Whichever download arrives first goes fir
 ### D6 — Hero generator and the eight variants
 
 - **Goal:**
-  - `classes.json` gains `model`, the Synty `weaponSocket`, a starter `weaponMesh`, `variants.boy/girl.parts`, and `colours` (bake branch only). The Fighter becomes a mace fighter. The skin-tone rule from ruling 7 applies to the eight variants.
+  - `classes.json` gains `model`, the Synty `weaponSocket`, a starter `weaponMesh`, `variants.boy/girl.parts`, and `colours` (bake branch only). The Fighter becomes a mace fighter. Each variant gets a `tone`, and the top level of `classes.json` gets `skinTones`. The starting assignment is the §15.3 one, and `TableLoader` enforces ruling 7's rule.
   - `items.json` gets real meshes and parts, and `TableLoader` gets the class checks.
   - `HeroGenerator` writes the eight `{classId}_{body}` prefabs with sockets, inactive armor parts and both weapons. It adds `HeroTextureBaker` if fact (b) says colour lives in the masks.
   - The hero override controllers map the §15.2 clips.
   - The M1 hero prefabs are deleted and KayKit is trimmed per §15.8.
   - `BattleView` spawns `{ClassId}_{Body}`; `CombatantActor` looks up bones through the Humanoid avatar.
-  - One front-facing editor capture per variant is saved to `Builds/evidence/M2/`, by the method §15.3/§15.13 names.
+  - `Game.Editor.VariantCapture.Run` (batch mode, without `-nographics`) writes one front-facing TGA per variant to `Builds/evidence/M2/`, which the lead converts with `sips`.
 - **Files:**
-  - `Editor/{HeroGenerator.cs, HeroTextureBaker.cs?, CombatantGenerator.cs}`;
+  - `Editor/{HeroGenerator.cs, HeroTextureBaker.cs?, VariantCapture.cs, CombatantGenerator.cs}`;
   - `Resources/Data/{classes.json, items.json}`, `Core/Data/{ClassDefinition.cs, TableLoader.cs}`;
   - generated prefabs, materials, textures and override controllers;
   - `Runtime/Battle/{BattleView.cs, CombatantActor.cs}`;

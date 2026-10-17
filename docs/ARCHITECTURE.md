@@ -560,7 +560,7 @@ State → clip (replaces §14.1's hero columns; the troll column is unchanged):
   ```
   - **`parts`** is the complete list of modular parts shown for that variant: head, hair, eyebrows, torso, upper and lower arms, hands, hips, legs, attachments. It is explicit, with no inheritance between classes or bodies: what the file says is what is on screen.
   - **Rules for picking parts.** Faces stay visible: no closed helmets or masks, because a kid has to see their hero's face. Nothing scary: no skulls or demon pieces (STORY-BIBLE tone). Each class must read from behind, which is where the camera is (§14.4).
-  - **`colours`** exists only in the bake branch below. Keys are the pack's character-shader colour property names without `_Color_`, in lower case. Palettes may be copied from the preset materials in the scratch folder.
+  - **`colours`** exists only in the bake branch below. Keys are the pack's character-shader colour property names without `_Color_`, in lower case, except skin, which comes from `tone` (below). Palettes may be copied from the preset materials in the scratch folder.
 - **Sockets (the §6 names) come from the avatar, not from bone names.**
   - The generator adds `Socket_HandR`, `Socket_HandL`, `Socket_Back` and `Socket_Head` as empty children of `animator.GetBoneTransform(RightHand | LeftHand | UpperChest ?? Chest | Head)`.
   - Each socket's local pose comes from one of four constants in the generator. They are measured once so that a Synty weapon sits in the grip, and commented like KayKit's `GlobalScale`.
@@ -584,6 +584,23 @@ State → clip (replaces §14.1's hero columns; the troll column is unchanged):
     - Output: `Assets/_Game/Art/Textures/Heroes/{classId}_{body}.asset`, a `Texture2D` with mips, compressed to ASTC 6×6 by `EditorUtility.CompressTexture` and saved with `AssetDatabase.CreateAsset`, plus one `Resources/Materials/Toon/{classId}_{body}.mat` per variant.
     - Rejected: porting the masks into `Toon.shader`, which would cost three more texture samples and a dozen properties per fragment on an iPhone 11, for colours that never change at runtime; §13.7 stays as decided. Also rejected: PNG output, because `LoadImage` and `EncodeToPNG` live in `com.unity.modules.imageconversion`, which §13.2 dropped, and an editor-only step is not worth a module.
   - Weapons share `synty_weapons.mat` (the weapon atlas). Armor parts use their variant's material. Unchanged inputs give byte-identical outputs, checked like every other generated asset.
+- **Skin tones (amended 2026-10-16, producer ruling 7).**
+  - **Data.** Each variant carries `"tone": "light" | "medium" | "dark"`. `classes.json` gets one top-level `"skinTones": { "light": "#RRGGBB", "medium": "#RRGGBB", "dark": "#RRGGBB" }`, and skin colour comes only from there.
+  - **`TableLoader` enforces the producer's rule:**
+    - at least three distinct tones across the eight;
+    - each tone on at least two variants;
+    - the boy and girl of each class differ;
+    - every tone appears in at least two classes.
+  - **Starting assignment.** Swordsman boy light, girl dark; Archer boy medium, girl dark; Mage boy medium, girl light; Fighter boy dark, girl light. It is data: Martin may change it, and the loader keeps it inside the rule.
+  - **Mask branch:** the baker's skin channel takes the tone colour.
+  - **Texture branch, if it gives all eight the same skin.** The cheapest fix, in order:
+    1. If the pack ships alternative atlases with other skin tones, each tone maps to one of them (data only).
+    2. Otherwise `HeroTextureBaker` runs in recolour mode. It copies the atlas and replaces the skin swatch with the tone colour. The skin swatch is every texel within a small RGB distance of the atlas's skin colour, a constant measured once from the head part and commented like `GlobalScale`. This makes one texture and one material per tone used (three, not eight). It reuses the mask branch's code path: no shader change, no package.
+- **Front captures for the tone check (producer ruling 7).** `Game.Editor.VariantCapture.Run` (`Editor/`) runs by `-executeMethod`, in batch mode **without** `-nographics` because it renders: `"$UNITY" -batchmode -projectPath . -executeMethod Game.Editor.VariantCapture.Run -logFile - -quit`.
+  - **Scene.** In an unsaved empty scene, it instantiates each `{classId}_{body}` prefab at the origin, facing the camera, in its base outfit with its starter weapon. Lighting matches `BattleStage`: the M0 directional light and flat ambient.
+  - **Camera.** FOV 30°, at chest height, 3.2 m in front, rendering into a 1024² `RenderTexture`.
+  - **Output.** `Builds/evidence/M2/variant-{classId}_{body}.tga`: an 18-byte TGA header and raw pixels, because `EncodeToPNG` lives in the dropped `imageconversion` module. The lead converts each file with macOS's built-in `sips -s format png`.
+  - Nothing is saved into `Assets/` and nothing ships. Battle shots do not count for this check: the battle camera sees the heroes' backs.
 - **Where the kid's choice lives in M2.** Profiles (parent settings) and saving are M3 (V1-SCOPE §8, §12). In M2 the choice lives in the Core `PartyRecord` (15.5), held in memory and seeded by `DebugParty`: Swordsman girl, Archer boy, Mage girl, Fighter boy. To see all eight on device without profiles, the camp's Equip tab has an M2-only **Body** toggle per hero (boy ↔ girl, applied from the next battle). It is deleted in M3 together with `DebugParty`, when profile creation picks the body (V1-SCOPE §14 smoke item 2).
 
 ### 15.4 Gear
@@ -670,6 +687,7 @@ Plus `potion` (heal 25, price 15) and `revive` (0.5, price 40), unchanged from M
   - **Equip tab:** three 1196 × 170 slot buttons: "Weapon: Steel Sword", "Armor: …", "Charm: none". A tap cycles starter ↔ owned (for the charm, none ↔ owned). A slot with nothing owned is non-interactable.
   - **Left out:** scrolling, confirmation dialogs (a tap buys; the price is on the button), 3D.
   - **Victory screen:** its coin line becomes "+10 coins each".
+  - **Shop pictures (amended 2026-10-16, producer ruling 6: pictures in M4).** Nothing in this layout blocks them. M4 puts a 150 × 150 picture at the left of each 586 × 170 item button and insets the three text lines by 170 px, which leaves about 400 px for a 40-px name. The button size, the grid and the 1600 × 900 box stay the same, so M2 lays out nothing differently.
 
 ### 15.6 Tests
 
@@ -726,6 +744,25 @@ Totals: 8 + 5 = 13 after M2. With M3's 3–4 `SaveServiceTests`, the total is 16
   - `BuildPipeline.ApplyPlayerSettings` sets `PlayerSettings.enableFrameTimingStats = true` and stack-trace type `None` for `Log` and `Warning`; errors and exceptions keep `ScriptOnly`. The saved console is then one line per message.
   - The iPad's `gpu group avg` is the §14.8 reading (under 6 ms).
   - Fallback: if the probe prints a GPU time of 0 on a device, Martin reads it from Xcode's Debug navigator (Cmd+7) → GPU → frame time during a group shot. That one reading needs Xcode attached.
+  - **Line format for the pass thresholds (amended 2026-10-16, producer ruling 4).** The thresholds are the producer's and live in STATUS (Producer rulings, 2026-10-16, item 4 (i)–(v)); the lead judges each saved log against them. The probe's job is to make every one of them readable from the lines:
+    - **Format:** `[Probe] t=…s flow=Camp|Battle fps avg 59.8 min 52.1 | gpu group avg 3.9 max 5.2 ms | cpu 6.1 ms | mem 187.4 MB`.
+    - **Timing:** one line every 30 s, against the ruling's 60 s ceiling, so a single dropped line is not yet a gap.
+    - **Precision:** `fps avg` and `mem` have one decimal, for the ≥ 58 and ±5 MB thresholds.
+    - **`flow`** shows where the first battle starts.
+    - **GPU field:** `gpu group -` when the window had no group-shot frame (camp, action shots). `0` appears only when `FrameTimingManager` returned zeros during group-shot frames; that is the Xcode fallback case, not a pass.
+  - **What `--console` captures and what it drops** (answering ruling 4's last line). It bridges the app's stdout and stderr.
+    - Captured: Unity's iOS player writes its log to stdout: every `Debug.Log*` and the engine's own warnings and errors. The M0 render-pass pair came from Unity's Metal backend, so it is expected in the file.
+    - Dropped, though Xcode shows them: os_log lines from iOS frameworks, and Metal API-validation messages, which exist only under an Xcode debug session.
+    - The first capture confirms the stdout half: Unity's startup lines and the first `[Probe]` line must be in the file. If they are not, that device's soak falls back to Xcode as in M1.
+- **`SoakProbe` is compiled out of the TestFlight build (amended 2026-10-16, producer ruling 9b).** The mechanism is a scripting define, `SQ_PROBE`. The lead's reading is accepted with one change: the define is passed per build through `BuildPlayerOptions.extraScriptingDefines` and is never written to Player Settings.
+  - **How it is set.** `BuildIOS` adds the define unless `SQ_TESTFLIGHT=1` is in the environment, and logs `SQ_PROBE on` or `SQ_PROBE off` as its first line; that line goes in the build's evidence.
+  - **Why `extraScriptingDefines`.** It applies to that one player compile only. So `ProjectSettings.asset` gets no define churn between probe builds and TestFlight builds (it still changes per build for the build number, §13.6), and neither the editor nor the CLI gate ever defines `SQ_PROBE`.
+  - **Code guards.**
+    - `SoakProbe.cs` is wrapped in `#if SQ_PROBE || UNITY_EDITOR`, so the compile gate still compiles it.
+    - `Services.Create` adds the component only under `#if SQ_PROBE`, so the editor never runs it.
+    - A TestFlight build therefore has neither the class nor the `[Probe]` literal. `BattleCameras.GroupShotLive` is a plain bool and may stay.
+  - **Engine settings.** `enableFrameTimingStats` and the stack-trace types stay on in every build: they are engine settings that measure nothing unless code reads them, and toggling them per build would dirty Player Settings.
+  - **Compliance check** (STATUS checklist): `grep -rla '\[Probe\]'` over `Builds/iOS/Data` and over the archived `.app` must return nothing on the TestFlight build. Run it first on a probe build as the positive control: it must find `Data/Managed/Metadata/global-metadata.dat`, where IL2CPP keeps string literals. If the positive control finds nothing, the grep pattern is wrong (for example, UTF-16 text), not the build; fix the pattern before trusting a negative.
 - **Producer condition (d): Silent mode** is Martin's explicit yes or no on the iPhone (Action button or Control Center; a hit must still be audible). The lead's fill-in block asks it as a question.
 - **What is left for Martin during the soak:** play; then say warm or hot, give the Silent mode answer, and name anything that looked wrong. The rest of §14.8's protocol stands (10 timed minutes per device, a win, a loss on each difficulty, every command, at least 40 hits), plus the M2 items in 15.12.
 - **KayKit stays for the troll.**
@@ -741,7 +778,7 @@ Totals: 8 + 5 = 13 after M2. With M3's 3–4 `SaveServiceTests`, the total is 16
 - `FlowController.CreateView` adds `Camp → CampView`.
 - `BattleView` spawns heroes by prefab id `{ClassId}_{Body}` from the setup's `HeroSpec`. `CombatantActor` gets the Humanoid bone lookup and calls `HeroAppearance.Apply` before caching renderers.
 - `CombatantGenerator` calls `HeroGenerator` (and the baker). Its `LoadClips` also scans Mixamo. The override controller files keep their class-id names.
-- `TableLoader` and the data models get the 15.4 fields. `ImpactFinder` gets Humanoid sampling. `BuildPipeline` gets frame-timing stats and the stack-trace types.
+- `TableLoader` and the data models get the 15.4 fields. `ImpactFinder` gets Humanoid sampling. `BuildPipeline` gets frame-timing stats, the stack-trace types and the per-build `SQ_PROBE` define (15.8).
 - `bundleVersion` becomes `0.3.0` at sign-off.
 
 ### 15.10 Packages
@@ -755,6 +792,9 @@ Totals: 8 + 5 = 13 after M2. With M3's 3–4 `SaveServiceTests`, the total is 16
 `manifest.json` stays equal to §13.2. `Tools/synty/` is a Mac tool outside `Assets/`, like `Tools/narration/` (§3 amendment), and is not covered by rule 8.
 
 ### 15.11 Questions for the producer
+
+Answered by the producer on 2026-10-16 (STATUS, Producer rulings, "M2 design rulings"). The three answers that change the design are folded in as dated notes in 15.3 (skin tones and front captures), 15.5 (shop pictures in M4) and 15.8 (soak thresholds and `SQ_PROBE`).
+
 
 1. **Budget.** US$149.99 plus tax, one-time, for the Synty pack, which V1-SCOPE §9 already names. Record it in the budget log when Martin pays.
 2. **Troll art for M4.** V1-SCOPE §9 names Synty for heroes and KayKit as placeholders; nothing names a source for three trolls and a boss. The options are tinted, rescaled KayKit mannequins (free, but they read as a dummy, not a troll), a free CC0 pack, or a paid pack (money, Martin). Decide before M4 planning.
@@ -793,6 +833,8 @@ In addition to §13.10 and §14.10 (Core purity, Boot the only scene, generated 
 - **Camp screens.** Simulator screenshots on the iPad (10th generation) and the iPhone 15 Pro, Shop and Equip tabs: everything inside the safe area and inside the 1600 × 900 box, every control at least 170 reference px.
 - **Framing.** With the Synty party on both ratios: feet at or above 27 %, tallest head at or below 86 %, no combatant under a card. The Fighter's action shot reads on both. All eight variants seen (two battles, one either side of the Body toggle).
 - **Performance in the editor.** The Frame Debugger in the group shot is within 15.7's budget. The build log shows only the referenced Synty parts.
+- **Skin tones** (producer ruling 7). `TableLoader` passes the tone rule. There are eight front captures, `Builds/evidence/M2/variant-*.png`, made by `VariantCapture.Run`; battle shots do not count.
+- **`SQ_PROBE`** (producer ruling 9b). The soak build's log says `SQ_PROBE on`. `ProjectSettings.asset` holds no `SQ_PROBE` define. The positive-control grep finds `[Probe]` in the soak build's `Data/`. The TestFlight negative is M5's compliance item.
 - **On device**, per device:
   - a saved soak log with start and end times and the red-line count with texts;
   - probe lines showing FPS steady at 60 and memory flat, and the iPad's group-shot GPU under 6 ms (or Martin's Xcode reading);
