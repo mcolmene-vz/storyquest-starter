@@ -162,6 +162,17 @@ Internal testers see new builds within minutes of processing. That is the loop f
 
 Claude Code on your Mac can edit all code, run the EditMode tests, run the Unity iOS build, read Unity and Xcode logs, and can run `xcodebuild` to archive and upload once signing is configured. It cannot press Trust on your phone, sign in to your Apple account, or watch the screen unless you let it. Expect the first device run to need you; after that, most of the loop is scriptable.
 
+## 2c. Synty files (lead)
+
+Synty packages are never imported or opened in Unity. `Tools/synty/extract.sh` unpacks them with `tar` and copies only the files on `Tools/synty/keep.txt` (ARCHITECTURE §15.1, §15.15.6):
+
+```bash
+Tools/synty/extract.sh ~/Downloads/Synty/<package>.unitypackage ...   # repeatable; refuses packages not in packs.txt
+"$UNITY" -batchmode -projectPath . -executeMethod Game.Editor.Import.SyntyImportCheck.Run -logFile - -quit   # no -nographics
+```
+
+A Synty FBX whose `.meta` is brand new (a file just added to `keep.txt`) imports with Unity's automatic avatar on the first pass, and the import check fails with fewer than 40 mapped bones. Run the check once more with `SQ_REIMPORT=1` in front: the second pass applies the explicit 40-bone map from `SyntyPostprocessor` (ARCHITECTURE §15.18.1). Committed `.meta` files import correctly in one pass.
+
 ## 6. Common failures
 
 - *"Unity Analytics" appears in the privacy report*: Services were not fully disabled. Project Settings → Services → turn everything off, rebuild.

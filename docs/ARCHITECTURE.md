@@ -1638,6 +1638,13 @@ The `package-contents.txt` names it relies on: the hero pack ships 12 atlases, `
   - So the fingers animate: the sword grip curls, and the bow hand closes.
 - **Verification:** the avatar is valid with 52 mapped bones, and a front capture of the Swordsman shows a closed grip.
 
+*Amended 2026-10-17 (D6.1 facts):* **40 bones, not 52.**
+- **What the rig has:** three finger chains per hand (`Thumb`, `IndexFinger`, and `Finger` as the middle finger), three joints each. That makes 22 body bones plus 18 finger bones.
+- **One map everywhere:** the hero FBX and all 18 clips use the same explicit 40-bone map, because Unity's automatic map was inconsistent across the clip files.
+- **Renaming:** `OnPostprocessMeshHierarchy` renames the transforms, and `OnPreprocessModel` renames the stored skeleton entries to match, through `SerializedObject`.
+- **Fresh imports need two passes.** A brand-new `.meta` (a fresh clone or a first extraction) needs one `SQ_REIMPORT=1` pass before the names line up. DEVICE-TESTING records the step.
+- **A missed pass cannot go unnoticed:** `SyntyImportCheck` and the generator fail if any Synty avatar maps fewer than 40 bones.
+
 **Fallback,** only if the hook cannot rename before the avatar step:
 - The generator writes a static grip pose into each prefab: a curl constant per finger joint, measured once and commented like `GlobalScale`, applied to the transforms under each hand.
 - Humanoid never writes unmapped bones, so the pose holds in every clip.
@@ -1664,6 +1671,29 @@ There is no regular grid in the atlas, so §15.15.2 branch 1 (cell tint) does no
    - Why not the 15.3 baker: it needs generated textures and proof that ASTC compression is byte-stable, to avoid one extra sample on four characters.
 3. **The baker (§15.3) only if the masked tint shows visible seams on device.** Its readable inputs are separate editor-only copies (below), so the shipped `01_A` stays compressed and non-readable for the weapons.
 
+*Amended 2026-10-17 (D6.1 facts; the lead recorded step 2):* only `01_A` qualifies. The `_B` and `_C` atlases also change scars, stubble and hair, and 45.6 % of unmasked texels differ by 10–57/255; atlases 02–04 are other clothing schemes. The mask is `Mask_03`'s red channel, black-on-white (skin where r < 0.5); `Old/…_Mask_Skin_02` matches it exactly. **D6.2 builds step 2 as follows:**
+- **Shader (`ToonForward` only):**
+  - `#pragma shader_feature_local_fragment _SKIN_TINT`.
+  - Under it: `half skin = 1.0h - SAMPLE_TEXTURE2D(_SkinMask, sampler_SkinMask, saturate(input.uv)).r;` then `albedo *= lerp(half3(1,1,1), _SkinTint.rgb, skin);`, placed before the cell tint.
+  - Properties: `_SkinMask` (2D, default `"white"`, so an unset mask means "no skin"), and `_SkinTint` as a **Vector** in `UnityPerMaterial`, default `(1,1,1,1)`.
+  - The inversion lives in the shader, not the import. An inverted import would mean processing pixels, and `1 −` costs one instruction.
+  - The outline, shadow-caster and depth passes are unchanged.
+- **Mask import** (`Mask_03` moves from `EditorOnly/` to `Textures/` on `keep.txt`; `SyntyPostprocessor` rule for that one file):
+  - `sRGBTexture = false` (linear data);
+  - iOS format R8, uncompressed; R8 keeps the red channel. ASTC would soften swatch edges into neighbouring swatches.
+  - `maxTextureSize = 1024`, mipmaps on, bilinear, clamp: the same size, mips and filtering as `01_A`, so mask and albedo minify alike.
+  - About 1.3 MB with mips.
+- **Materials.** One hero material per tone in use: `Resources/Materials/Toon/hero_{tone}.mat`, with `_BaseMap = 01_A`, `_SkinMask = Mask_03`, keyword `_SKIN_TINT` enabled by the generator, and `_SkinTint` set with `SetVector`. Variants that share a tone share the material. Weapons keep their own material on `01_A` without the keyword.
+- **Reference.** `skinReference` is **#FFCCAE**, `01_A`'s measured mean inside the mask. It replaces §15.14.3's #F6C09C, which was KayKit's ramp. The multiplier is `tone.linear / skinReference.linear` per channel, `w = 1`, so light (#FFCCAE) multiplies by 1 and shading inside the skin scales proportionally.
+- **Starting tones** (`classes.json` `skinTones`):
+  - light #FFCCAE;
+  - medium #D1A275 and dark #906850, which are Synty's own `_B`/`_C` skin means: authored for this atlas, so they sit right with its shading.
+  - If the producer judges dark not dark enough from the front captures, a darker value is a data change.
+- **The developer's readings, confirmed and made checks:**
+  - "Clearly lighter or darker" means a luma change of at least 16/255, using Rec. 709 luma on 8-bit sRGB values (`0.2126 R + 0.7152 G + 0.0722 B`).
+  - Tone class is the nearest luma.
+  - `TableLoader` adds one check: `skinTones` luma is ordered light > medium > dark, with consecutive gaps of at least 16/255. Today's values are 212.7, 168.7 and 110.8.
+
 **Which mask is skin.** Read from Synty's character Shader Graph (text) in the scratch folder: which channel of which `Mask_0n` is skin. Confirm it numerically: the mean `01_A` colour where that channel is above 0.5 must be skin-coloured. Use `Masks/Old/…_Mask_Skin_01` only if no current mask channel is skin.
 
 **Readable copies, without touching the shipped atlas.**
@@ -1682,6 +1712,19 @@ There is no regular grid in the atlas, so §15.15.2 branch 1 (cell tint) does no
   - The Skill clip ends at the landing frame, found with a foot-height sample and confirmed by eye. Target: at most 2.5 s, so the action shot does not hold for 5.3 s.
   - If no clean landing frame exists inside 2.5 s, the Skill uses the Attack clip too.
 - **The draw-snap.** If the cross-fade into the drawn pose reads as a snap on device, the recorded improvement is a generated clip that concatenates `Stand_Aiming_ToDrawn` and `Stand_Shoot_ToBowDown` (humanoid curves joined in the editor). It is not built in M2; it would be an architect decision in M4's tuning, not a controller change.
+
+**Weapon grip** (amended 2026-10-17, D6.1 facts).
+- **Zero the scene offsets.** Hero-pack weapon FBX roots carry scene offsets (`SM_Wep_Sword_Small_01` sits at (118.32, 0, −181.29)). The generator zeroes the instance root, and any child that carries the offset, under the socket. It then asserts that the weapon's renderer-bounds centre lies within 0.3 m of the socket, failing with the measured value.
+- **Grip data, one entry per mesh.** `classes.json` gains a top-level `"weaponGrips": { "<mesh name>": { "pos": [x, y, z], "euler": [x, y, z] } }`, in metres and degrees in the socket's local space.
+  - Keying by mesh means `bow_2` shares the Long bow's grip, and the troll's club (D6b) uses the same table.
+  - Core carries it and ignores it. `TableLoader` checks that every class `weaponMesh`, weapon item `mesh` and enemy `weaponMesh` has an entry with three numbers in each array.
+  - The sockets themselves now sit at identity under the hand bones; the per-mesh grip carries the whole alignment. This replaces §15.3's four socket-pose constants.
+- **Tuned by eye.** `VariantCapture` gains a hand close-up per weapon mesh, in the idle pose with fingers mapped (both hands for the bow). The developer adjusts the numbers in data, regenerates and re-captures until the hilt sits in the closed fist. One grip serves boy and girl, since the skeleton is shared.
+
+**GraphicsSettings churn** (amended 2026-10-17, same rule as the §13.6 note). Editor URP rendering (`VariantCapture`, captures) flips `m_LightsUseLinearIntensity` and `m_LightsUseColorTemperature` from 0 to 1 in `ProjectSettings/GraphicsSettings.asset`.
+- **Ruling: commit 1 for both, and have `ProjectSetup` set them** (`GraphicsSettings.lightsUseLinearIntensity = true`, `GraphicsSettings.lightsUseColorTemperature = true`, both public), so regeneration, captures and the gate all leave the file unchanged.
+- **Why this is safe:** URP turns both on when its pipeline starts, so players and the simulator have always rendered with 1, and nothing seen so far changes.
+- Reverting after every capture is rejected: it is a manual step that a missed run turns into churn.
 
 #### 15.18.4 Bows and budget
 
