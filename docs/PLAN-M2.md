@@ -311,7 +311,7 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
   - After step 3: scripted simulator battles on both ratios, with the troll's Attack and Skill firing `OnImpact` and framing within §15.13.
   - After step 4: no `KayKit` path or string left in `Assets/` (grep), regeneration byte-identical, the gate 13/13, and `packs.txt` with exactly five lines.
 - **Not part of it:** the M4 thrower, shaman and boss (M4); environments (M3).
-- **Status:** steps 1–2 done 2026-10-17, verified by the lead. Step 3 waits on the producer's troll decision.
+- **Status:** steps 1–3 done 2026-10-17, verified by the lead. Step 4 (KayKit removal) is next.
   - The lead looked at `d6b-troll-colours-sheet.png` and `d6b-troll-iphone-FantasyRivals_01_C.png`.
   - Step 1 files:
     - `packs.txt` gains Fantasy Rivals 1.4.2 (5 rows).
@@ -323,6 +323,22 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
     - a small skull hangs from the troll's belt; it is part of the body mesh in all four colours;
     - `Characters_BR.fbx` also contains the other ten Big Rig bodies (demons, golems), unused and never in a prefab;
     - colour 01_C (olive green) reads friendliest.
+  - **Step 3 done 2026-10-17, verified by the lead.** The producer passed the troll (STATUS ruling "Troll"), on condition the skull is removed.
+    - The lead's own checks: regeneration then the gate left the tree unchanged; gate 13/13 with zero warnings; the skull-removal log line is unchanged; the `Combatant.controller` diff is BigStagger 0.6 → 1 only; `BattleResolver` and the tests are untouched; the `DamageNumberPool` clamp read against §15.18.8.
+    - The lead looked at `d6b3-troll-hip-before-after.png` (skull gone, belt plain), `d6b3-action-iphone-{troll,fighter}-attack.png` and `d6b3-iphone-C-clamp-weakness.png` (the weakness number stays under the enemy card in the real HUD).
+    - Developer facts:
+      - the derived mesh `Character_Troll_01_NoSkull.asset` (3,978 → 3,838 triangles; vertices, weights and bindposes identical);
+      - `troll_grunt` at 2.30 m in 01_C with its club from `weaponMeshes`;
+      - clips HeavyCombo01B and 01C plus BeatChest;
+      - the anchor rule brings the troll's head to 85.3 % in the group shot on all ratios;
+      - action pose ×1.4 / FOV 26 with the aim at + 1.5 m; 72 of 72 action checks pass (20 % enemy / 17 % hero minimum, number clamped below the band, target clear of the HUD);
+      - in the build report, `Characters_BR.fbx` is 23.5 KB and the derived mesh 790 KB;
+      - counters 185–187 draws, 125–127 SetPass, 63–64k triangles.
+    - Readings accepted:
+      - the impact for HeavyCombo01C at the club hand's peak (0.51);
+      - the unused `troll_grunt.mat` deleted;
+      - shared hero helpers made `internal`;
+      - the `VariantCapture` batch-mode workarounds (it copies CM_Action's pose; it clears TMP font asset dirtiness).
 
 ### D7 — Runtime gear swap
 

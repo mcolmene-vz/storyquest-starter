@@ -6,7 +6,8 @@ namespace Game.Runtime
 {
     /// Eight world-space TextMeshPro numbers built once when the battle view shows (ARCHITECTURE §14.4 step 10),
     /// reused round-robin: pop 0 -> 1.3 -> 1 over 0.15 s, rise 0.6 m over 0.8 s, fade over the last 0.3 s, billboarded
-    /// to the camera every frame while active. A MonoBehaviour only for LateUpdate; no serialized fields.
+    /// to the camera every frame while active. The rise stops 12 reference px below the top HUD band (§15.18.8 item 3).
+    /// A MonoBehaviour only for LateUpdate; no serialized fields.
     public sealed class DamageNumberPool : MonoBehaviour
     {
         public const int Size = 8;
@@ -22,6 +23,8 @@ namespace Game.Runtime
         const float FadeSeconds = 0.3f;
         // The chest point is inside the body; the number is pulled towards the camera so the body never covers it.
         const float TowardsCamera = 0.6f;
+        /// Reference px between a number's top and the bottom of the top HUD band.
+        public const float BandGap = 12f;
         static readonly Vector2 TextArea = new Vector2(4f, 1f);
         static readonly Color NormalColour = Color.white;
         static readonly Color WeaknessColour = new Color(1f, 0.88f, 0.2f, 1f);
@@ -34,6 +37,8 @@ namespace Game.Runtime
             public Vector3 Anchor;
             public float Start;
             public float Scale;
+            // The rendered text's top in its local space, measured when the text is set.
+            public float Top;
             public bool Active;
         }
 
@@ -41,13 +46,15 @@ namespace Game.Runtime
         int next;
         int activeCount;
         Camera cam = null!;
+        BattleHud hud = null!;
 
-        public static DamageNumberPool Create(Transform parent, Camera camera)
+        public static DamageNumberPool Create(Transform parent, Camera camera, BattleHud hud)
         {
             var go = new GameObject("DamageNumbers");
             go.transform.SetParent(parent, false);
             var pool = go.AddComponent<DamageNumberPool>();
             pool.cam = camera;
+            pool.hud = hud;
             for (int i = 0; i < Size; i++)
                 pool.entries[i] = pool.Build(i);
             return pool;
@@ -59,6 +66,7 @@ namespace Game.Runtime
             entry.Text.color = isWeakness ? WeaknessColour : NormalColour;
             entry.Scale = isWeakness ? WeaknessScale : 1f;
             entry.Text.SetText("{0}", value);
+            Measure(entry);
             Launch(entry, point);
         }
 
@@ -68,7 +76,26 @@ namespace Game.Runtime
             entry.Text.color = HealColour;
             entry.Scale = 1f;
             entry.Text.SetText("+{0}", value);
+            Measure(entry);
             Launch(entry, point);
+        }
+
+        // Once per number, not per frame; the entry is still inactive here.
+        static void Measure(Entry entry)
+        {
+            entry.Text.ForceMeshUpdate(true);
+            entry.Top = entry.Text.textBounds.max.y;
+        }
+
+        /// How far to lower a number along the camera's up axis so that its top, a world point, projects at or below
+        /// `ceiling` (screen px from the bottom); 0 when it already does. A move along the camera's up keeps the depth,
+        /// so the screen shift is linear in it.
+        public static float LowerBy(Camera camera, Vector3 top, float ceiling)
+        {
+            var screen = camera.WorldToScreenPoint(top);
+            if (screen.z <= 0f || screen.y <= ceiling)
+                return 0f;
+            return (screen.y - ceiling) * 2f * screen.z * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad) / camera.pixelHeight;
         }
 
         Entry Build(int index)
@@ -140,11 +167,15 @@ namespace Game.Runtime
                 pop = PopPeak * (t / (PopSeconds * PopPeakFraction));
             else
                 pop = Mathf.Lerp(PopPeak, 1f, (t - PopSeconds * PopPeakFraction) / (PopSeconds * (1f - PopPeakFraction)));
-            entry.Transform.localScale = Vector3.one * (pop * entry.Scale);
+            float scale = pop * entry.Scale;
+            entry.Transform.localScale = Vector3.one * scale;
 
             var camTransform = cam.transform;
             var position = entry.Anchor + Vector3.up * (RiseMetres * (t / LifeSeconds));
             position += (camTransform.position - position).normalized * TowardsCamera;
+            // Billboarded, so the text's up is the camera's: the top sits Top x scale along it.
+            var up = camTransform.up;
+            position -= up * LowerBy(cam, position + up * (entry.Top * scale), hud.TopBandBottom - BandGap * hud.ReferencePixel);
             entry.Transform.SetPositionAndRotation(position, camTransform.rotation);
 
             float fadeStart = LifeSeconds - FadeSeconds;

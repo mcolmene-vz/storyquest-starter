@@ -17,13 +17,18 @@ namespace Game.Runtime
         const float DefaultBlendSeconds = 0.25f;
         const float ActionToGroupBlendSeconds = 0.4f;
         const float MemberWeight = 1f;
-        // Anchors sit at chest height with a 1.2 m radius (y -0.2..2.2), covering every body the generator allows.
+        // Anchors sit at chest height with a 1.2 m radius (y -0.2..2.2), covering every hero the generator allows.
+        // A combatant taller than TallBody gets both scaled to its height (§15.16.2, §15.16.8), the troll today and M4's boss.
         const float AnchorHeight = 1.0f;
         const float MemberRadius = 1.2f;
+        const float TallBody = 2.2f;
+        const float TallAnchorPerMetre = 0.45f;
+        const float TallRadiusPerMetre = 0.55f;
         const float GroupFramingSize = 0.75f;
         const float GroupDamping = 0.3f;
         const float GroupFov = 30f;
-        const float ActionFov = 32f;
+        // §15.18.8 item 3, ruled after D6b step 3's re-measure: FOV 26 with the offsets below at 1.4x M1's.
+        const float ActionFov = 26f;
         const float ImpulseDuration = 0.2f;
         // Three-quarter view from the party's rear-left (§14.4, amended 2026-10-16); FOV is fixed, the framing dollies.
         static readonly Vector3 GroupPose = new Vector3(-6.6f, 3.2f, -7.9f);
@@ -33,11 +38,14 @@ namespace Game.Runtime
         static readonly Vector2 GroupCenterOffset = new Vector2(-0.10f, 0.22f);
         static readonly Vector3 ImpulseVelocity = new Vector3(0f, -0.25f, 0f);
         // §14.4 (amended after D6): high behind the attacker's weapon shoulder, scaled by the attacker's root so the
-        // troll's 1.35 fits; the aim is the attacker-target midpoint at an unscaled 1.4 m, over every neighbour's head.
-        const float ShoulderBack = 3.0f;
-        const float ShoulderRight = 0.3f;
-        const float ShoulderUp = 2.8f;
-        const float AimHeight = 1.4f;
+        // troll's scale fits; the aim is the attacker-target midpoint at an unscaled height, over every neighbour's head.
+        // §15.18.8 item 3: M1's 3.0 / 0.3 / 2.8 scaled by 1.4 about the attacker, so the Synty attacker and its weapon
+        // take less of the frame while the narrower lens keeps the target's size.
+        const float ShoulderBack = 4.2f;
+        const float ShoulderRight = 0.42f;
+        const float ShoulderUp = 3.92f;
+        // §15.18.8 item 3: 1.5 (was 1.4) keeps the troll's head below the enemy card on the iPhone; not scaled.
+        const float AimHeight = 1.5f;
 
         readonly CinemachineBrain brain;
         readonly CinemachineBlenderSettings blends;
@@ -73,7 +81,13 @@ namespace Game.Runtime
             TargetGroup.RotationMode = CinemachineTargetGroup.RotationModes.Manual;
             TargetGroup.UpdateMethod = CinemachineTargetGroup.UpdateMethods.LateUpdate;
             foreach (var actor in actors)
-                TargetGroup.AddMember(CreateAnchor(actor), MemberWeight, MemberRadius);
+            {
+                float h = actor.BodyHeight;
+                bool tall = h > TallBody;
+                float anchorHeight = tall ? Mathf.Max(AnchorHeight, TallAnchorPerMetre * h) : AnchorHeight;
+                float radius = tall ? Mathf.Max(MemberRadius, TallRadiusPerMetre * h) : MemberRadius;
+                TargetGroup.AddMember(CreateAnchor(actor, anchorHeight), MemberWeight, radius);
+            }
 
             Group = CreateCamera(GroupName, GroupPriority);
             Group.transform.SetPositionAndRotation(GroupPose, Quaternion.Euler(GroupEuler));
@@ -132,12 +146,12 @@ namespace Game.Runtime
             GroupShotLive = !active;
         }
 
-        // World offset, not local: the troll's 1.35 root scale must not lift its anchor. Parented so it follows knockback.
-        static Transform CreateAnchor(CombatantActor actor)
+        // World offset, not local: the troll's root scale must not lift its anchor again. Parented so it follows knockback.
+        static Transform CreateAnchor(CombatantActor actor, float height)
         {
             var anchor = new GameObject("GroupAnchor").transform;
             anchor.SetParent(actor.Root, false);
-            anchor.position = actor.Root.position + Vector3.up * AnchorHeight;
+            anchor.position = actor.Root.position + Vector3.up * height;
             return anchor;
         }
 

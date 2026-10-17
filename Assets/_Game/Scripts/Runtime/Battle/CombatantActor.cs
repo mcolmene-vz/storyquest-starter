@@ -23,6 +23,7 @@ namespace Game.Runtime
             Relay = instance.GetComponentInChildren<AnimationEventRelay>()
                     ?? throw new InvalidOperationException(instance.name + " has no AnimationEventRelay; regenerate the prefab");
             Renderers = instance.GetComponentsInChildren<Renderer>();
+            BodyHeight = MeasureBodyHeight(Renderers);
 
             var model = Animator.transform;
             if (Animator.isHuman)
@@ -50,6 +51,9 @@ namespace Game.Runtime
         public Transform? HandR { get; }
         public Vector3 SlotPosition { get; }
         public Renderer[] Renderers { get; }
+        /// The active body renderers' bounds height at spawn, weapons excluded (§15.16.2's anchor rule). Weapons are the
+        /// only mesh renderers on a combatant; every body part is skinned.
+        public float BodyHeight { get; }
 
         public static CombatantActor Spawn(int id, string prefabId, Vector3 position, Quaternion rotation, Transform parent)
         {
@@ -59,6 +63,20 @@ namespace Game.Runtime
             var instance = Object.Instantiate(prefab, position, rotation, parent);
             instance.name = prefabId;
             return new CombatantActor(id, instance, position);
+        }
+
+        static float MeasureBodyHeight(Renderer[] renderers)
+        {
+            float min = float.MaxValue, max = float.MinValue;
+            foreach (var renderer in renderers)
+            {
+                if (!(renderer is SkinnedMeshRenderer))
+                    continue;
+                var bounds = renderer.bounds;
+                min = Mathf.Min(min, bounds.min.y);
+                max = Mathf.Max(max, bounds.max.y);
+            }
+            return max > min ? max - min : 0f;
         }
 
         static Transform Missing(string prefabId, string bone, Transform fallback)

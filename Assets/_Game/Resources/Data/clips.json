@@ -33,6 +33,8 @@
     "A_Attack_HeavyStab01_ReturnToIdle_Sword": { "impact": 0.16 },
     "A_Attack_HeavyCombo01A_ReturnToIdle_Sword": { "impact": 0.40 },
     "A_Attack_LightLeaping01_ReturnToIdle_Sword": { "impact": 0.30 },
+    "A_Attack_HeavyCombo01B_ReturnToIdle_Sword": { "impact": 0.50 },
+    "A_Attack_HeavyCombo01C_ReturnToIdle_Sword": { "impact": 0.51 },
     "A_POLY_EMOT_Happy_ArmsRaised_Masc": { "impact": 0.172, "start": 0.1, "end": 2.6 },
     "A_POLY_EMOT_Happy_ArmsRaised_Femn": { "impact": 0.172, "start": 0.1, "end": 2.6 },
     "A_POLY_BOW_Stand_Shoot_ToBowDown_Neut": { "impact": 0.05 },
@@ -41,6 +43,7 @@
     "A_Hit_F_Stagger_Sword": {},
     "A_Death_B_01_Sword": {},
     "A_POLY_EMOT_Happy_FistPump_Masc": {},
-    "A_POLY_EMOT_Happy_FistPump_Femn": {}
+    "A_POLY_EMOT_Happy_FistPump_Femn": {},
+    "A_POLY_EMOT_Celebrate_BeatChest_Masc": {}
   }
 }

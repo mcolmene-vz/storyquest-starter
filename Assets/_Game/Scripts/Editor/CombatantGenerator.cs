@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Game.Core.Data;
@@ -13,10 +14,10 @@ using Object = UnityEngine.Object;
 
 namespace Game.Editor
 {
-    /// Builds the toon materials, the shared Combatant controller, one override controller per enemy, and the enemy
-    /// prefabs from the data tables and the KayKit import (ARCHITECTURE §14.4); HeroGenerator builds the eight Synty hero
-    /// variants (§15.3). Run by ProjectSetup.Run and by -executeMethod. Existing assets are loaded and modified in place,
-    /// so a run on unchanged inputs writes every file byte-identically and `git status` stays clean.
+    /// Builds the toon materials, the shared Combatant controller, one override controller per enemy, and the Synty enemy
+    /// prefabs from the data tables (ARCHITECTURE §14.4, §15.16.8); HeroGenerator builds the eight Synty hero variants
+    /// (§15.3). Run by ProjectSetup.Run and by -executeMethod. Existing assets are loaded and modified in place, so a run
+    /// on unchanged inputs writes every file byte-identically and `git status` stays clean.
     public static class CombatantGenerator
     {
         public const string ShaderName = "StoryQuest/Toon";
@@ -30,10 +31,16 @@ namespace Game.Editor
         const string ParticleShaderName = "Universal Render Pipeline/Particles/Unlit";
         const string IdleState = "Idle";
         const string BigStaggerState = "BigStagger";
-        const float BigStaggerSpeed = 0.6f;
+        // §15.16.2: every combatant now has a dedicated stagger clip, so it plays at its authored speed (0.6 stretched
+        // KayKit's plain hit). Set by eye on a weakness hit.
+        const float BigStaggerSpeed = 1.0f;
         const float OneShotExitDuration = 0.1f;
         internal const float MinHeight = 1.2f;
         internal const float MaxHeight = 2.4f;
+        // §15.16.2: an enemy's height after its scale, for the three troll types; M4's boss gets its own band.
+        const float MinEnemyHeight = 2.0f;
+        const float MaxEnemyHeight = 2.5f;
+        const string EnemyWeaponRole = "weapon";
         static readonly string[] OneShotStates = { "Attack", "Skill", "Hit", "BigStagger", "Victory" };
         static readonly string[] ImpactStates = { "Attack", "Skill" };
         // §15.18.8: no action shot holds longer than this plus §14.4's 0.7 s rule. The tolerance absorbs float rounding of
@@ -62,14 +69,17 @@ namespace Game.Editor
 
             var partyRenderers = HeroGenerator.Generate(tables, controller, placeholders, clips, toon);
 
-            // Enemy material files are named by enemy id: a tinted variant of a shared body.
+            var enemyMaterials = new Dictionary<string, Material>();
             int enemyRenderers = 0;
             foreach (var e in tables.Enemies)
             {
-                var material = GenerateToonMaterial(MaterialsFolder + "/" + e.Id + ".mat",
-                    toon, LoadTexture(e.Model), ParseTint(e));
+                var material = EnemyMaterial(e.Texture, toon, enemyMaterials);
+                foreach (var clip in e.Clips.Values.Distinct())
+                    HeroGenerator.CheckAvatar(AssetDatabase.GetAssetPath(clips[clip]));
                 var overrides = GenerateOverrideController(e.Id, controller, placeholders, e.Clips, clips);
-                enemyRenderers = Math.Max(enemyRenderers, GeneratePrefab(e.Id, e.Model, "", "", (float)e.Scale, material, overrides));
+                HeroGenerator.LogDerived(AnimatorsFolder + "/" + e.Id + ".overrideController",
+                    e.Clips.Values.Select(c => AssetDatabase.GetAssetPath(clips[c])));
+                enemyRenderers = Math.Max(enemyRenderers, GenerateEnemyPrefab(e, material, overrides, tables.Heroes.WeaponMeshes));
             }
             HeroGenerator.CheckPartyBudget(partyRenderers, enemyRenderers);
             GenerateToonMaterial(MaterialsFolder + "/ground.mat", toon, null, GroundColor);
@@ -138,29 +148,12 @@ namespace Game.Editor
             return shader;
         }
 
-        /// Knight -> knight_texture.png, Mannequin_Medium -> mannequin_texture.png: the pack names textures by body, not rig size.
-        static Texture2D LoadTexture(string modelName)
-        {
-            string path = KayKitPostprocessor.TexturesFolder + modelName.Split('_')[0].ToLowerInvariant() + "_texture.png";
-            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (texture == null)
-                throw new InvalidOperationException(Tag + "texture for model " + modelName + " not found at " + path);
-            return texture;
-        }
-
         internal static GameObject LoadModel(string path)
         {
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (model == null)
                 throw new InvalidOperationException(Tag + "model not imported: " + path);
             return model;
-        }
-
-        static Color ParseTint(EnemyDefinition enemy)
-        {
-            if (ColorUtility.TryParseHtmlString(enemy.Tint, out var colour))
-                return colour;
-            throw new InvalidOperationException($"{Tag}enemy '{enemy.Id}' tint '{enemy.Tint}' is not a #RRGGBB colour");
         }
 
         // ----- materials -----
@@ -174,6 +167,19 @@ namespace Game.Editor
             material.SetTexture("_BaseMap", texture);
             material.SetColor("_BaseColor", baseColor);
             Save(material, path, before);
+            return material;
+        }
+
+        /// §15.16.8: one material per enemy texture, for the body and the weapon alike, with no skin tint.
+        static Material EnemyMaterial(string texture, Shader toon, Dictionary<string, Material> cache)
+        {
+            if (cache.TryGetValue(texture, out var cached))
+                return cached;
+            string texturePath = SyntyPostprocessor.TexturesFolder + texture + ".png";
+            string path = MaterialsFolder + "/enemy_" + texture + ".mat";
+            var material = GenerateToonMaterial(path, toon, HeroGenerator.LoadTexture(texturePath), Color.white);
+            HeroGenerator.LogDerived(path, new[] { texturePath });
+            cache[texture] = material;
             return material;
         }
 
@@ -299,32 +305,52 @@ namespace Game.Editor
 
         // ----- prefabs -----
 
+        /// §15.16.2, §15.16.8: the enemy's parts kept from its Synty character file (the troll's body as the derived mesh
+        /// without the skull), its weapon in a hero-made socket, one material on every renderer, and the scale from data.
         /// Returns the prefab's renderer count, for the §15.7 party budget.
-        static int GeneratePrefab(string id, string modelName, string weaponMesh, string weaponSocket, float scale,
-            Material material, AnimatorOverrideController overrides)
+        static int GenerateEnemyPrefab(EnemyDefinition enemy, Material material, AnimatorOverrideController overrides,
+            Dictionary<string, WeaponMeshDefinition> meshes)
         {
+            string id = enemy.Id;
+            string modelPath = SyntyPostprocessor.CharactersFolder + enemy.Model + ".fbx";
+            HeroGenerator.CheckAvatar(modelPath);
+            var source = LoadModel(modelPath);
             string path = PrefabsFolder + "/" + id + ".prefab";
             var before = ReadBytes(path);
 
             var root = new GameObject(id);
             try
             {
-                var model = Object.Instantiate(LoadModel(KayKitPostprocessor.CharactersFolder + modelName + ".fbx"));
-                model.name = modelName;
+                var model = Object.Instantiate(source);
+                model.name = source.name;
                 model.transform.SetParent(root.transform, false);
-
-                // Measured before the enemy scale: the band is a property of the import (§14.1), not of the enemy row.
-                float height = RendererHeight(model);
-                if (height < MinHeight || height > MaxHeight)
-                    throw new InvalidOperationException(
-                        $"{Tag}{id}: {modelName}.fbx stands {height:F2} m, outside {MinHeight}–{MaxHeight} m; fix KayKitPostprocessor.GlobalScale, not the data");
-
-                foreach (var renderer in model.GetComponentsInChildren<Renderer>(true))
-                    ApplyMaterial(renderer, material);
-
                 var animator = model.GetComponent<Animator>();
-                if (animator == null)
-                    animator = model.AddComponent<Animator>();
+                if (animator == null || !animator.isHuman)
+                    throw new InvalidOperationException($"{Tag}{id}: {modelPath} has no Humanoid Animator");
+
+                var body = HeroGenerator.KeepParts(id, model, modelPath, enemy.Parts, new List<string>(), out _);
+                foreach (var renderer in body)
+                {
+                    if (renderer is SkinnedMeshRenderer skinned && skinned.name == SkullRemoval.SourcePart)
+                        skinned.sharedMesh = SkullRemoval.Derive(skinned.sharedMesh);
+                    ApplyMaterial(renderer, material);
+                }
+
+                // Body renderers at the bind pose, before the scale and the weapon (the measure VariantCapture reported in D6b step 2).
+                var bounds = body[0].bounds;
+                foreach (var renderer in body)
+                    bounds.Encapsulate(renderer.bounds);
+                float native = bounds.size.y;
+                float scale = (float)enemy.Scale;
+                float height = native * scale;
+                if (height < MinEnemyHeight || height > MaxEnemyHeight)
+                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture,
+                        "{0}{1}: {2} stands {3:F3} m x {4} = {5:F3} m, outside {6}–{7} m; fix the scale in enemies.json",
+                        Tag, id, enemy.Model, native, scale, height, MinEnemyHeight, MaxEnemyHeight));
+
+                var sockets = HeroGenerator.AddSockets(id, animator);
+                HeroGenerator.AddWeapon(id, sockets[enemy.WeaponSocket], enemy.WeaponMesh, EnemyWeaponRole, material, meshes);
+
                 animator.runtimeAnimatorController = overrides;
                 animator.applyRootMotion = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
@@ -332,25 +358,11 @@ namespace Game.Editor
                 if (model.GetComponent<AnimationEventRelay>() == null)
                     model.AddComponent<AnimationEventRelay>();
 
-                string weaponText = "";
-                if (!string.IsNullOrEmpty(weaponMesh))
-                {
-                    var socket = FindDeep(model.transform, weaponSocket);
-                    if (socket == null)
-                        throw new InvalidOperationException($"{Tag}{id}: bone '{weaponSocket}' not found under {modelName}.fbx");
-                    var weapon = Object.Instantiate(LoadModel(KayKitPostprocessor.WeaponsFolder + weaponMesh + ".fbx"));
-                    weapon.name = weaponMesh;
-                    weapon.transform.SetParent(socket, false);
-                    foreach (var renderer in weapon.GetComponentsInChildren<Renderer>(true))
-                        ApplyMaterial(renderer, material);
-                    weaponText = ", " + weaponMesh + " under " + weaponSocket;
-                }
-
                 // Animation-driven combat, no physics on characters (§5): strip anything the FBX brought.
                 foreach (var collider in root.GetComponentsInChildren<Collider>(true))
                     Object.DestroyImmediate(collider);
-                foreach (var body in root.GetComponentsInChildren<Rigidbody>(true))
-                    Object.DestroyImmediate(body);
+                foreach (var rigidbody in root.GetComponentsInChildren<Rigidbody>(true))
+                    Object.DestroyImmediate(rigidbody);
 
                 root.transform.localScale = Vector3.one * scale;
 
@@ -359,24 +371,20 @@ namespace Game.Editor
                     throw new InvalidOperationException(Tag + "could not save " + path);
                 Report(path, before);
                 int renderers = root.GetComponentsInChildren<Renderer>().Length;
-                Debug.Log($"{Tag}{id}: {modelName} {height:F2} m" + (scale == 1f ? "" : $" x{scale:0.##} = {height * scale:F2} m") + weaponText + $", {renderers} renderers");
+                long triangles = root.GetComponentsInChildren<Renderer>()
+                    .Select(r => r is SkinnedMeshRenderer s ? s.sharedMesh : r.GetComponent<MeshFilter>().sharedMesh)
+                    .Distinct().Sum(m => Enumerable.Range(0, m.subMeshCount).Sum(i => (long)m.GetIndexCount(i) / 3));
+                Debug.Log(Tag + string.Format(CultureInfo.InvariantCulture,
+                    "{0}: {1} {2:F3} m x {3} = {4:F3} m (bind pose, body bounds); {5} under {6}; {7} renderers, {8} unique triangles; {9}",
+                    id, string.Join("+", enemy.Parts), native, scale, height, enemy.WeaponMesh, enemy.WeaponSocket, renderers, triangles,
+                    string.Join(", ", body.Select(r => r.name + " mesh " + ((SkinnedMeshRenderer)r).sharedMesh.name))));
+                HeroGenerator.LogDerived(path, new[] { modelPath, HeroGenerator.WeaponPath(enemy.WeaponMesh) });
                 return renderers;
             }
             finally
             {
                 Object.DestroyImmediate(root);
             }
-        }
-
-        static float RendererHeight(GameObject model)
-        {
-            var renderers = model.GetComponentsInChildren<Renderer>(true);
-            if (renderers.Length == 0)
-                return 0f;
-            var bounds = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
-                bounds.Encapsulate(renderers[i].bounds);
-            return bounds.size.y;
         }
 
         internal static void ApplyMaterial(Renderer renderer, Material material)
@@ -387,19 +395,6 @@ namespace Game.Editor
             for (int i = 0; i < materials.Length; i++)
                 materials[i] = material;
             renderer.sharedMaterials = materials;
-        }
-
-        static Transform? FindDeep(Transform parent, string name)
-        {
-            if (parent.name == name)
-                return parent;
-            for (int i = 0; i < parent.childCount; i++)
-            {
-                var found = FindDeep(parent.GetChild(i), name);
-                if (found != null)
-                    return found;
-            }
-            return null;
         }
 
         // ----- asset plumbing -----
@@ -431,7 +426,7 @@ namespace Game.Editor
             Debug.Log(Tag + path + ": " + state);
         }
 
-        static void EnsureFolder(string folder)
+        internal static void EnsureFolder(string folder)
         {
             if (AssetDatabase.IsValidFolder(folder))
                 return;

@@ -62,7 +62,7 @@ namespace Game.Runtime
             panel.Submitted += OnCommand;
             corner = DebugCorner.Create(uiRoot);
             presenter = new BattlePresenter(flow.Host, Hud, panel, Cameras, actors, new HitFx(root.transform),
-                DamageNumberPool.Create(root.transform, camera), state, OnOutcome);
+                DamageNumberPool.Create(root.transform, camera, Hud), state, OnOutcome);
             battle.BatchReady += presenter.Play;
             // The start batch (BattleStarted, RoundStarted, TurnStarted) was raised before this view existed.
             presenter.Play(battle.LastEvents);

@@ -51,11 +51,25 @@ namespace Game.Runtime
 
         readonly List<Entry> entries = new List<Entry>();
         readonly Dictionary<int, Entry> byId = new Dictionary<int, Entry>();
+        readonly List<RectTransform> enemyCards = new List<RectTransform>();
+        readonly Vector3[] corners = new Vector3[4];
+        RectTransform bannerRect = null!;
+        Canvas canvas = null!;
+        Rect measuredSafeArea;
+        int measuredWidth;
+        int measuredHeight;
         TMP_Text banner = null!;
         Transform ring = null!;
         Material ringMaterial = null!;
 
         public event Action<int>? CardTapped;
+
+        /// The bottom of the top HUD band in screen pixels from the bottom: the lower of the turn banner's and the enemy
+        /// cards' bottom edges. DamageNumberPool keeps numbers below it (ARCHITECTURE §15.18.8 item 3).
+        public float TopBandBottom { get; private set; }
+
+        /// Screen pixels per 1920×1080 reference pixel, the canvas scale.
+        public float ReferencePixel { get; private set; } = 1f;
 
         public static BattleHud Create(Transform safeArea, BattleState state, BattleSetup setup, GameTables tables,
             IReadOnlyList<CombatantActor> actors, Transform worldParent)
@@ -72,6 +86,7 @@ namespace Game.Runtime
             var bannerPanel = UiFactory.Panel(transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(BannerWidth, BannerHeight), UiFactory.PanelColour);
             bannerPanel.name = "TurnBanner";
             bannerPanel.anchoredPosition = new Vector2(Margin, -Margin);
+            bannerRect = bannerPanel;
             banner = UiFactory.Label(bannerPanel, "", 44f, TextAlignmentOptions.Left);
             banner.rectTransform.offsetMin = new Vector2(24f, 0f);
 
@@ -99,6 +114,8 @@ namespace Game.Runtime
             }
 
             BuildRing(worldParent);
+            canvas = GetComponentInParent<Canvas>().rootCanvas;
+            MeasureTopBand();
         }
 
         // rowFromBottom 0 is the lowest card; slot 0 ends up on top.
@@ -150,6 +167,7 @@ namespace Game.Runtime
             var panel = UiFactory.Panel(transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(EnemyCardWidth, EnemyCardHeight), UiFactory.PanelColour);
             panel.name = "EnemyCard";
             panel.anchoredPosition = new Vector2(0f, -Margin);
+            enemyCards.Add(panel);
             var name = UiFactory.Label(panel, entry.Name, 36f, TextAlignmentOptions.Center);
             SetRect(name.rectTransform, new Vector2(0f, 1f), new Vector2(0f, -8f), new Vector2(EnemyCardWidth, 44f));
             entry.Bar = UiFactory.Bar(panel, new Vector2(EnemyCardWidth - 40f, 24f));
@@ -282,6 +300,30 @@ namespace Game.Runtime
                     entry.Bar.Value = Mathf.Lerp(entry.TweenFrom, target, t);
                 }
             }
+        }
+
+        // After every Update, so SafeAreaFitter and the CanvasScaler have applied a change before it is measured.
+        void LateUpdate()
+        {
+            if (Screen.safeArea != measuredSafeArea || Screen.width != measuredWidth || Screen.height != measuredHeight)
+                MeasureTopBand();
+        }
+
+        // An overlay canvas's world space is screen pixels.
+        void MeasureTopBand()
+        {
+            bannerRect.GetWorldCorners(corners);
+            float bottom = corners[0].y;
+            for (int i = 0; i < enemyCards.Count; i++)
+            {
+                enemyCards[i].GetWorldCorners(corners);
+                bottom = Mathf.Min(bottom, corners[0].y);
+            }
+            TopBandBottom = bottom;
+            ReferencePixel = canvas.scaleFactor;
+            measuredSafeArea = Screen.safeArea;
+            measuredWidth = Screen.width;
+            measuredHeight = Screen.height;
         }
 
         void OnDestroy()

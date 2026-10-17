@@ -48,7 +48,7 @@ namespace Game.Core.Data
             if (items != null)
                 ValidateItems(items, classes != null ? classIds : null, problems);
             if (classes != null)
-                ValidateHeroes(classes, items, problems);
+                ValidateHeroes(classes, items, enemies, problems);
 
             if (problems.Count > 0)
                 throw new TableValidationException(problems);
@@ -150,8 +150,9 @@ namespace Game.Core.Data
             }
         }
 
-        /// The whole-table hero rules: skin tones (producer ruling 7, §15.18.2, §15.18.8) and weapon meshes (§15.18.3, §15.18.8).
-        static void ValidateHeroes(ClassesTable table, ItemsTable? items, List<string> problems)
+        /// The whole-table hero rules: skin tones (producer ruling 7, §15.18.2, §15.18.8) and weapon meshes (§15.18.3,
+        /// §15.18.8), whose table also holds the enemies' weapons (§15.16.8).
+        static void ValidateHeroes(ClassesTable table, ItemsTable? items, EnemiesTable? enemies, List<string> problems)
         {
             const string file = ClassesTable + ".json";
 
@@ -226,6 +227,10 @@ namespace Game.Core.Data
                 foreach (var item in items.Items)
                     if (item.Kind == ItemKinds.Weapon && !string.IsNullOrEmpty(item.Mesh))
                         meshes.Add(($"{ItemsTable}.json: item '{item.Id}' mesh", item.Mesh!));
+            if (enemies != null)
+                foreach (var e in enemies.Enemies)
+                    if (!string.IsNullOrEmpty(e.WeaponMesh))
+                        meshes.Add(($"{EnemiesTable}.json: enemy '{e.Id}' weaponMesh", e.WeaponMesh));
             foreach (var (who, mesh) in meshes)
                 if (!table.WeaponMeshes.ContainsKey(mesh))
                     problems.Add($"{who} '{mesh}' has no weaponMeshes entry in {file}");
@@ -281,6 +286,18 @@ namespace Game.Core.Data
                 if (e.Scale <= 0)
                     problems.Add($"{who} scale {e.Scale} must be > 0");
                 CheckClips(who, e.Clips, problems);
+
+                // §15.16.8; whether weaponMesh has a weaponMeshes entry is ValidateHeroes' cross-table check.
+                if (string.IsNullOrEmpty(e.Model))
+                    problems.Add($"{who} has no model");
+                if (e.Parts.Count == 0 || e.Parts.Exists(string.IsNullOrEmpty))
+                    problems.Add($"{who} parts is missing, empty or has an empty name");
+                if (string.IsNullOrEmpty(e.Texture))
+                    problems.Add($"{who} has no texture");
+                if (string.IsNullOrEmpty(e.WeaponMesh))
+                    problems.Add($"{who} has no weaponMesh");
+                if (Array.IndexOf(SocketNames.All, e.WeaponSocket) < 0)
+                    problems.Add($"{who} weaponSocket '{e.WeaponSocket}' is not one of {string.Join("/", SocketNames.All)}");
             }
         }
 

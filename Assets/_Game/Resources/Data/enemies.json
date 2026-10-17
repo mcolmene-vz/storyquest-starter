@@ -4,11 +4,14 @@
     {
       "id": "troll_grunt", "name": "Troll Grunt", "hp": 70, "attack": 10, "defence": 3, "speed": 4,
       "damageType": "blunt", "attackPower": 1.0, "weakness": "blunt", "behaviour": "attack_random_hero",
-      "xp": 20, "coins": 10, "model": "Mannequin_Medium", "scale": 1.35, "tint": "#6E9A4F",
+      "xp": 20, "coins": 10,
+      "model": "Characters_BR", "parts": [ "Character_Troll_01" ], "texture": "FantasyRivals_01_C",
+      "weaponMesh": "SM_Wep_Troll_01", "weaponSocket": "Socket_HandR", "scale": 1.173,
       "clips": {
-        "Idle": "Idle_B", "Walk": "Walking_B",
-        "Attack": "Melee_2H_Attack_Chop", "Skill": "Melee_2H_Attack_Spin",
-        "Hit": "Hit_B", "BigStagger": "Hit_A", "Defend": "Melee_Blocking", "Defeat": "Death_B", "Victory": "Cheering"
+        "Idle": "A_Idle_Base_Sword", "Walk": "A_Idle_Base_Sword",
+        "Attack": "A_Attack_HeavyCombo01B_ReturnToIdle_Sword", "Skill": "A_Attack_HeavyCombo01C_ReturnToIdle_Sword",
+        "Hit": "A_Hit_F_React_Sword", "BigStagger": "A_Hit_F_Stagger_Sword", "Defend": "A_Block_Loop_Sword",
+        "Defeat": "A_Death_B_01_Sword", "Victory": "A_POLY_EMOT_Celebrate_BeatChest_Masc"
       }
     }
   ]

@@ -35,6 +35,9 @@ Assets/Synty/AnimationSwordCombat/Animations/Polygon/Hit/HitReact/A_Hit_F_React_
 Assets/Synty/AnimationSwordCombat/Animations/Polygon/Hit/HitStagger/A_Hit_F_Stagger_Sword.fbx -> Animations
 Assets/Synty/AnimationSwordCombat/Animations/Polygon/Block/A_Block_Loop_Sword.fbx -> Animations
 Assets/Synty/AnimationSwordCombat/Animations/Polygon/Death/A_Death_B_01_Sword.fbx -> Animations
+# The troll's Attack and Skill (§15.16.2, §15.16.8): the club smash, and the second heavy combo reserved for M4.
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Attack/HeavyCombo01/A_Attack_HeavyCombo01B_ReturnToIdle_Sword.fbx -> Animations
+Assets/Synty/AnimationSwordCombat/Animations/Polygon/Attack/HeavyCombo01/A_Attack_HeavyCombo01C_ReturnToIdle_Sword.fbx -> Animations
 
 # pack: ANIMATION - Bow Combat
 # The Archer's bow (the hero pack has none; fact e), a static mesh, and its atlas. The Long bow serves the starter and
@@ -57,6 +60,8 @@ Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Masculine/Happy/A_POLY_
 Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Feminine/Happy/A_POLY_EMOT_Happy_ArmsRaised_Femn.fbx -> Animations
 Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Masculine/Happy/A_POLY_EMOT_Happy_FistPump_Masc.fbx -> Animations
 Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Feminine/Happy/A_POLY_EMOT_Happy_FistPump_Femn.fbx -> Animations
+# The troll's Victory (§15.16.2): a proud, silly chest-beat.
+Assets/Synty/AnimationEmotesAndTaunts/Animations/Polygon/Masculine/Celebrate/A_POLY_EMOT_Celebrate_BeatChest_Masc.fbx -> Animations
 
 # pack: POLYGON - Fantasy Rivals Pack
 # The troll (ARCHITECTURE §15.16.2). The pack has no troll-only model: SM_Chr_BR_Troll_01 is Characters_BR.fbx with

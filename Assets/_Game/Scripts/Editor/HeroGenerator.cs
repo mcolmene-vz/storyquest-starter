@@ -173,7 +173,7 @@ namespace Game.Editor
                 if (animator == null || !animator.isHuman)
                     throw new InvalidOperationException($"{Tag}{id}: {SyntyPostprocessor.HeroModel} has no Humanoid Animator");
 
-                var bodyRenderers = KeepParts(id, model, variant.Parts, armorParts, out var armorRenderers);
+                var bodyRenderers = KeepParts(id, model, SyntyPostprocessor.HeroModel, variant.Parts, armorParts, out var armorRenderers);
                 foreach (var renderer in bodyRenderers.Concat(armorRenderers))
                     CombatantGenerator.ApplyMaterial(renderer, bodyMaterial);
 
@@ -233,8 +233,9 @@ namespace Game.Editor
         }
 
         /// Keeps exactly the variant's parts and the class armor's parts for this body (§15.3), destroys every other part,
-        /// then the part groups left empty. The skeleton stays whole.
-        static List<Renderer> KeepParts(string id, GameObject model, List<string> parts, List<string> armorParts, out List<Renderer> armor)
+        /// then the part groups left empty. The skeleton stays whole. Enemies keep their parts the same way (§15.16.2).
+        internal static List<Renderer> KeepParts(string id, GameObject model, string source, List<string> parts, List<string> armorParts,
+            out List<Renderer> armor)
         {
             var byName = model.GetComponentsInChildren<SkinnedMeshRenderer>(true).GroupBy(r => r.name).ToDictionary(g => g.Key, g => g.ToList());
             var overlap = parts.Intersect(armorParts).ToList();
@@ -247,9 +248,9 @@ namespace Game.Editor
                 foreach (var name in names)
                 {
                     if (!byName.TryGetValue(name, out var list))
-                        throw new InvalidOperationException($"{Tag}{id}: part '{name}' is not in {SyntyPostprocessor.HeroModel}");
+                        throw new InvalidOperationException($"{Tag}{id}: part '{name}' is not in {source}");
                     if (list.Count > 1)
-                        throw new InvalidOperationException($"{Tag}{id}: part name '{name}' is used by {list.Count} renderers in {SyntyPostprocessor.HeroModel}");
+                        throw new InvalidOperationException($"{Tag}{id}: part name '{name}' is used by {list.Count} renderers in {source}");
                     found.Add(list[0]);
                 }
                 return found;
@@ -294,7 +295,7 @@ namespace Game.Editor
 
         /// §15.3 and §15.18.3: empty children of the avatar's bones at identity, scaled so their world scale is 1; the
         /// per-mesh grip carries the whole alignment.
-        static Dictionary<string, Transform> AddSockets(string id, Animator animator)
+        internal static Dictionary<string, Transform> AddSockets(string id, Animator animator)
         {
             var sockets = new Dictionary<string, Transform>();
             foreach (var (name, bone, fallback) in Sockets)
@@ -314,7 +315,7 @@ namespace Game.Editor
         /// The weapon under the socket, named by role (§15.15.2: "starter" or the item id), posed by the mesh's grip from
         /// data. It is rebuilt from the FBX's meshes rather than instantiated, so the FBX root's scene offset (§15.18.3) and
         /// its empty nodes stay behind. Only the mesh entry's parts are kept.
-        static GameObject AddWeapon(string id, Transform socket, string mesh, string role, Material material,
+        internal static GameObject AddWeapon(string id, Transform socket, string mesh, string role, Material material,
             Dictionary<string, WeaponMeshDefinition> meshes)
         {
             if (!meshes.TryGetValue(mesh, out var grip))
@@ -369,9 +370,9 @@ namespace Game.Editor
 
         // ----- inputs -----
 
-        static string WeaponPath(string mesh) => SyntyPostprocessor.WeaponsFolder + mesh + ".fbx";
+        internal static string WeaponPath(string mesh) => SyntyPostprocessor.WeaponsFolder + mesh + ".fbx";
 
-        static Texture2D LoadTexture(string path)
+        internal static Texture2D LoadTexture(string path)
         {
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             if (texture == null)
@@ -386,8 +387,8 @@ namespace Game.Editor
             throw new InvalidOperationException($"{Tag}classes.json {what} '{hex}' is not a #RRGGBB colour");
         }
 
-        /// §15.18.1: every Synty avatar the heroes use maps the shared 40 bones; a missed SQ_REIMPORT pass cannot go unnoticed.
-        static void CheckAvatar(string path)
+        /// §15.18.1: every Synty avatar the heroes and enemies use maps the shared 40 bones; a missed SQ_REIMPORT pass cannot go unnoticed.
+        internal static void CheckAvatar(string path)
         {
             if (!path.StartsWith(SyntyPostprocessor.Root, StringComparison.Ordinal))
                 return;
@@ -399,7 +400,7 @@ namespace Game.Editor
         }
 
         /// §15.15.6: one line per generated asset that derives from a Synty file, so the sign-off log names them all.
-        static void LogDerived(string asset, IEnumerable<string> sources) =>
+        internal static void LogDerived(string asset, IEnumerable<string> sources) =>
             Debug.Log(Derived + asset + " <- " + string.Join(", ", sources.Distinct().OrderBy(s => s, StringComparer.Ordinal)));
     }
 }
