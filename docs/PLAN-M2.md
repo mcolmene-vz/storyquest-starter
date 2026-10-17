@@ -1,32 +1,31 @@
 # PLAN-M2 — Heroes and gear
 
-Lead's plan for V1-SCOPE §12 M2. The design is in ARCHITECTURE §15 (15.1–15.13) plus the amended §3, §6 and §9. M1 was signed off on 2026-10-16. The producer ruled on §15.11 the same day (STATUS → Producer rulings). Statuses are kept current here. Sign-off evidence goes to `docs/evidence/M2/` and to STATUS.md.
+Lead's plan for V1-SCOPE §12 M2. The design is in ARCHITECTURE §15 (15.1–15.13) plus the amended §3, §6 and §9. **Amended 2026-10-16 by §15.14 (owner: no art spend):** M2 ships on the KayKit heroes and KayKit animations already in the repo, and Synty and Mixamo are off. M1 was signed off on 2026-10-16. The producer ruled on §15.11 the same day and on §15.14.8 afterwards (STATUS → Producer rulings). Statuses are kept current here. Sign-off evidence goes to `docs/evidence/M2/` and to STATUS.md.
 
-**M2 is done when:** Synty bases, 8 hero variants, Mixamo retargeting, weapon and armor sockets, equip screen, shop UI with the 14 items, coins. Buying a weapon in the shop changes the model in the next battle, on device. The producer's rulings add three things:
+**M2 is done when** (V1-SCOPE §12 M2 as amended by the producer): KayKit heroes, 8 hero looks (4 classes × 2 skin tones), KayKit animations, visible weapon and armor swaps, equip screen, shop UI with the 14 items, coins. Buying a weapon in the shop changes the model in the next battle, on device. The producer's rulings add three things:
 - the soak passes the thresholds in STATUS (devicectl log plus probe lines, both devices);
 - the iPhone gets an explicit yes for Silent mode;
-- one front-facing image per variant shows the skin-tone range.
+- one front-facing image per look shows the skin-tone range.
 
 ## Dependency order
 
 ```
 D1 Core camp model + items + tests ─► D2 party, flow and Camp screens ─► D3 soak probe + build settings + capture commands ─► D3a probe amendment
-   (D1–D3 need no Synty or Mixamo files and start now)
-D4 Synty extract + postprocessor ──┐   (needs Needs Martin 11)
-D5 Mixamo import ──────────────────┴─► D6 hero generator, 8 variants ─► D7 runtime gear swap ─► D8 device build, soak, evidence
-                                        (D5 needs Needs Martin 12)
+   (done 2026-10-16)
+D4 KayKit weapons + shader cell tint ─► D6 Body→Look, data, generator: eight looks ─► D7 runtime gear swap ─► D8 device build, soak, evidence
+D5 (Mixamo): dropped by §15.14
 ```
 
-D4 and D5 do not depend on each other. Whichever download arrives first goes first.
+Nothing in D4–D8 waits on Martin until D8's install and soak.
 
 ## Lead's readings (assumptions written down)
 
-- **Work before the art arrives.** D1–D3 use the M1 KayKit prefabs. Until D6, `BattleView` keeps spawning heroes by `classId`. The Body toggle is built in D2 but changes nothing on screen until D6. In D1–D5 a purchase shows up only in stats (a bigger damage number), not on the model. That is enough to verify the shop and the flow before Synty lands.
-- **Provisional mesh and part names.** D1 writes `items.json` with all 14 items. Weapon `mesh` and armor `parts` values are placeholders, replaced in D6 from the facts D4 reports. Nothing reads them before D7. `TableLoader`'s class checks (`variants`, the four socket names) arrive with the data in D6; adding them in D1 would fail M1's `classes.json`.
+- **Owner direction 2026-10-16: no art spend.** §15.14 supersedes the Synty and Mixamo parts of §15. Until D6, `BattleView` keeps spawning heroes by `classId`, and a purchase shows up only in stats. D6 brings the eight looks, and D7 brings the visible swap.
+- **Provisional mesh and part names.** D1 wrote placeholder values (`TBD_D6_*`). D6 replaces them with the §15.14.2 KayKit names and renames three items (`hat_mage` → `cape_mage`, `mace_2` → `axe_2`, `pads_fighter` → `hat_fighter`). No test uses those ids.
 - **Coins.** Each hero has their own coins and every hero receives a Victory's full award (producer ruling 5). Seed: 60 coins each and a pool of `{potion: 2, revive: 1}` (ruling 9c). Lost on quit until M3.
 - **Smoke item 1 until M3.** The "title" is the Camp screen (ruling 9c), and the M2 evidence says so.
-- **Body toggle and SoakProbe.** The Body toggle is in M2 builds only and is deleted in M3 with `DebugParty`. SoakProbe is compiled out of the TestFlight build, using the mechanism the architect records in §15.8 (ruling 9b).
-- **Performance counts without the editor GUI.** D3's probe prints draw calls, SetPass calls and triangles from `ProfilerRecorder` render counters in development players. These count every pass. The architect restated the §15.7 budget in those terms on 2026-10-16: draws ≤ 300, SetPass ≤ 200, triangles ≤ 180k, ≤ 90 skinned renderers, read on a simulator development player. On the A16 iPad device build, `cpu` and `rt` must each be under 6 ms in the group shot. Simulator runs never count for fps, CPU, GPU or memory.
+- **Look toggle and SoakProbe.** The Body toggle becomes a Look toggle in D6. It is in M2 builds only and is deleted in M3 with `DebugParty` (ruling 9a). SoakProbe is compiled out of the TestFlight build by the per-build `SQ_PROBE` define (ruling 9b).
+- **Performance counts without the editor GUI.** D3's probe prints draw calls, SetPass calls and triangles from `ProfilerRecorder` render counters in development players. These count every pass. §15.14.5 sets the M2 budget in those terms: draws ≤ 140, SetPass ≤ 100, triangles ≤ 120k, ≤ 42 combatant renderers (from the generator log), read on a simulator development player. On the A16 iPad device build, `cpu` and `rt` must each be under 6 ms in the group shot. Simulator runs never count for fps, CPU, GPU or memory.
 - **`ProjectSettings.asset` churn.** M1 showed a simulator build flipping `m_Automatic` and `iOSSimulatorArchitecture`. The sign-off commit 6a8bcda set `m_Automatic: 0` from the generator. A task diff that changes either line is reverted or explained, never committed silently.
 - **Version string.** `bundleVersion` stays `0.2.0` through M2 and becomes `0.3.0` in the sign-off commit (§15.9).
 - **Tests.** `ProgressionTests.cs` holds exactly the five §15.6 tests and is closed at five (ruling 3). The total after M2 is 13.
@@ -168,107 +167,108 @@ D4 and D5 do not depend on each other. Whichever download arrives first goes fir
   - **Lead's reading for D8:** `cpu` is averaged over the whole 30 s window, not only group-shot frames. §15.13's "cpu under 6 ms in the group shot" is judged on the `flow=Battle` lines, where the group shot is most of the frames. That is stricter than the rule as written, not looser. If a device reading lands within 10 % of 6 ms, the architect decides whether to make `cpu` group-only (one line).
   - On the simulator `mem` reads below `unity` (184–218 against 219–225 MB). Simulator memory is not evidence, but it makes Martin's Xcode memory reading at Needs Martin 13 a real test.
 
-### D4 — Synty extraction and import (needs Needs Martin 11)
+### D4 — KayKit weapons and the shader cell tint
 
 - **Goal:**
-  - `Tools/synty/extract.sh` unpacks the downloaded `.unitypackage` into `Builds/synty-extract/` and writes `Tools/synty/package-contents.txt`. It copies only the files listed in `Tools/synty/keep.txt` into `Assets/ThirdParty/Synty/{Characters,Weapons,Textures}/`: the `asset` files, never Synty's `.meta`.
-  - `SyntyPostprocessor` per §15.7.
-  - An import check reports the four §15.1 facts (a)–(d) in the task notes before any hero code.
-- **Files:** `Tools/synty/{extract.sh, keep.txt, package-contents.txt}`; `Assets/ThirdParty/Synty/**` plus Unity `.meta`; `Editor/Import/{SyntyPostprocessor.cs, SyntyImportCheck.cs}`; `.gitignore` if `Builds/synty-extract/` needs a line.
+  - Copy `sword_2handed_color.fbx`, `axe_1handed.fbx`, `axe_2handed.fbx` and `wand.fbx` from `KayKit_Adventurers_2.0_FREE/Assets/fbx(unity)/` into `Assets/ThirdParty/KayKit/Weapons/`. They import through the existing `KayKitPostprocessor` weapon rule, with no rule change and `GetVersion` staying 2.
+  - `Toon.shader` gains the §15.14.3 palette-cell tint: `_CellA`/`_CellAMul`/`_CellB`/`_CellBMul` in the one `UnityPerMaterial` block, `CellTint` applied in `ToonForward` only, no texture sample added.
+- **Files:** the four FBX plus Unity `.meta`; `Assets/_Game/Art/Shaders/Toon.shader`; generated materials only where the new properties appear.
 - **Verification:**
-  - A second `extract.sh` run changes nothing.
-  - No Synty `.cs`, `.unity`, `.prefab`, `.mat` or `.shader` file exists anywhere under `Assets/`.
-  - The character `.meta` shows Human, no materials and read/write off; textures are 1024 and ASTC 6×6.
-  - `avatar.isHuman && isValid`; the four facts are in the notes.
+  - The four `.meta` files show the weapon rule (no animation, `globalScale` 0.70, no materials).
+  - `ProjectSetup.Run` passes the shader check.
+  - The regeneration diff touches only the shader and the new property entries in existing materials, and a second run is byte-identical.
+  - A simulator battle looks exactly like M1: no cell is set yet, so nothing changes colour.
   - The gate passes 13/13.
-- **Not part of it:** prefabs, materials, the baker (D6).
-- **Status:** waiting on Martin's purchase.
+- **Not part of it:** materials that set a cell (D6), data changes, other KayKit files.
+- **Status:** not started.
 
-### D5 — Mixamo import (needs Needs Martin 12)
+### D5 — Mixamo import
 
-- **Goal:** the 15 clips and Y Bot are copied into `Assets/ThirdParty/Mixamo/`.
-  - `MixamoPostprocessor` per §15.2 handles the Human import: each clip is renamed to its file name, loop flags and `OnImpact` come from `clips.json`, and the root is baked into pose.
-  - `ImpactFinder` gets Humanoid sampling, `CombatantGenerator.LoadClips` also scans Mixamo, and the avatar check asserts `isHuman && isValid`.
-- **Files:** `Assets/ThirdParty/Mixamo/*.fbx` plus `.meta`, `Editor/Import/{MixamoPostprocessor.cs, ImpactFinder.cs}`, the import check, `Editor/CombatantGenerator.cs` (`LoadClips` only), `Resources/Data/clips.json`.
-- **Verification:**
-  - All 15 clip names resolve, or any substitutes are listed in the status.
-  - Every avatar is valid.
-  - Each Attack and Skill clip has exactly one `OnImpact` at the `ImpactFinder` time.
-  - Loop flags are on the four looping clips.
-  - The gate passes 13/13.
-- **Not part of it:** hero prefabs and override-controller remapping (D6).
-- **Status:** waiting on Martin's download.
+- **Status:** dropped 2026-10-16 (§15.14.5). The KayKit clips are already imported; the Fighter's two new `clips.json` entries go into D6.
 
-### D6 — Hero generator and the eight variants
+### D6 — Body → Look, data, and the eight looks
 
 - **Goal:**
-  - `classes.json` gains `model`, the Synty `weaponSocket`, a starter `weaponMesh`, `variants.boy/girl.parts`, and `colours` (bake branch only). The Fighter becomes a mace fighter. Each variant gets a `tone`, and the top level of `classes.json` gets `skinTones`. The starting assignment is the §15.3 one, and `TableLoader` enforces ruling 7's rule.
-  - `items.json` gets real meshes and parts, and `TableLoader` gets the class checks.
-  - `HeroGenerator` writes the eight `{classId}_{body}` prefabs with sockets, inactive armor parts and both weapons. It adds `HeroTextureBaker` if fact (b) says colour lives in the masks.
-  - The hero override controllers map the §15.2 clips.
-  - The M1 hero prefabs are deleted and KayKit is trimmed per §15.8.
-  - `BattleView` spawns `{ClassId}_{Body}`; `CombatantActor` looks up bones through the Humanoid avatar.
-  - `Game.Editor.VariantCapture.Run` (batch mode, without `-nographics`) writes one front-facing TGA per variant to `Builds/evidence/M2/`, which the lead converts with `sips`.
+  - The Core rename per §15.14.4: `HeroRecord.Look`; `HeroSpec(..., string Look = "", ...)`; `Bodies` deleted. `ItemDefinition.Parts` becomes a list, and `CellTint` replaces `Tint`. The `TableLoader` checks per §15.14.4, including ruling 7. `ProgressionTests` changes one fixture line.
+  - `classes.json`: `looks`, `skinCells`, `skinTones`, `skinReference`; the Mage's `wand`; the Fighter's `axe_1handed` and its clips.
+  - `items.json` per §15.14.2, including `bow_2`'s `cellTint` and the three renamed ids.
+  - `clips.json` gains `Melee_2H_Idle` (loop) and `Melee_1H_Attack_Chop` (impact from `ImpactFinder`).
+  - The generator writes:
+    - eight `{classId}_{look}` materials and `bow_2.mat`;
+    - eight `{classId}_{look}` prefabs, each with the armor parts inactive and `starter` plus item-id weapon children under `handslot.r`.
+    
+    It deletes the four M1 class prefabs and materials, remaps the Fighter's override, checks heights with armor on and off, and logs active renderer counts.
+  - `DebugParty` seeds Swordsman dark, Archer medium, Mage light and Fighter dark. `BattleView` spawns `{ClassId}_{Look}`. `CampView`'s toggle becomes "Look: …".
+  - `VariantCapture.Run` writes the eight `variant-*.tga` plus `armor-swordsman.tga`.
 - **Files:**
-  - `Editor/{HeroGenerator.cs, HeroTextureBaker.cs?, VariantCapture.cs, CombatantGenerator.cs}`;
-  - `Resources/Data/{classes.json, items.json}`, `Core/Data/{ClassDefinition.cs, TableLoader.cs}`;
-  - generated prefabs, materials, textures and override controllers;
-  - `Runtime/Battle/{BattleView.cs, CombatantActor.cs}`;
-  - KayKit deletions.
+  - Core: `PartyRecord.cs`, `BattleSetup.cs`, `Progression.cs`, `ItemDefinition.cs`, `ClassDefinition.cs`, `TableLoader.cs`;
+  - Tests: `ProgressionTests.cs`, one line;
+  - Data: `classes.json`, `items.json`, `clips.json`;
+  - Editor: `CombatantGenerator.cs` (or a new hero generator class, the developer's call), `VariantCapture.cs`;
+  - Runtime: `DebugParty.cs`, `BattleView.cs`, `CampView.cs`;
+  - generated materials, prefabs and override controllers, and the deletions.
 - **Verification:**
+  - The gate passes 13/13. `BattleResolver.cs` and `BattleResolverTests.cs` are unchanged. The `ProgressionTests` diff is one line. A grep finds no `Body`/`Bodies` in Core or Runtime.
   - `ProjectSetup.Run` twice leaves `git status` clean.
-  - The heights log is 1.2–2.4 m for every variant, with and without armor.
-  - Eight prefabs, each with four sockets, no collider and no rigidbody.
-  - `Combatant.controller` diff is empty.
-  - Scripted simulator battles on both ratios, one each side of the Body toggle, so all eight variants are seen.
-  - Framing per §15.13: feet ≥ 27 %, head ≤ 86 %, no combatant under a card.
-  - Eight front captures cover at least three tones, each on at least two variants.
-  - The gate passes 13/13.
-- **Not part of it:** runtime gear swapping (D7), a stage, new enemies.
-- **Status:** waits on D4 and D5.
+  - The heights log is 1.2–2.4 m with armor on and off, and there are at most 42 combatant renderers.
+  - `Combatant.controller`'s diff is empty.
+  - Scripted simulator battles on both ratios, one each side of the Look toggle, so all eight prefabs spawn with no missing-prefab error. The Fighter's axe Attack and Skill fire `OnImpact`.
+  - Framing per §15.14.6: feet ≥ 27 %, head ≤ 86 %, no combatant under a card.
+  - Nine captures converted with `sips`: three tones, faces visible, and only skin differs between a class's two looks.
+- **Not part of it:** the runtime gear swap (D7); hair tints; a stage; new enemies; any Synty, Mixamo or Sidekick code.
+- **Status:** not started. Waits on D4.
 
 ### D7 — Runtime gear swap
 
-- **Goal:** `HeroAppearance.Apply` per §15.4. It only calls `SetActive`, switching the weapon under `weaponSocket` and armor by part group. `CombatantActor.Spawn` calls it before caching renderers.
+- **Goal:** `HeroAppearance.Apply` per §15.14.2.
+  - The weapon child named `Equipped.Weapon ?? "starter"` is active and the other inactive.
+  - The class armor parts are active exactly when that armor is equipped.
+  - It only calls `SetActive`, and `CombatantActor.Spawn` calls it before caching renderers.
 - **Files:** `Runtime/Battle/{HeroAppearance.cs, CombatantActor.cs}`.
-- **Verification:** scripted simulator session on both ratios:
-  - buy `sword_2` → Next battle → the screenshot shows the new sword (the M2 criterion on the simulator);
-  - a separate session buys an armor item, which then shows in battle;
-  - the hit flash covers the new weapon and armor, not the hidden ones;
+- **Verification:** scripted simulator sessions on both ratios:
+  - buy `sword_2` → Next battle → the screenshot shows the bigger sword (the M2 criterion on the simulator);
+  - buying `bow_2` shows the gold bow;
+  - each class's armor, bought once (the developer may raise the seed coins in a throwaway local build, never committed), is visible from behind in the group shot;
+  - the hit flash covers the active weapon and armor, not the hidden ones;
   - no `Instantiate` in `HeroAppearance`;
   - the gate passes 13/13.
-- **Not part of it:** charm visuals (charms are not visible, V1-SCOPE §6), item pictures.
+- **Not part of it:** charm visuals (charms are not visible, V1-SCOPE §6), item pictures (M4).
 - **Status:** waits on D6.
 
 ### D8 — Performance check, device build, soak, evidence
 
 - **Goal:**
-  - Group-shot counts against the §15.7 budget (≤ 90 SkinnedMeshRenderers, 280 draw calls, 12 SetPass, 60k triangles), from a `SQ_DEV=1` simulator build's probe; levers only if a number misses.
-  - The build log's asset report confirms only the referenced Synty parts ship.
-  - Device build for the soak; the soak checklist and fill-in block for Martin; the lead captures the log with `devicectl`.
+  - Group-shot counters on a simulator development player against the §15.14.5 budget (draws ≤ 140, SetPass ≤ 100, tris ≤ 120k), with the all-armor party.
+  - A release device build for the soak (`SQ_PROBE on`).
+  - The soak checklist and fill-in block for Martin; the lead captures each device's log with `devicectl` and takes screenshots of the purchase and the next battle.
   - Evidence in `docs/evidence/M2/`.
 - **Files:** none beyond tuning numbers a measurement forces (each one written into this plan); `docs/evidence/M2/*`.
-- **Verification:** the producer's soak thresholds (STATUS, ruling 4) on both devices; devicectl screenshots of the purchase and of the next battle on both devices; Martin's warm-or-hot answer and his Silent mode yes.
+- **Verification:**
+  - The producer's soak thresholds (STATUS, ruling 4) on both devices.
+  - On the A16 iPad, `gpu`, `cpu` and `rt` each under 6 ms in the group shot, with `cpu` judged on `flow=Battle` lines (D3a reading).
+  - Martin's Xcode memory reading at Needs Martin 13 is within about 10 % of the probe's `mem`.
+  - devicectl screenshots of the purchase and the new weapon on both devices.
+  - Martin's warm-or-hot answer and his Silent mode yes.
 - **Not part of it:** render-scale changes (M5), new content.
 - **Status:** waits on D7.
 
-## Needs Martin for M2 (also STATUS items 11–14)
+## Needs Martin for M2 (also STATUS)
 
-1. Buy the Synty pack (money, his account), then send the receipt figures for the budget log.
-2. The Mixamo download (free, his Adobe ID).
-3. One Xcode Run per device on the M2 build.
-4. The soak: play; warm or hot; Silent mode yes or no; anything wrong.
+1. One Xcode Run per device on the M2 build, with one Xcode memory reading at Camp.
+2. The soak: play; warm or hot; Silent mode yes or no; anything wrong.
+
+Items 11 (Synty) and 12 (Mixamo) were withdrawn on 2026-10-16: nothing is bought or downloaded for M2.
 
 ## Acceptance evidence to assemble for the producer
 
 - Criteria table, as for M1.
 - Gate 13/13.
 - Regeneration byte-identical.
-- Third-party folder audit (§15.13).
+- Third-party folder audit (§15.14.6): only KayKit under `Assets/ThirdParty/`, and no third-party script.
 - Camp screenshots on both ratios.
-- Eight front captures (skin tones).
+- Eight front captures plus `armor-swordsman` (skin tones, faces).
 - Simulator and devicectl screenshots of buy → next battle with the new weapon.
 - Probe-line excerpts per device against the thresholds.
-- The compliance line: no Synty or Mixamo file has left this Mac, `git remote -v` is empty.
-- Budget row filled from Martin's receipt.
+- The compliance line: there are no Synty or Mixamo files, and `git remote -v` is empty.
+- Budget: $0 for M2 (the Synty row closed unpaid).
 - Smoke items 1 (Camp as title), 3, 5, 8, 9 and 10, plus item 7 (Silent mode yes).
