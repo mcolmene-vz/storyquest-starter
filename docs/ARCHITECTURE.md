@@ -1617,3 +1617,109 @@ So within the rule as written, the answer is "neither pack". The UI keeps `UiFac
 - Fantasy Warrior HUD alone covers the battle HUD, the camp and M3's story and choice screens.
 
 If the producer amends for one only, take the INTERFACE pack. Every screen and both camp tabs benefit, while effects can be improved in code. If M3's parent settings later want INTERFACE - Fantasy Menus, it has to replace something, which today means no.
+
+### 15.18 D5 facts (2026-10-17)
+
+This section rules on the five open D5 findings (PLAN-M2 D5 status; full log in `Builds/synty-check-final2.log`) before D6 starts. Where it differs from §15.3, §15.4, §15.15.2 or §15.15.5, it wins.
+
+The `package-contents.txt` names it relies on: the hero pack ships 12 atlases, `PolygonFantasyHero_Texture_0{1..4}_{A,B,C}`, and the masks `Masks/PolygonFantasyHero_Texture_Mask_01..06` plus `Masks/Old/…_Mask_Skin_01` and `_Skin_02`. Bow Combat ships 12 atlases, `AnimationBowCombat_Texture_0{1..4}_{A,B,C}`.
+
+#### 15.18.1 Fingers
+
+**Not acceptable as M2's end state.** The action shot shows the weapon hand close up, and a flat hand through a sword grip reads wrong. It is acceptable only while D6 lands the fix.
+
+**Fix, code-first, no FBX edit: rename the duplicate finger bones during import, before the avatar is built.**
+- `SyntyPostprocessor` gains `OnPostprocessMeshHierarchy(GameObject root)`. Unity calls it per root hierarchy before the avatar and clips are imported.
+- For the hero FBX, it prefixes every transform under the left and right hand bones with `L_` or `R_` (for example `L_IndexFinger_01`), so finger names become unique.
+- The explicit body map then adds the 30 finger bones (15 per hand).
+- **Why this is safe:**
+  - Skinning binds to transforms, not names.
+  - Synty's clips already carry finger muscles: their avatars map 17–19 finger bones (fact g).
+  - So the fingers animate: the sword grip curls, and the bow hand closes.
+- **Verification:** the avatar is valid with 52 mapped bones, and a front capture of the Swordsman shows a closed grip.
+
+**Fallback,** only if the hook cannot rename before the avatar step:
+- The generator writes a static grip pose into each prefab: a curl constant per finger joint, measured once and commented like `GlobalScale`, applied to the transforms under each hand.
+- Humanoid never writes unmapped bones, so the pose holds in every clip.
+- Grip curl on the weapon hand, a lighter curl on the other.
+
+A per-weapon `gripOffset` is still added only if a weapon visibly misaligns (§15.3).
+
+#### 15.18.2 Skin tones
+
+There is no regular grid in the atlas, so §15.15.2 branch 1 (cell tint) does not apply to heroes. A cell tint on a measured rectangle is rejected too: skin is not guaranteed to be one rectangle, and the pack's own masks are exact.
+
+**Mechanism, in this order:**
+
+1. **Alternative atlases as data, if they qualify.** D6's first step measures, in `SyntyImportCheck`, each of the 11 alternative hero atlases against `01_A`:
+   - the mean colour inside the skin mask;
+   - the mean absolute difference outside it.
+
+   An atlas qualifies as a tone if it differs from `01_A` by at most 3/255 outside the mask (same clothes) and its skin is clearly lighter or darker. If light, medium and dark all qualify, each variant names its atlas in data (`"atlas"`). The chosen atlases are copied to `Textures/` (compressed, like `01_A`). No shader or baker work.
+2. **Otherwise, a skin mask in `Toon.shader`.**
+   - Under a local keyword, `_SKIN_TINT`, enabled on hero materials only: one extra texture sample (`_SkinMask`) and one colour (`_SkinTint`).
+   - `albedo *= lerp(1, _SkinTint.rgb, mask)`, with `_SkinTint = tone.linear / skinReference.linear`, the same multiplier §15.14.3 used.
+   - Every variant shares `01_A` and the mask; the tone is a material colour per variant, and the SRP Batcher stays on.
+   - The mask is imported linear (sRGB off), single channel. Nothing else changes in §13.7.
+   - Why not the 15.3 baker: it needs generated textures and proof that ASTC compression is byte-stable, to avoid one extra sample on four characters.
+3. **The baker (§15.3) only if the masked tint shows visible seams on device.** Its readable inputs are separate editor-only copies (below), so the shipped `01_A` stays compressed and non-readable for the weapons.
+
+**Which mask is skin.** Read from Synty's character Shader Graph (text) in the scratch folder: which channel of which `Mask_0n` is skin. Confirm it numerically: the mean `01_A` colour where that channel is above 0.5 must be skin-coloured. Use `Masks/Old/…_Mask_Skin_01` only if no current mask channel is skin.
+
+**Readable copies, without touching the shipped atlas.**
+- New `keep.txt` destination `EditorOnly/`: `SyntyPostprocessor` imports it readable, uncompressed RGBA32, no mips, full size.
+- Nothing may reference it. The D8 audit checks that no material or `UiSkin` points into `EditorOnly/`, so it never reaches the build.
+- The same package pathname may appear twice in `keep.txt` with different destinations (`01_A` in `Textures/` and in `EditorOnly/`). If `extract.sh` refuses that, D6 extends it.
+
+**Ruling 7** is unchanged: `tone` per variant, `skinTones`, and the `TableLoader` checks (§15.15.2).
+
+#### 15.18.3 Archer clips
+
+**Within one clip per state; no chaining.**
+- **Attack: `A_POLY_BOW_Stand_Shoot_ToBowDown_Neut`.** It starts at full draw and releases early, so the 0.1 s cross-fade from the bow idle reads as a quick draw-and-loose. Impact at the release frame (`ImpactFinder`, confirmed by eye).
+- **Skill: `A_POLY_BOW_Stand_Shoot_Leaping_Neut`, trimmed.**
+  - `clips.json` entries gain an optional `"end"`, in seconds. `SyntyPostprocessor` applies it as the clip's last frame.
+  - The Skill clip ends at the landing frame, found with a foot-height sample and confirmed by eye. Target: at most 2.5 s, so the action shot does not hold for 5.3 s.
+  - If no clean landing frame exists inside 2.5 s, the Skill uses the Attack clip too.
+- **The draw-snap.** If the cross-fade into the drawn pose reads as a snap on device, the recorded improvement is a generated clip that concatenates `Stand_Aiming_ToDrawn` and `Stand_Shoot_ToBowDown` (humanoid curves joined in the editor). It is not built in M2; it would be an architect decision in M4's tuning, not a controller change.
+
+#### 15.18.4 Bows and budget
+
+- **Starter: `Wep_LongBow_01_Unrigged`** (6.7k triangles, 5 renderers).
+- **`bow_2`: the same Long bow on one of Bow Combat's alternative atlases** (`AnimationBowCombat_Texture_0n_B`/`_C`), chosen from D6's front captures for the most visible change. One more 1024² texture; no shader or cell work. §15.15.2's "two different bow meshes" is withdrawn for this one item.
+- **Rejected:** the Recurve (22.4k triangles and 12 renderers, about 37 % of the 60k unique budget for one prop) and the Compound bow (it reads modern).
+- The bow's five renderers stay separate: 15 draws inside the 300 budget, and merging would add a generated mesh to git.
+
+#### 15.18.5 Swords
+
+- **Starter: `SM_Wep_Sword_Small_01` (0.74 m). `sword_2`: `SM_Wep_Sword_01` (1.24 m).** That is half a metre longer, which reads as "a bigger sword". Both suit the one-handed Sword Combat clips.
+- **`SM_Wep_Sword_Large_01` (1.66 m) leaves `keep.txt`.** It is greatsword scale for one-handed clips, and its low swings would cut the ground.
+- **Staffs and maces stay as kept:** `Staff_01` (1.78 m) → `Staff_02` (1.98 m), and `Mace_01` (0.78 m) → `Mace_02` (1.13 m).
+
+#### 15.18.6 Budget check
+
+The §15.7 counter budget is 60k unique triangles (180k counted) and 90 skinned renderers. The worst case on screen (all armor, both upgrades):
+
+| What | Unique triangles | Renderers |
+|---|---|---|
+| Four heroes, at about 4.5–5k each (fact d: one average part per group sums to about 3.7–3.8k for a body, plus hair and attachments) | about 21k | at most 76 (19 each) |
+| Armor pieces, about 0.5k each | about 2k | (included above) |
+| Sword, staff and mace (at most 650 each) | about 1.5k | 3 |
+| Long bow | 6.7k | 5 |
+| Troll (pass rule ceiling, §15.16) | at most 15k | at most 6 |
+| **Total** | **about 46k**, about 138k counted | **at most 90**, exactly at the cap |
+
+Both are inside the budget. The renderer count is at the cap only if every hero carries 19 parts, so D6's generator log reports the real per-prefab count. If it exceeds 90, the first lever is §15.7 lever 1, then dropping a cosmetic attachment from the parts lists (data).
+
+#### 15.18.7 `keep.txt` changes in D6
+
+- **Remove:** `SM_Wep_Sword_Large_01.fbx` and `Wep_RecurveBow_01_Unrigged.fbx`.
+- **Add for D6's measurement step:**
+  - in `EditorOnly/`: the 11 alternative hero atlases, `PolygonFantasyHero_Texture_0{1..4}_{A,B,C}` without `01_A`; a second copy of `01_A`; the six `Masks/PolygonFantasyHero_Texture_Mask_0{1..6}.png`; and `Masks/Old/…_Mask_Skin_01.png` and `_Skin_02.png`;
+  - in `Textures/`: Bow Combat's alternative atlases, `AnimationBowCombat_Texture_0{1..4}_{A,B,C}` without `01_A`, for the `bow_2` capture.
+- **After the decisions,** D6 leaves on `keep.txt` only what is used:
+  - one bow alternative;
+  - either the qualifying hero atlases (15.18.2 step 1) or the one skin mask, moved to `Textures/` (step 2);
+  - the `EditorOnly/` copies only if the baker (step 3) is used.
+
+  The rest leave, so `keep.txt` stays the exact record of what V1 uses.

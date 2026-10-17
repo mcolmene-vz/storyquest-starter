@@ -236,7 +236,15 @@ D5–D8 wait on Martin's download (STATUS Needs Martin 11).
   - Framing per §15.13.
   - Eight front captures cover ruling 7's tone range.
 - **Not part of it:** the runtime gear swap (D7), stage art, new enemies.
-- **Status:** waits on D5. D6's KayKit version was stopped on 2026-10-16 before it changed any file.
+- **Split into two steps (lead, 2026-10-17, after ARCHITECTURE §15.18):**
+  - **D6.1, finger bones, skin-tone measurement and keep.txt:**
+    - `SyntyPostprocessor.OnPostprocessMeshHierarchy` prefixes the finger bones `L_`/`R_`, and the body map gains the 30 finger bones. The fixed-grip fallback is used only if the hook can't rename in time.
+    - `keep.txt` loses `SM_Wep_Sword_Large_01` and the Recurve bow. It gains the `EditorOnly/` measuring set (11 alternative hero atlases, a second `01_A`, `Mask_01`–`06`, the two old skin masks) and the 11 alternative Bow Combat atlases. `extract.sh` is extended if one pathname needs two destinations.
+    - `SyntyImportCheck` compares each alternative atlas with `01_A` per §15.18.2 and prints the qualifying tones.
+    - Verified by: an avatar with 52 mapped bones, a Swordsman front capture with curled fingers, the atlas table, extract still repeatable, gate 13/13.
+    - The lead then records the skin branch (atlases as data, or the shader skin mask) from the measurement, per §15.18.2's rule.
+  - **D6.2, Synty heroes and data:** the goal above, on the branch D6.1 chose. `keep.txt` is trimmed to what's used.
+- **Status:** D6.1 started 2026-10-17. D6.2 waits on D6.1.
 
 ### D6a — Stop the graphics-API line churning (ARCHITECTURE §13.6 note, 2026-10-16)
 
